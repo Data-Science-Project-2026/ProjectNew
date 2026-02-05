@@ -8,6 +8,11 @@ from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
+
+# To install the Chinese font:
+# sudo apt-get install fonts-noto-cjk
+# fc-list | grep "Noto"
+# copy e.g. /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc:
 FONT_PATH = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 cjk_font = font_manager.FontProperties(fname=FONT_PATH)
 
