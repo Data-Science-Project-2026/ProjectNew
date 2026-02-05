@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 from dataclasses import dataclass
@@ -185,7 +186,11 @@ def import_posts_and_images_from_all_folders(
 
 
 if __name__ == "__main__":
-    sample_folder = "6深圳_携程图像文本"
-    results = import_posts_and_images_from_all_folders(sample_folder, db_path="data.db")
+    parser = argparse.ArgumentParser(description="Import posts and images from data folders into a SQLite database.")
+    parser.add_argument("folder", nargs="?", default="6深圳_携程图像文本", help="Parent folder containing location subfolders (default: 6深圳_携程图像文本)")
+    parser.add_argument("--db", dest="db_path", default="data.db", help="Path to SQLite database (default: data.db)")
+    args = parser.parse_args()
+
+    results = import_posts_and_images_from_all_folders(args.folder, db_path=args.db_path)
     for folder_name, posts, images in results:
         print(f"Imported {posts} posts and {images} images from {folder_name}")
