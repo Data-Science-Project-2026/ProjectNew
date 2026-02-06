@@ -141,7 +141,7 @@ This will:
 
 ## License
 
-This project is part of a Data Science course project (2026).
+This project is for a Data Science course at the University of Helsinki (2026).
 
 ## Authors
 
