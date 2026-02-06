@@ -1,4 +1,13 @@
-# ProjectNew
+# Data Science Project
+
+Multimodal analysis of human-nature interactions based on large social media dataset.
+
+## Dataset
+
+**Source**: Crowdsourced data from Ctrip.com (similar to TripAdvisor)
+**Scope**: 720 representative urban parks in 36 cities in China
+**Volume**: Around 853,977 pieces of social media texts and 985,025 social media images in total
+**Metadata**: Geotags and timestamps
 
 ## Database
 
@@ -126,3 +135,11 @@ This will:
 - open a Matplotlib window showing all images for the post (up to 3 columns, multiple rows)
 - render a title with location, username, rating, time, and wrapped comment
 - print a copy‑pastable metadata block to the terminal for documentation or analysis.
+
+## License
+
+This project is part of a Data Science course project (2026).
+
+## Authors
+
+Group 5 - Data Science Project 2026
