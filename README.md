@@ -5,8 +5,11 @@ Multimodal analysis of human-nature interactions based on large social media dat
 ## Dataset
 
 **Source**: Crowdsourced data from Ctrip.com (similar to TripAdvisor)
+
 **Scope**: 720 representative urban parks in 36 cities in China
+
 **Volume**: Around 853,977 pieces of social media texts and 985,025 social media images in total
+
 **Metadata**: Geotags and timestamps
 
 ## Database
