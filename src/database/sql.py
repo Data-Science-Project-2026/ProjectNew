@@ -165,6 +165,43 @@ def fetch_images_for_post(conn: sqlite3.Connection, post_id: int) -> list[bytes]
     return [row[0] for row in rows]
 
 
+def fetch_unanalyzed_images(
+    conn: sqlite3.Connection, limit: int
+) -> list[tuple[int, bytes]]:
+    """Fetch image ids and blobs that do not have species/confidence yet."""
+    _ensure_images_table(conn)
+    rows = conn.execute(
+        """
+        SELECT id, image
+        FROM images
+        WHERE species IS NULL AND confidence IS NULL
+        ORDER BY id
+        LIMIT ?
+        """,
+        (int(limit),),
+    ).fetchall()
+    return [(int(row[0]), row[1]) for row in rows]
+
+
+def update_image_analysis(
+    conn: sqlite3.Connection,
+    *,
+    image_id: int,
+    species: Sequence[str] | None,
+    confidence: Sequence[float] | None,
+) -> None:
+    """Update species/confidence fields for a specific image row."""
+    _ensure_images_table(conn)
+    conn.execute(
+        """
+        UPDATE images
+        SET species = ?, confidence = ?
+        WHERE id = ?
+        """,
+        (_serialize_optional(species), _serialize_optional(confidence), int(image_id)),
+    )
+
+
 def _human_readable_bytes(num_bytes: int | None) -> str:
     if not num_bytes:
         return "0 B"
