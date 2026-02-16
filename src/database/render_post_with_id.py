@@ -31,7 +31,7 @@ def load_post_with_images(
         sql.ensure_schema(conn)
         rows = conn.execute(
             """
-                 SELECT p.location, p.username, p.comment, p.time, p.rating, i.image,
+                 SELECT p.city, p.park, p.username, p.comment, p.time, p.rating, i.image,
                      i.species, i.confidence
             FROM posts AS p
             LEFT JOIN images AS i ON p.id = i.post_id
@@ -45,16 +45,20 @@ def load_post_with_images(
         raise ValueError(f"Post {post_id} was not found in the database.")
 
     metadata = {
-        "location": rows[0][0],
-        "username": rows[0][1],
-        "comment": rows[0][2],
-        "time": rows[0][3],
-        "rating": rows[0][4],
+        "city": rows[0][0],
+        "park": rows[0][1],
+        "username": rows[0][2],
+        "comment": rows[0][3],
+        "time": rows[0][4],
+        "rating": rows[0][5],
     }
 
     images: List[Image.Image] = []
     analyses: List[Tuple[List[str], List[float]]] = []
-    for _, _, _, _, _, blob, species_json, confidence_json in rows:
+    for row in rows:
+        blob = row[6]
+        species_json = row[7]
+        confidence_json = row[8]
         if blob is None:
             continue
         try:
@@ -71,7 +75,8 @@ def load_post_with_images(
 
 def _format_metadata_block(metadata: Dict[str, str | None], comment_text: str) -> str:
     lines = [
-        f"Location: {metadata['location']}",
+        f"City: {metadata.get('city')}",
+        f"Park: {metadata.get('park')}",
         f"User: {metadata['username']}",
         f"Rating: {metadata['rating'] or 'N/A'}",
         f"Time: {metadata['time'] or 'N/A'}",
@@ -144,7 +149,7 @@ def render_post(post_id: int, db_path: str = "data.db") -> List[Image.Image]:
     comment_text = metadata["comment"] or "(no comment provided)"
     wrapped_comment = textwrap.fill(comment_text, width=90)
     metadata_header = (
-        f"Location: {metadata['location']} | User: {metadata['username']} | "
+        f"City: {metadata.get('city')} | Park: {metadata.get('park')} | User: {metadata['username']} | "
         f"Rating: {metadata['rating'] or 'N/A'}\n"
         f"Time: {metadata['time'] or 'N/A'}\n"
         f"Comment: {wrapped_comment}"

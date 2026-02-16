@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
 
 import sqlite3
+import re
 
 from src.database import sql
 
@@ -108,7 +109,7 @@ def _locate_csv_file(folder: Path) -> Path:
     )
 
 
-def import_posts_and_images_from_folder(folder_path: str, db_path: str = "data.db") -> tuple[int, int]:
+def import_posts_and_images_from_folder(folder_path: str, city: str, db_path: str = "data.db") -> tuple[int, int]:
     """Insert posts and their images from a folder containing a CSV and class_* images.
 
     Returns a tuple of (post_count, image_count).
@@ -118,7 +119,12 @@ def import_posts_and_images_from_folder(folder_path: str, db_path: str = "data.d
     csv_file = _locate_csv_file(folder)
 
     image_lookup = _build_image_lookup(folder)
-    location = csv_file.stem
+    # Park name: remove leading digits from the CSV stem, then remove the city string
+    park_stem = re.sub(r"^\d+", "", csv_file.stem)
+    if park_stem.startswith(city):
+        park = park_stem[len(city) :]
+    else:
+        park = park_stem
 
     post_count = 0
     image_count = 0
@@ -130,7 +136,8 @@ def import_posts_and_images_from_folder(folder_path: str, db_path: str = "data.d
         for row in _iter_csv_rows(csv_file):
             post_id = sql.insert_post(
                 conn,
-                location=location,
+                city=city,
+                park=park,
                 username=row.username,
                 comment=row.comment,
                 time=row.timestamp,
@@ -160,6 +167,13 @@ def import_posts_and_images_from_all_folders(
     parent = Path(parent_folder)
     if not parent.is_dir():
         raise FileNotFoundError(f"Folder not found: {parent}")
+    # Parse city from the parent folder name: number + city + underscore
+    # e.g. '6深圳_携程图像文本' -> city == '深圳'
+    parent_name = parent.name
+    m = re.match(r"^\d+([^_]+)_", parent_name)
+    if not m:
+        raise ValueError(f"Unable to parse city name from parent folder: {parent_name}")
+    city = m.group(1)
 
     results: List[Tuple[str, int, int]] = []
     for child in sorted(parent.iterdir()):
@@ -179,7 +193,7 @@ def import_posts_and_images_from_all_folders(
         except (FileNotFoundError, ValueError):
             continue
 
-        posts, images = import_posts_and_images_from_folder(str(child), db_path=db_path)
+        posts, images = import_posts_and_images_from_folder(str(child), city=city, db_path=db_path)
         results.append((child.name, posts, images))
 
     return results

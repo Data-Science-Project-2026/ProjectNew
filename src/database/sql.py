@@ -7,7 +7,8 @@ from typing import Sequence
 
 POST_COLUMNS = [
     ("id", "INTEGER"),
-    ("location", "TEXT"),
+    ("city", "TEXT"),
+    ("park", "TEXT"),
     ("username", "TEXT"),
     ("comment", "TEXT"),
     ("time", "TEXT"),
@@ -22,7 +23,8 @@ def _ensure_posts_table(conn: sqlite3.Connection) -> None:
         """
         CREATE TABLE IF NOT EXISTS posts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            location TEXT NOT NULL,
+            city TEXT NOT NULL,
+            park TEXT NOT NULL,
             username TEXT NOT NULL,
             comment TEXT,
             time TEXT,
@@ -39,7 +41,8 @@ def _ensure_posts_table(conn: sqlite3.Connection) -> None:
             """
             CREATE TABLE posts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                location TEXT NOT NULL,
+                city TEXT NOT NULL,
+                park TEXT NOT NULL,
                 username TEXT NOT NULL,
                 comment TEXT,
                 time TEXT,
@@ -103,7 +106,8 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
 def insert_post(
     conn: sqlite3.Connection,
     *,
-    location: str,
+    city: str,
+    park: str,
     username: str,
     comment: str | None,
     time: str | None,
@@ -114,10 +118,10 @@ def insert_post(
     _ensure_posts_table(conn)
     cursor = conn.execute(
         """
-        INSERT INTO posts (location, username, comment, time, rating, sentiment_score)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO posts (city, park, username, comment, time, rating, sentiment_score)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
-        (location, username, comment, time, rating, sentiment_score),
+        (city, park, username, comment, time, rating, sentiment_score),
     )
     return int(cursor.lastrowid)
 
@@ -223,7 +227,8 @@ def print_database_summary(db_path: str = "data.db") -> None:
         post_bytes = conn.execute(
             """
             SELECT SUM(
-                COALESCE(LENGTH(location), 0) +
+                COALESCE(LENGTH(city), 0) +
+                COALESCE(LENGTH(park), 0) +
                 COALESCE(LENGTH(username), 0) +
                 COALESCE(LENGTH(comment), 0) +
                 COALESCE(LENGTH(time), 0) +
