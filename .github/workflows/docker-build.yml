@@ -1,0 +1,50 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    paths:
+      - 'src/pipeline/**'
+      - 'src/models/**'
+  pull_request:
+    paths:
+      - 'src/pipeline/**'
+      - 'src/models/**'
+
+jobs:
+  build:
+    name: Build container images
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        container:
+          - path: src/pipeline/Orchestrator-Container
+            tag: orchestrator
+          - path: src/models/BioClip-Container
+            tag: bioclip
+          - path: src/models/Qwen-Container
+            tag: qwen
+          - path: src/models/Bert/Bert-Container
+            tag: bert
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        env:
+          CR_PAT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo $CR_PAT | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build image (${{ matrix.tag }})
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}:${{ matrix.tag }} "${{ matrix.path }}"
+
+      - name: Push image (${{ matrix.tag }})
+        run: |
+          docker push ghcr.io/${{ github.repository }}:${{ matrix.tag }}
