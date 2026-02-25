@@ -4,3 +4,24 @@
 6深圳_携程图像文本
 *.pt
 *.txt
+
+# Docker
+*.tar
+*.tar.gz
+docker-compose.override.yml
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

@@ -150,8 +150,8 @@ def import_posts_and_images_from_folder(folder_path: str, city: str, db_path: st
                 if image_path is None:
                     continue
 
-                image_blob = image_path.read_bytes()
-                sql.insert_image(conn, post_id=post_id, image=image_blob)
+                # store the relative/absolute path; blob is not persisted
+                sql.insert_image(conn, post_id=post_id, path=str(image_path))
                 image_count += 1
 
         conn.commit()

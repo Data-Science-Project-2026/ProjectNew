@@ -139,13 +139,6 @@ This will:
 - render a title showing City, Park, username, rating, time, and a wrapped comment
 - print a copy‑pastable metadata block to the terminal for documentation or analysis.
 
-## License
-
-This project is for a Data Science course at the University of Helsinki (2026).
-
-## Authors
-
-Group 5 - Data Science Project 2026
 ```# Database for dashboard
 
 ## Dataset
@@ -286,11 +279,3 @@ This will:
 - open a Matplotlib window showing all images for the post (up to 3 columns, multiple rows)
 - render a title showing City, Park, username, rating, time, and a wrapped comment
 - print a copy‑pastable metadata block to the terminal for documentation or analysis.
-
-## License
-
-This project is for a Data Science course at the University of Helsinki (2026).
-
-## Authors
-
-Group 5 - Data Science Project 2026

@@ -4,6 +4,7 @@ import argparse
 import base64
 import sqlite3
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterable, List, Sequence, Set, Tuple
 
 
@@ -12,6 +13,9 @@ class QwenImageInput:
     image_id: int
     post_id: int
     data_url: str
+
+    def to_dict(self) -> dict:
+        return {"image_id": self.image_id, "post_id": self.post_id, "data_url": self.data_url}
 
 
 @dataclass(frozen=True)
@@ -22,6 +26,16 @@ class QwenUserBatchInput:
     post_ids: List[int]
     comments: List[str]
     images: List[QwenImageInput]
+
+    def to_dict(self) -> dict:
+        return {
+            "city": self.city,
+            "park": self.park,
+            "username": self.username,
+            "post_ids": self.post_ids,
+            "comments": self.comments,
+            "images": [img.to_dict() for img in self.images],
+        }
 
     def merged_comment(self, sep: str = "\n") -> str:
         return sep.join(comment for comment in self.comments if comment.strip())
@@ -41,8 +55,21 @@ def _blob_to_data_url(image_blob: bytes) -> str:
     return f"data:image/jpeg;base64,{encoded}"
 
 
+def _read_image_file(path: str) -> bytes:
+    """Read a binary image from disk; path may be relative or absolute."""
+    p = Path(path)
+    if not p.is_absolute():
+        # assume current working directory or caller will supply root
+        pass
+    try:
+        with open(p, "rb") as f:
+            return f.read()
+    except Exception:
+        return b""
+
+
 def _build_where_clause(city: str | None, park: str | None, username: str | None) -> tuple[str, list[str]]:
-    clauses: list[str] = ["i.image IS NOT NULL"]
+    clauses: list[str] = ["i.path IS NOT NULL"]
     params: list[str] = []
 
     if city:
@@ -85,8 +112,9 @@ def build_qwen_user_batches(
 ) -> List[QwenUserBatchInput]:
     """Read SQL rows and aggregate them as Qwen-ready user batches.
 
-    Group key is (city, park, username), so users with the same name in different parks
-    are kept separate.
+    ``db_path`` is the path to a **SQLite** database file.  This helper exists
+    for backwards compatibility with the original command‑line tools.  it is
+    mostly a thin wrapper around :func:`build_qwen_user_batches_from_conn`.
     """
 
     where_sql, params = _build_where_clause(city, park, username)
@@ -98,7 +126,7 @@ def build_qwen_user_batches(
             p.username,
             COALESCE(p.comment, '') AS comment,
             i.id AS image_id,
-            i.image AS image_blob
+            i.path AS image_path
         FROM posts AS p
         JOIN images AS i ON i.post_id = p.id
         WHERE {where_sql}
@@ -111,6 +139,16 @@ def build_qwen_user_batches(
         _assert_required_tables(conn)
         rows = conn.execute(query, params).fetchall()
 
+    # delegate the heavy lifting to the connection-agnostic helper below
+    return _batches_from_rows(rows, min_images)
+
+
+# new helper that accepts raw rows (generic sequence) and can be reused by
+# both SQLite and Postgres callers.
+
+def _batches_from_rows(rows: Iterable[Sequence], min_images: int) -> List[QwenUserBatchInput]:
+    grouped: dict[tuple[str, str, str], _GroupBucket] = {}
+
     for row in rows:
         post_id = int(row[0])
         city_value = str(row[1])
@@ -118,7 +156,8 @@ def build_qwen_user_batches(
         username_value = str(row[3])
         comment_value = str(row[4]) if row[4] is not None else ""
         image_id = int(row[5])
-        image_blob = bytes(row[6])
+        image_path = str(row[6])
+
 
         key = (city_value, park_value, username_value)
         bucket = grouped.setdefault(
@@ -132,33 +171,29 @@ def build_qwen_user_batches(
             ),
         )
 
-        seen_posts = bucket.seen_posts
-        if post_id not in seen_posts:
+        if post_id not in bucket.seen_posts:
             bucket.post_ids.append(post_id)
-            seen_posts.add(post_id)
+            bucket.seen_posts.add(post_id)
 
         normalized_comment = comment_value.strip()
         if normalized_comment:
-            seen_comments = bucket.seen_comments
             comment_key = (post_id, normalized_comment)
-            if comment_key not in seen_comments:
+            if comment_key not in bucket.seen_comments:
                 bucket.comments.append(normalized_comment)
-                seen_comments.add(comment_key)
+                bucket.seen_comments.add(comment_key)
 
         bucket.images.append(
             QwenImageInput(
                 image_id=image_id,
                 post_id=post_id,
-                data_url=_blob_to_data_url(image_blob),
+                data_url=_blob_to_data_url(_read_image_file(image_path)),
             )
         )
 
     batches: list[QwenUserBatchInput] = []
     for (city_value, park_value, username_value), bucket in grouped.items():
-        images: Sequence[QwenImageInput] = bucket.images
-        if len(images) < int(min_images):
+        if len(bucket.images) < int(min_images):
             continue
-
         batches.append(
             QwenUserBatchInput(
                 city=city_value,
@@ -166,11 +201,52 @@ def build_qwen_user_batches(
                 username=username_value,
                 post_ids=list(bucket.post_ids),
                 comments=list(bucket.comments),
-                images=list(images),
+                images=list(bucket.images),
             )
         )
-
     return batches
+
+
+def build_qwen_user_batches_pg(
+    conn,
+    *,
+    city: str | None = None,
+    park: str | None = None,
+    username: str | None = None,
+    min_images: int = 1,
+) -> List[QwenUserBatchInput]:
+    """Same as :func:`build_qwen_user_batches` but works over a Postgres cursor.
+
+    ``conn`` may be any PEP 249 connection object (including psycopg2) that has
+    ``execute`` and ``fetchall`` methods.  The query is identical to the
+    SQLite version but uses ``%s`` parameter placeholders.
+    """
+    where_sql, params = _build_where_clause(city, park, username)
+    query = f"""
+        SELECT
+            p.id AS post_id,
+            p.city,
+            p.park,
+            p.username,
+            COALESCE(p.comment, '') AS comment,
+            i.id AS image_id,
+            i.path AS image_path
+        FROM posts AS p
+        JOIN images AS i ON i.post_id = p.id
+        WHERE {where_sql}
+        ORDER BY p.city, p.park, p.username, p.id, i.id
+    """
+
+    # adapt parameter markers from ? to %s
+    # _build_where_clause returns placeholders for SQLite; we need to convert them
+    pg_params: list[str] = []
+    pg_where = where_sql.replace("?", "%s")
+    pg_params.extend(params)
+
+    cursor = conn.cursor()
+    cursor.execute(query.replace(where_sql, pg_where), pg_params)
+    rows = cursor.fetchall()
+    return _batches_from_rows(rows, min_images)
 
 
 def build_qwen_messages(batch: QwenUserBatchInput, instruction: str) -> list[dict]:

@@ -10,6 +10,7 @@ POST_COLUMNS = [
     ("city", "TEXT"),
     ("park", "TEXT"),
     ("username", "TEXT"),
+    ("username_hash", "TEXT"),
     ("comment", "TEXT"),
     ("time", "TEXT"),
     ("rating", "TEXT"),
@@ -26,6 +27,7 @@ def _ensure_posts_table(conn: sqlite3.Connection) -> None:
             city TEXT NOT NULL,
             park TEXT NOT NULL,
             username TEXT NOT NULL,
+            username_hash TEXT NOT NULL,
             comment TEXT,
             time TEXT,
             rating TEXT,
@@ -56,7 +58,8 @@ def _ensure_posts_table(conn: sqlite3.Connection) -> None:
 IMAGE_COLUMNS = [
     ("id", "INTEGER"),
     ("post_id", "INTEGER"),
-    ("image", "BLOB"),
+    ("path", "TEXT"),
+    ("username_hash", "TEXT"),
     ("species", "TEXT"),
     ("confidence", "TEXT"),
     ("activity", "TEXT"),
@@ -69,8 +72,9 @@ def _ensure_images_table(conn: sqlite3.Connection) -> None:
         """
         CREATE TABLE IF NOT EXISTS images (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            post_id INTEGER NOT NULL,
-            image BLOB NOT NULL,
+            post_id INTEGER,
+            path TEXT NOT NULL,
+            username_hash TEXT,
             species TEXT,
             confidence TEXT,
             activity TEXT,
@@ -86,8 +90,8 @@ def _ensure_images_table(conn: sqlite3.Connection) -> None:
             """
             CREATE TABLE images (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                post_id INTEGER NOT NULL,
-                image BLOB NOT NULL,
+                post_id INTEGER,
+                path TEXT NOT NULL,
                 species TEXT,
                 confidence TEXT,
                 activity TEXT,
@@ -98,9 +102,50 @@ def _ensure_images_table(conn: sqlite3.Connection) -> None:
 
 
 def ensure_schema(conn: sqlite3.Connection) -> None:
-    """Ensure that both posts and images tables exist with the expected schema."""
+    """Ensure that both posts and images tables exist with the expected schema.
+
+    The sqlite helper also maintains an ``ingestion_status`` table for
+    compatibility with the Postgres version.
+    """
     _ensure_posts_table(conn)
     _ensure_images_table(conn)
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ingestion_status (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT UNIQUE,
+            status TEXT,
+            last_processed_row INTEGER,
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT
+        )
+        """
+    )
+
+
+def upsert_ingestion_status(
+    conn: sqlite3.Connection,
+    *,
+    filename: str,
+    status: str,
+    last_processed_row: int | None = None,
+) -> None:
+    """Insert or update the progress row for a file.
+
+    This mirrors the Postgres helper and is used by the orchestrator when the
+    backend is sqlite (mainly in tests).
+    """
+    conn.execute(
+        """
+        INSERT INTO ingestion_status (filename, status, last_processed_row, updated_at)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(filename) DO UPDATE SET
+            status=excluded.status,
+            last_processed_row=excluded.last_processed_row,
+            updated_at=CURRENT_TIMESTAMP
+        """,
+        (filename, status, last_processed_row),
+    )
 
 
 def insert_post(
@@ -109,11 +154,14 @@ def insert_post(
     city: str,
     park: str,
     username: str,
+    username_hash: str | None = None,
     comment: str | None,
     time: str | None,
     rating: str | None,
     sentiment_score: float | None = None,
 ) -> int:
+    # ``username_hash`` parameter is accepted for API compatibility with the
+    # PostgreSQL helpers; sqlite backend does not store it.
     """Insert a single post record and return its primary key."""
     _ensure_posts_table(conn)
     cursor = conn.execute(
@@ -135,22 +183,24 @@ def _serialize_optional(values: Sequence[object] | None) -> str | None:
 def insert_image(
     conn: sqlite3.Connection,
     *,
-    post_id: int,
-    image: bytes,
+    post_id: int | None,
+    path: str,
+    username_hash: str | None = None,
     species: Sequence[str] | None = None,
     confidence: Sequence[float] | None = None,
     activity: str | None = None,
 ) -> int:
-    """Insert a single image row linked to a post."""
+    # ``username_hash`` is ignored in sqlite; stored only for compatibility
+    """Insert a single image row linked to a post using file path."""
     _ensure_images_table(conn)
     cursor = conn.execute(
         """
-        INSERT INTO images (post_id, image, species, confidence, activity)
+        INSERT INTO images (post_id, path, species, confidence, activity)
         VALUES (?, ?, ?, ?, ?)
         """,
         (
             post_id,
-            image,
+            path,
             _serialize_optional(species),
             _serialize_optional(confidence),
             activity,
@@ -159,11 +209,11 @@ def insert_image(
     return int(cursor.lastrowid)
 
 
-def fetch_images_for_post(conn: sqlite3.Connection, post_id: int) -> list[bytes]:
-    """Return all image blobs associated with the provided post id."""
+def fetch_images_for_post(conn: sqlite3.Connection, post_id: int) -> list[str]:
+    """Return all image paths associated with the provided post id."""
     _ensure_images_table(conn)
     rows = conn.execute(
-        "SELECT image FROM images WHERE post_id=? ORDER BY id",
+        "SELECT path FROM images WHERE post_id=? ORDER BY id",
         (post_id,),
     ).fetchall()
     return [row[0] for row in rows]
@@ -171,12 +221,12 @@ def fetch_images_for_post(conn: sqlite3.Connection, post_id: int) -> list[bytes]
 
 def fetch_unanalyzed_images(
     conn: sqlite3.Connection, limit: int
-) -> list[tuple[int, bytes]]:
-    """Fetch image ids and blobs that do not have species/confidence yet."""
+) -> list[tuple[int, str]]:
+    """Fetch image ids and paths that do not have species/confidence yet."""
     _ensure_images_table(conn)
     rows = conn.execute(
         """
-        SELECT id, image
+        SELECT id, path
         FROM images
         WHERE species IS NULL AND confidence IS NULL
         ORDER BY id
@@ -184,7 +234,7 @@ def fetch_unanalyzed_images(
         """,
         (int(limit),),
     ).fetchall()
-    return [(int(row[0]), row[1]) for row in rows]
+    return [(int(row[0]), str(row[1])) for row in rows]
 
 
 def update_image_analysis(
@@ -203,6 +253,43 @@ def update_image_analysis(
         WHERE id = ?
         """,
         (_serialize_optional(species), _serialize_optional(confidence), int(image_id)),
+    )
+
+
+def fetch_posts_for_sentiment(
+    conn: sqlite3.Connection, limit: int
+) -> list[tuple[int, str]]:
+    _ensure_posts_table(conn)
+    rows = conn.execute(
+        "SELECT id, COALESCE(comment, '') FROM posts WHERE sentiment_score IS NULL ORDER BY id LIMIT ?",
+        (int(limit),),
+    ).fetchall()
+    return [(int(r[0]), str(r[1])) for r in rows]
+
+
+def update_post_sentiment(
+    conn: sqlite3.Connection,
+    *,
+    post_id: int,
+    sentiment_score: float,
+) -> None:
+    _ensure_posts_table(conn)
+    conn.execute(
+        "UPDATE posts SET sentiment_score = ? WHERE id = ?",
+        (float(sentiment_score), int(post_id)),
+    )
+
+
+def update_image_activity(
+    conn: sqlite3.Connection,
+    *,
+    image_id: int,
+    activity: str,
+) -> None:
+    _ensure_images_table(conn)
+    conn.execute(
+        "UPDATE images SET activity = ? WHERE id = ?",
+        (activity, int(image_id)),
     )
 
 
