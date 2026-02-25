@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypass
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  bioclip:
+    build:
+      context: .
+      dockerfile: src/models/BioClip-Container/Dockerfile
+    image: bioclip-service
+    ports:
+      - "5000:5000"
+    # mount a directory containing token files if available
+    volumes:
+      - ./src/models/BioClip:/app/src/models/BioClip
+
+  bert:
+    build:
+      context: .
+      dockerfile: src/models/Bert/Bert-Container/Dockerfile
+    image: bert-service
+    ports:
+      - "5001:5000"
+
+  qwen:
+    build:
+      context: .
+      dockerfile: src/models/Qwen-Container/Dockerfile
+    image: qwen-service
+    ports:
+      - "5002:5000"
+    environment:
+      OPENAI_API_KEY: ""   # set a real key in production or via env override
+      OPENAI_BASE_URL: ""
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: src/pipeline/Orchestrator-Container/Dockerfile
+    image: pipeline-orchestrator
+    depends_on:
+      - postgres
+      - bioclip
+      - bert
+      - qwen
+    volumes:
+      - ./data:/data
+    command: >
+      upload-posts
+      --csv-dir /data/csvs
+      --image-root /data/images
+      --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432"
+      --bio-service-url http://bioclip:5000
+      --sentiment-service-url http://bert:5000
+      --qwen-service-url http://qwen:5000
+
+volumes:
+  pgdata:
