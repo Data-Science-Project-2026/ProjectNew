@@ -15,12 +15,26 @@ SPECIES_NAMES = os.environ.get("SPECIES_NAMES_PATH", "src/models/BioClip/species
 USE_HALF = bool(os.environ.get("USE_HALF", "False").lower() in ("1", "true"))
 TEXT_BATCH_SIZE = int(os.environ.get("TEXT_BATCH_SIZE", 4048))
 
-model = BioClipModel(
-    species_tokens_path=SPECIES_TOKENS,
-    species_names_path=SPECIES_NAMES,
-    use_half=USE_HALF,
-    text_batch_size=TEXT_BATCH_SIZE,
-)
+# initialize the BioClip model; failure to load the token files
+# should not crash the entire container during development.  we
+# catch the FileNotFoundError and fall back to a dummy instance.
+try:
+    model = BioClipModel(
+        species_tokens_path=SPECIES_TOKENS,
+        species_names_path=SPECIES_NAMES,
+        use_half=USE_HALF,
+        text_batch_size=TEXT_BATCH_SIZE,
+    )
+except FileNotFoundError as e:
+    # warn and create a stub object with minimal API so the service
+    # can start (analysis endpoints will return empty results).
+    import logging
+    logging.warning("BioClip tokens not found: %s; starting stub model", e)
+
+    class _Stub:
+        def analyze_image_blobs(self, blobs, threshold=0.05):
+            return [(None, 0.0) for _ in blobs]
+    model = _Stub()
 
 @app.route("/analyze_images", methods=["POST"])
 def analyze_images():

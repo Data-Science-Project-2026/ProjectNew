@@ -13,7 +13,8 @@ from typing import Iterable, List, Optional
 
 from database import postgres as db
 from models.BioClip.model import BioClipModel
-from models.Sentiment.llm_analyzer import PsychologicalStateAnalyzer
+
+from models.Bert.llm_analyzer import PsychologicalStateAnalyzer
 from models.Qwen.user_sql_reader import (
     build_qwen_user_batches,
     build_qwen_user_batches_pg,

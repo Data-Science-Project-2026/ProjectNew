@@ -9,7 +9,12 @@ app = Flask(__name__)
 # configuration (OpenAI API key should be provided via env)
 API_KEY = os.environ.get("OPENAI_API_KEY")
 BASE_URL = os.environ.get("OPENAI_BASE_URL")
-client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+if not API_KEY:
+    # service can still start but will reject requests that need OpenAI
+    # if no key is provided.  this makes local development easier.
+    client = None
+else:
+    client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
 @app.route("/analyze_users", methods=["POST"])
 def analyze_users():
@@ -17,6 +22,9 @@ def analyze_users():
     batches = payload.get("batches", [])
     results = []
     for batch in batches:
+        if client is None:
+            results.append({"error": "missing OPENAI_API_KEY"})
+            continue
         messages = build_qwen_messages(batch, batch.get("instruction", ""))
         resp = client.chat.completions.create(
             model=batch.get("model"),

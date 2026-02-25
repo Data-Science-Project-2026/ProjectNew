@@ -22,14 +22,14 @@ Free open source dashboard tool [Metabase](https://www.metabase.com/) is used fo
 
 ## Pipeline & Deployment
 
-[Pipeline documentation](./documentation/pipeline.md)
-
 The core workflow is orchestrated by `src/pipeline/orchestrator.py`.  It
 imports CSVs, ingests image paths, then runs three kinds of models
 (BioClip, sentiment/BERT and Qwen) and writes results to a PostgreSQL
 database.  For production you should provide a Postgres DSN via
 `--db-dsn` or the `PIPELINE_DATABASE_DSN` environment variable; SQLite is
 supported only in tests and import utilities.
+
+[Pipeline documentation](./documentation/pipeline.md)
 
 ### Containers for models
 

@@ -7,7 +7,6 @@ import sqlite3
 import pytest
 from pipeline.orchestrator import Pipeline
 
-
 def _make_dummy_csv(tmpdir: Path) -> Path:
     path = tmpdir / "data.csv"
     with open(path, "w", encoding="utf-8", newline="") as f:

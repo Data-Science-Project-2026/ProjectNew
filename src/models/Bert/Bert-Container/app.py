@@ -1,7 +1,7 @@
 import os
 import json
 from flask import Flask, request, jsonify
-from models.Sentiment.llm_analyzer import PsychologicalStateAnalyzer
+from models.Bert.llm_analyzer import PsychologicalStateAnalyzer
 
 app = Flask(__name__)
 
