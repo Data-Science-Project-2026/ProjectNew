@@ -40,28 +40,28 @@ class Pipeline:
         self,
         dsn: str,
         bio_clip_args: dict,
-        sentiment_args: dict | None = None,
+        bert_args: dict | None = None,
         qwen_args: dict | None = None,
         *,
         bio_service_url: Optional[str] = None,
-        sentiment_service_url: Optional[str] = None,
+        bert_service_url: Optional[str] = None,
         qwen_service_url: Optional[str] = None,
     ) -> None:
         self.dsn = dsn
         # if service urls provided we avoid loading local models until
         # the caller explicitly needs them.
         self.bio_service_url = bio_service_url
-        self.sentiment_service_url = sentiment_service_url
+        self.bert_service_url = bert_service_url
         self.qwen_service_url = qwen_service_url
 
         if not self.bio_service_url:
             self.bio = BioClipModel(**bio_clip_args)
         else:
             self.bio = None
-        if not self.sentiment_service_url:
-            self.sentiment = PsychologicalStateAnalyzer(**(sentiment_args or {}))
+        if not self.bert_service_url:
+            self.bert = PsychologicalStateAnalyzer(**(bert_args or {}))
         else:
-            self.sentiment = None
+            self.bert = None
         self.qwen_args = qwen_args or {}
 
     # ingestion
@@ -224,15 +224,15 @@ class Pipeline:
                         break
                     post_ids, comments = zip(*rows)
 
-                    if self.sentiment_service_url:
+                    if self.bert_service_url:
                         r = requests.post(
-                            f"{self.sentiment_service_url.rstrip('/')}/analyze_posts",
+                            f"{self.bert_service_url.rstrip('/')}/analyze_posts",
                             json={"comments": list(comments)},
                         )
                         r.raise_for_status()
                         scores = r.json().get("scores", [])
                     else:
-                        scores = self.sentiment.batch_analyze(list(comments))
+                        scores = self.bert.batch_analyze(list(comments))
 
                     for pid, score_dict in zip(post_ids, scores):
                         db.update_post_sentiment(
@@ -379,7 +379,7 @@ def main() -> None:
 
     svc_arg = parser.add_argument_group("services")
     svc_arg.add_argument("--bio-service-url", default=None, help="URL for the BioClip container (e.g. http://localhost:5000)")
-    svc_arg.add_argument("--sentiment-service-url", default=None, help="URL for the sentiment/BERT container")
+    svc_arg.add_argument("--bert-service-url", default=None, help="URL for the Bert container")
     svc_arg.add_argument("--qwen-service-url", default=None, help="URL for the Qwen container")
 
     args = parser.parse_args()
@@ -393,7 +393,7 @@ def main() -> None:
             "text_batch_size": 4048,
         },
         bio_service_url=args.bio_service_url,
-        sentiment_service_url=args.sentiment_service_url,
+        bert_service_url=args.bert_service_url,
         qwen_service_url=args.qwen_service_url,
     )
 

@@ -55,13 +55,13 @@ services:
     volumes:
       - ./data:/data
     command: >
+      --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432"
+      --bio-service-url http://bioclip:5000
+      --bert-service-url http://bert:5000
+      --qwen-service-url http://qwen:5000
       upload-posts
       --csv-dir /data/csvs
       --image-root /data/images
-      --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432"
-      --bio-service-url http://bioclip:5000
-      --sentiment-service-url http://bert:5000
-      --qwen-service-url http://qwen:5000
 
 volumes:
   pgdata:
