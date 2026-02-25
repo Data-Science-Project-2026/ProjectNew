@@ -4,10 +4,6 @@ Multimodal analysis of human-nature interactions based on large social media dat
 
 ## Dataset
 
-[Database documentation](./documentation/database.md)
-
-[Dashboard documentation](./documentation/dashboard.md)
-
 **Source**: Crowdsourced data from Ctrip.com (similar to TripAdvisor)
 
 **Scope**: 720 representative urban parks in 36 cities in China
@@ -15,6 +11,14 @@ Multimodal analysis of human-nature interactions based on large social media dat
 **Volume**: Around 853,977 pieces of social media texts and 985,025 social media images in total
 
 **Metadata**: Geotags and timestamps
+
+[Database documentation](./documentation/database.md)
+
+## Dashboard
+
+Free open source dashboard tool [Metabase](https://www.metabase.com/) is used for this project.
+
+[Dashboard documentation](./documentation/dashboard.md)
 
 ## Pipeline & Deployment
 
@@ -29,12 +33,6 @@ supported only in tests and import utilities.
 
 ### Containers for models
 
-[Species indentification documentation](./documentation/species_identification.md)
-
-[Sentiment analysis documentation](./documentation/sentiment_analysis.md)
-
-[Human activity recognition documentation](./documentation/human_activity_recognition.md)
-
 Each model is available as a standalone Docker service under `src/models`:
 
 * `BioClip-Container` – species identification
@@ -47,6 +45,12 @@ the `--bio-service-url`, `--sentiment-service-url` and
 `--qwen-service-url` CLI flags, in which case batches are POSTed to the
 container and the JSON response is used just as if the local model had been
 running.
+
+[Species indentification documentation](./documentation/species_identification.md)
+
+[Sentiment analysis documentation](./documentation/sentiment_analysis.md)
+
+[Human activity recognition documentation](./documentation/human_activity_recognition.md)
 
 ## License
 
