@@ -4,6 +4,10 @@ Multimodal analysis of human-nature interactions based on large social media dat
 
 ## Dataset
 
+[Database documentation](./documentation/database.md)
+
+[Dashboard documentation](./documentation/dashboard.md)
+
 **Source**: Crowdsourced data from Ctrip.com (similar to TripAdvisor)
 
 **Scope**: 720 representative urban parks in 36 cities in China
@@ -14,6 +18,8 @@ Multimodal analysis of human-nature interactions based on large social media dat
 
 ## Pipeline & Deployment
 
+[Pipeline documentation](./documentation/pipeline.md)
+
 The core workflow is orchestrated by `src/pipeline/orchestrator.py`.  It
 imports CSVs, ingests image paths, then runs three kinds of models
 (BioClip, sentiment/BERT and Qwen) and writes results to a PostgreSQL
@@ -22,6 +28,12 @@ database.  For production you should provide a Postgres DSN via
 supported only in tests and import utilities.
 
 ### Containers for models
+
+[Species indentification documentation](./documentation/species_identification.md)
+
+[Sentiment analysis documentation](./documentation/sentiment_analysis.md)
+
+[Human activity recognition documentation](./documentation/human_activity_recognition.md)
 
 Each model is available as a standalone Docker service under `src/models`:
 
