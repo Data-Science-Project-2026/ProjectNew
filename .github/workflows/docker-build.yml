@@ -23,7 +23,7 @@ jobs:
             tag: bioclip
           - path: src/models/Qwen-Container
             tag: qwen
-          - path: src/models/Bert/Bert-Container
+          - path: src/models/Bert-Container
             tag: bert
     steps:
       - name: Check out repository

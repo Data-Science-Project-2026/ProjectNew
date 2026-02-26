@@ -26,7 +26,7 @@ services:
   bert:
     build:
       context: .
-      dockerfile: src/models/Bert/Bert-Container/Dockerfile
+      dockerfile: src/models/Bert-Container/Dockerfile
     image: bert-service
     ports:
       - "5001:5000"

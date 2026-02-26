@@ -52,7 +52,6 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
                 id SERIAL PRIMARY KEY,
                 city TEXT NOT NULL,
                 park TEXT NOT NULL,
-                username TEXT NOT NULL,
                 username_hash TEXT NOT NULL,
                 comment TEXT,
                 time TIMESTAMP,
@@ -66,7 +65,6 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
             CREATE TABLE IF NOT EXISTS images (
                 id SERIAL PRIMARY KEY,
                 post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-                path TEXT NOT NULL,
                 username_hash TEXT,
                 species TEXT[],
                 confidence REAL[],
@@ -108,17 +106,17 @@ def insert_post(
 ) -> int:
     """Insert a post row and return the new primary key.
 
-    ``username_hash`` is stored alongside the original username for privacy
-    when the data is exported to downstream systems.
+    ``username_hash`` is stored for privacy when the data is exported to
+    downstream systems. ``username`` is accepted but not stored in Postgres.
     """
     with conn.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO posts (city, park, username, username_hash, comment, time, rating, sentiment_score)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO posts (city, park, username_hash, comment, time, rating, sentiment_score)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
-            (city, park, username, username_hash, comment, time, rating, sentiment_score),
+            (city, park, username_hash, comment, time, rating, sentiment_score),
         )
         post_id = cur.fetchone()[0]
     conn.commit()
@@ -154,19 +152,19 @@ def insert_image(
     path: str,
     username_hash: str | None = None,
 ) -> int:
-    """Insert an image record pointing at ``path`` and return its id.
+    """Insert an image record and return its id.
 
     ``username_hash`` may be derived from the filename so downstream analysis
-    can link back to the origin.
+    can link back to the origin. ``path`` is accepted but not stored in Postgres.
     """
     with conn.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO images (post_id, path, username_hash)
-            VALUES (%s, %s, %s)
+            INSERT INTO images (post_id, username_hash)
+            VALUES (%s, %s)
             RETURNING id
             """,
-            (post_id, path, username_hash),
+            (post_id, username_hash),
         )
         image_id = cur.fetchone()[0]
     conn.commit()
@@ -175,12 +173,16 @@ def insert_image(
 
 def fetch_unanalyzed_images(
     conn: psycopg2.extensions.connection, limit: int
-) -> list[tuple[int, str]]:
-    """Return (id, path) tuples for rows without analysis yet."""
+) -> list[int]:
+    """Return image IDs for rows without analysis yet.
+    
+    Note: path is not stored in Postgres, so callers must obtain paths from
+    another source (e.g., the original CSV files or a separate key-value store).
+    """
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT id, path
+            SELECT id
             FROM images
             WHERE species IS NULL AND confidence IS NULL
             ORDER BY id
@@ -189,7 +191,7 @@ def fetch_unanalyzed_images(
             (limit,),
         )
         rows = cur.fetchall()
-    return [(int(r[0]), str(r[1])) for r in rows]
+    return [int(r[0]) for r in rows]
 
 
 def update_image_analysis(

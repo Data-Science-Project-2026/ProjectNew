@@ -60,7 +60,7 @@ services for each model.  These services are packaged as Docker images and
 live in sibling subdirectories of the model code:
 
 * `src/models/BioClip-Container` – exposes `/analyze_images`
-* `src/models/Bert/Bert-Container` (sentiment/BERT) – exposes `/analyze_posts`
+* `src/models/Bert-Container` (sentiment/BERT) – exposes `/analyze_posts`
 * `src/models/Qwen-Container` – exposes `/analyze_users`
 
 Each service wraps the existing Python classes, accepts a JSON payload, and
@@ -76,7 +76,7 @@ arguments.
 # build all three images (from repo root)
 cd src/models/BioClip-Container && docker build -t bioclip-service .
 cd ../Qwen-Container && docker build -t qwen-service .
-cd ../Bert/Bert-Container && docker build -t bert-service .
+cd ../Bert-Container && docker build -t bert-service .
 
 # run them on the default ports
 docker run -p 5000:5000 bioclip-service

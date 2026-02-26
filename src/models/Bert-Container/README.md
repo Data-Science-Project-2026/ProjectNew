@@ -7,7 +7,7 @@ Provides sentiment analysis as a service.  URL:
 Build & run:
 
 ```sh
-cd src/models/Bert/Bert-Container
+cd src/models/Bert-Container
 docker build -t bert-service .
 docker run -p 5001:5000 bert-service
 ```
