@@ -17,6 +17,14 @@ class QwenImageInput:
     def to_dict(self) -> dict:
         return {"image_id": self.image_id, "post_id": self.post_id, "data_url": self.data_url}
 
+    @staticmethod
+    def from_dict(d: dict) -> "QwenImageInput":
+        return QwenImageInput(
+            image_id=d["image_id"],
+            post_id=d["post_id"],
+            data_url=d["data_url"],
+        )
+
 
 @dataclass(frozen=True)
 class QwenUserBatchInput:
@@ -36,6 +44,17 @@ class QwenUserBatchInput:
             "comments": self.comments,
             "images": [img.to_dict() for img in self.images],
         }
+
+    @staticmethod
+    def from_dict(d: dict) -> "QwenUserBatchInput":
+        return QwenUserBatchInput(
+            city=d["city"],
+            park=d["park"],
+            username=d["username"],
+            post_ids=d["post_ids"],
+            comments=d["comments"],
+            images=[QwenImageInput.from_dict(img) for img in d["images"]],
+        )
 
     def merged_comment(self, sep: str = "\n") -> str:
         return sep.join(comment for comment in self.comments if comment.strip())

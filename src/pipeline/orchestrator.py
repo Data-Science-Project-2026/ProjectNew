@@ -291,8 +291,16 @@ class Pipeline:
             batches = batches[:max_users]
 
         if self.qwen_service_url:
-            # serialize minimal batch info
-            payload = {"batches": [batch.to_dict() for batch in batches]}
+            # serialize minimal batch info and configuration
+            payload = {
+                "batches": [batch.to_dict() for batch in batches],
+                "config": {
+                    "instruction": self.qwen_args.get("instruction", ""),
+                    "model": self.qwen_args.get("model", "qwen-vl-max"),
+                    "max_tokens": self.qwen_args.get("max_tokens", 512),
+                    "temperature": self.qwen_args.get("temperature", 0.2),
+                },
+            }
             r = requests.post(f"{self.qwen_service_url.rstrip('/')}/analyze_users", json=payload)
             r.raise_for_status()
             results = r.json().get("results", [])
@@ -415,6 +423,16 @@ def main() -> None:
     analyze.add_argument("--workers", type=int, default=1)
     analyze.add_argument("--image-root", required=False, help="root for image files when analyzing")
 
+    qwen_arg = parser.add_argument_group("qwen configuration")
+    qwen_arg.add_argument("--qwen-instruction", default="", help="System instruction for Qwen VL model")
+    qwen_arg.add_argument("--qwen-model", default="qwen-vl-max", help="Qwen model name")
+    qwen_arg.add_argument("--qwen-max-tokens", type=int, default=512, help="Max tokens for Qwen responses")
+    qwen_arg.add_argument("--qwen-temperature", type=float, default=0.2, help="Temperature for Qwen inference")
+    qwen_arg.add_argument("--qwen-city", default=None, help="Filter for specific city")
+    qwen_arg.add_argument("--qwen-park", default=None, help="Filter for specific park")
+    qwen_arg.add_argument("--qwen-username", default=None, help="Filter for specific username")
+    qwen_arg.add_argument("--qwen-min-images", type=int, default=1, help="Minimum images per user batch")
+
     db_arg = parser.add_argument_group("database")
     db_arg.add_argument("--db-dsn", default=None, help="Postgres DSN or use PIPELINE_DATABASE_DSN env var")
 
@@ -438,6 +456,16 @@ def main() -> None:
             "use_half": False,
             "text_batch_size": 4048,
         },
+        qwen_args={
+            "instruction": args.qwen_instruction,
+            "model": args.qwen_model,
+            "max_tokens": args.qwen_max_tokens,
+            "temperature": args.qwen_temperature,
+            "city": args.qwen_city,
+            "park": args.qwen_park,
+            "username": args.qwen_username,
+            "min_images": args.qwen_min_images,
+        },
         bio_service_url=args.bio_service_url,
         bert_service_url=args.bert_service_url,
         qwen_service_url=args.qwen_service_url,
@@ -452,6 +480,10 @@ def main() -> None:
         files = Path(args.csv_dir).glob("*.csv")
         n = pipeline.ingest_posts(files, image_root=Path(args.image_root) if args.image_root else None, max_posts=args.max_posts)
         logger.info("ingested %d posts", n)
+        # analyze human activities with Qwen
+        if not args.skip_qwen:
+            nusers = pipeline.analyze_human_activities()
+            logger.info("analyzed activities for %d user batches", nusers)
     elif args.command == "upload-images":
         folders = [Path(p) for p in args.folders]
         storage = Path(args.image_root) if args.image_root else None

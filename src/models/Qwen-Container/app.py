@@ -2,13 +2,14 @@ import os
 import json
 from flask import Flask, request, jsonify
 from openai import OpenAI
-from models.Qwen.user_sql_reader import build_qwen_messages
+from models.Qwen.user_sql_reader import build_qwen_messages, QwenUserBatchInput
 
 app = Flask(__name__)
 
 # configuration (OpenAI API key should be provided via env)
 API_KEY = os.environ.get("OPENAI_API_KEY")
 BASE_URL = os.environ.get("OPENAI_BASE_URL")
+MODEL = os.environ.get("MODEL", "qwen-vl-max")
 if not API_KEY:
     # service can still start but will reject requests that need OpenAI
     # if no key is provided.  this makes local development easier.
@@ -19,18 +20,27 @@ else:
 @app.route("/analyze_users", methods=["POST"])
 def analyze_users():
     payload = request.get_json(force=True)
-    batches = payload.get("batches", [])
+    batch_dicts = payload.get("batches", [])
+    # get config from payload
+    config = payload.get("config", {})
+    instruction = config.get("instruction", "")
+    model = config.get("model", MODEL)
+    max_tokens = config.get("max_tokens", 512)
+    temperature = config.get("temperature", 0.2)
+
     results = []
-    for batch in batches:
+    for batch_dict in batch_dicts:
         if client is None:
             results.append({"error": "missing OPENAI_API_KEY"})
             continue
-        messages = build_qwen_messages(batch, batch.get("instruction", ""))
+        # reconstruct batch object from dict
+        batch = QwenUserBatchInput.from_dict(batch_dict)
+        messages = build_qwen_messages(batch, instruction)
         resp = client.chat.completions.create(
-            model=batch.get("model"),
+            model=model,
             messages=messages,
-            max_tokens=batch.get("max_tokens", 512),
-            temperature=batch.get("temperature", 0.2),
+            max_tokens=max_tokens,
+            temperature=temperature,
         )
         try:
             parsed = json.loads(resp.choices[0].message.content)

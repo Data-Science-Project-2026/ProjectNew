@@ -39,8 +39,11 @@ services:
     ports:
       - "5002:5000"
     environment:
-      OPENAI_API_KEY: ""   # set a real key in production or via env override
-      OPENAI_BASE_URL: ""
+      # For local Qwen inference server (vLLM/similar)
+      # Update BASE_URL to point to your Qwen server (e.g., http://host.docker.internal:8000/v1)
+      OPENAI_API_KEY: "EMPTY"   # can use "EMPTY" for local inference servers
+      OPENAI_BASE_URL: "http://host.docker.internal:8000/v1"  # adjust port if needed
+      MODEL: "Qwen/Qwen3-VL-8B-Instruct-FP8"  # or your model name
 
   orchestrator:
     build:
@@ -59,6 +62,10 @@ services:
       --bio-service-url http://bioclip:5000
       --bert-service-url http://bert:5000
       --qwen-service-url http://qwen:5000
+      --qwen-instruction "You are a visual analyst. Examine the provided images and identify any human activities visible. For each activity detected (e.g., walking, running, cycling, sitting, picnicking, photography, playing, exercising, etc.), provide the activity name and the image indices where it appears. Output ONLY valid JSON in this format: {\"human_activities\": [{\"activity\": \"<activity_name>\", \"count_estimate\": \"1\" or \"multiple\", \"evidence_images\": [<int indices>]}]}. If no humans are visible, return {\"human_activities\": []}."
+      --qwen-model "Qwen/Qwen3-VL-8B-Instruct-FP8"
+      --qwen-max-tokens 512
+      --qwen-temperature 0.2
       upload-posts
       --csv-dir /data/csvs
       --image-root /data/images
