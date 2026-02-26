@@ -73,12 +73,25 @@ def _iter_csv_rows(csv_file: Path) -> Iterable[CsvPostRow]:
 
 
 def _build_image_lookup(folder: Path) -> Dict[str, Path]:
+    """Build a filename → path lookup for images.
+
+    First looks in ``class_*`` sub-directories (the original data layout).
+    If no ``class_*`` dirs exist, falls back to scanning the folder directly
+    for image files (flat layout like Hohhot data).
+    """
     lookup: Dict[str, Path] = {}
-    for class_dir in folder.glob("class_*"):
-        if not class_dir.is_dir():
-            continue
-        for image_path in class_dir.rglob("*"):
-            if image_path.is_file():
+    class_dirs = list(folder.glob("class_*"))
+    if class_dirs:
+        for class_dir in class_dirs:
+            if not class_dir.is_dir():
+                continue
+            for image_path in class_dir.rglob("*"):
+                if image_path.is_file():
+                    lookup.setdefault(image_path.name, image_path)
+    else:
+        # flat layout: images sit directly in the folder
+        for image_path in folder.iterdir():
+            if image_path.is_file() and image_path.suffix.lower() in (".jpg", ".jpeg", ".png", ".bmp", ".webp", ".gif"):
                 lookup.setdefault(image_path.name, image_path)
     return lookup
 
@@ -185,7 +198,12 @@ def import_posts_and_images_from_all_folders(
             continue
 
         class_dirs = [p for p in child.glob("class_*") if p.is_dir()]
-        if len(class_dirs) < 2:
+        # Accept folders with class_* dirs OR flat image files
+        has_images = bool(class_dirs) or any(
+            p.suffix.lower() in (".jpg", ".jpeg", ".png", ".bmp", ".webp", ".gif")
+            for p in child.iterdir() if p.is_file()
+        )
+        if not has_images:
             continue
 
         try:

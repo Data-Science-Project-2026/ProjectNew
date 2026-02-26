@@ -1,4 +1,4 @@
-version: "3.9"
+
 
 services:
   postgres:
@@ -36,14 +36,19 @@ services:
       context: .
       dockerfile: src/models/Qwen-Container/Dockerfile
     image: qwen-service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "5002:5000"
+    volumes:
+      - ./src/models/Qwen-Container/prompt.md:/app/prompt.md:ro
     environment:
       # For local Qwen inference server (vLLM/similar)
       # Update BASE_URL to point to your Qwen server (e.g., http://host.docker.internal:8000/v1)
       OPENAI_API_KEY: "EMPTY"   # can use "EMPTY" for local inference servers
       OPENAI_BASE_URL: "http://host.docker.internal:8000/v1"  # adjust port if needed
       MODEL: "Qwen/Qwen3-VL-8B-Instruct-FP8"  # or your model name
+      QWEN_INSTRUCTION_FILE: "/app/prompt.md"  # reads system prompt from this file
 
   orchestrator:
     build:
@@ -57,14 +62,15 @@ services:
       - qwen
     volumes:
       - ./data:/data
+      - ./src/models/Qwen-Container/prompt.md:/app/prompt.md:ro
     command: >
       --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432"
       --bio-service-url http://bioclip:5000
       --bert-service-url http://bert:5000
       --qwen-service-url http://qwen:5000
-      --qwen-instruction "You are a visual analyst. Examine the provided images and identify any human activities visible. For each activity detected (e.g., walking, running, cycling, sitting, picnicking, photography, playing, exercising, etc.), provide the activity name and the image indices where it appears. Output ONLY valid JSON in this format: {\"human_activities\": [{\"activity\": \"<activity_name>\", \"count_estimate\": \"1\" or \"multiple\", \"evidence_images\": [<int indices>]}]}. If no humans are visible, return {\"human_activities\": []}."
+      --qwen-instruction-file /app/prompt.md
       --qwen-model "Qwen/Qwen3-VL-8B-Instruct-FP8"
-      --qwen-max-tokens 512
+      --qwen-max-tokens 4096
       --qwen-temperature 0.2
       upload-posts
       --csv-dir /data/csvs

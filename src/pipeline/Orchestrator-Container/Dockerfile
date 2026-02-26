@@ -5,9 +5,9 @@ WORKDIR /app
 # copy entire workspace so imports resolve
 COPY ../../.. /app
 
-# install dependencies: reuse requirements from other containers and add extras
-RUN pip install --no-cache-dir psycopg2-binary flask requests openai \
-    open_clip_torch transformers torch
+# install only the lightweight dependencies needed for orchestration
+# (BioClip/Bert models run in their own containers, no torch needed here)
+RUN pip install --no-cache-dir psycopg2-binary requests openai
 
 ENV PYTHONPATH=/app/src
 

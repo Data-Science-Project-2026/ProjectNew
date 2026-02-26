@@ -15,6 +15,9 @@ POST_COLUMNS = [
     ("time", "TEXT"),
     ("rating", "TEXT"),
     ("sentiment_score", "REAL"),
+    ("bert_sentiment_score", "REAL"),
+    ("bert_sentiment_label", "TEXT"),
+    ("qwen_sentiment_score", "REAL"),
 ]
 
 
@@ -31,7 +34,10 @@ def _ensure_posts_table(conn: sqlite3.Connection) -> None:
             comment TEXT,
             time TEXT,
             rating TEXT,
-            sentiment_score REAL
+            sentiment_score REAL,
+            bert_sentiment_score REAL,
+            bert_sentiment_label TEXT,
+            qwen_sentiment_score REAL
         )
         """
     )
@@ -49,7 +55,10 @@ def _ensure_posts_table(conn: sqlite3.Connection) -> None:
                 comment TEXT,
                 time TEXT,
                 rating TEXT,
-                sentiment_score REAL
+                sentiment_score REAL,
+                bert_sentiment_score REAL,
+                bert_sentiment_label TEXT,
+                qwen_sentiment_score REAL
             )
             """
         )
@@ -261,7 +270,7 @@ def fetch_posts_for_sentiment(
 ) -> list[tuple[int, str]]:
     _ensure_posts_table(conn)
     rows = conn.execute(
-        "SELECT id, COALESCE(comment, '') FROM posts WHERE sentiment_score IS NULL ORDER BY id LIMIT ?",
+        "SELECT id, COALESCE(comment, '') FROM posts WHERE bert_sentiment_score IS NULL ORDER BY id LIMIT ?",
         (int(limit),),
     ).fetchall()
     return [(int(r[0]), str(r[1])) for r in rows]
@@ -277,6 +286,35 @@ def update_post_sentiment(
     conn.execute(
         "UPDATE posts SET sentiment_score = ? WHERE id = ?",
         (float(sentiment_score), int(post_id)),
+    )
+
+
+def update_bert_sentiment(
+    conn: sqlite3.Connection,
+    *,
+    post_id: int,
+    score: float,
+    label: str,
+) -> None:
+    """Write Bert sentiment result independently."""
+    _ensure_posts_table(conn)
+    conn.execute(
+        "UPDATE posts SET bert_sentiment_score = ?, bert_sentiment_label = ? WHERE id = ?",
+        (float(score), label, int(post_id)),
+    )
+
+
+def update_qwen_sentiment(
+    conn: sqlite3.Connection,
+    *,
+    post_id: int,
+    score: float,
+) -> None:
+    """Write Qwen sentiment result independently."""
+    _ensure_posts_table(conn)
+    conn.execute(
+        "UPDATE posts SET qwen_sentiment_score = ? WHERE id = ?",
+        (float(score), int(post_id)),
     )
 
 

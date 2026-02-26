@@ -165,7 +165,8 @@ def build_qwen_user_batches(
 # new helper that accepts raw rows (generic sequence) and can be reused by
 # both SQLite and Postgres callers.
 
-def _batches_from_rows(rows: Iterable[Sequence], min_images: int) -> List[QwenUserBatchInput]:
+def _batches_from_rows(rows: Iterable[Sequence], min_images: int, max_images: int = 0) -> List[QwenUserBatchInput]:
+    """Build batches from rows.  If *max_images* > 0, cap images per batch."""
     grouped: dict[tuple[str, str, str], _GroupBucket] = {}
 
     for row in rows:
@@ -213,6 +214,9 @@ def _batches_from_rows(rows: Iterable[Sequence], min_images: int) -> List[QwenUs
     for (city_value, park_value, username_value), bucket in grouped.items():
         if len(bucket.images) < int(min_images):
             continue
+        imgs = list(bucket.images)
+        if max_images > 0 and len(imgs) > max_images:
+            imgs = imgs[:max_images]
         batches.append(
             QwenUserBatchInput(
                 city=city_value,
@@ -220,7 +224,7 @@ def _batches_from_rows(rows: Iterable[Sequence], min_images: int) -> List[QwenUs
                 username=username_value,
                 post_ids=list(bucket.post_ids),
                 comments=list(bucket.comments),
-                images=list(bucket.images),
+                images=imgs,
             )
         )
     return batches
@@ -233,39 +237,58 @@ def build_qwen_user_batches_pg(
     park: str | None = None,
     username: str | None = None,
     min_images: int = 1,
+    max_images: int = 0,
+    image_root: str | None = None,
 ) -> List[QwenUserBatchInput]:
     """Same as :func:`build_qwen_user_batches` but works over a Postgres cursor.
 
-    ``conn`` may be any PEP 249 connection object (including psycopg2) that has
-    ``execute`` and ``fetchall`` methods.  The query is identical to the
-    SQLite version but uses ``%s`` parameter placeholders.
+    ``conn`` may be any PEP 249 connection object (including psycopg2).
+    Postgres uses ``username_hash`` instead of ``username`` and stores
+    optional ``path`` on images.  ``image_root`` is prepended to the
+    stored path when reading image files from disk.
     """
-    where_sql, params = _build_where_clause(city, park, username)
+    clauses: list[str] = ["i.path IS NOT NULL"]
+    params: list[str] = []
+    if city:
+        clauses.append("p.city = %s")
+        params.append(city)
+    if park:
+        clauses.append("p.park = %s")
+        params.append(park)
+    if username:
+        clauses.append("p.username_hash = %s")
+        params.append(username)
+    where_sql = " AND ".join(clauses)
+
     query = f"""
         SELECT
             p.id AS post_id,
             p.city,
             p.park,
-            p.username,
+            p.username_hash,
             COALESCE(p.comment, '') AS comment,
             i.id AS image_id,
             i.path AS image_path
         FROM posts AS p
         JOIN images AS i ON i.post_id = p.id
         WHERE {where_sql}
-        ORDER BY p.city, p.park, p.username, p.id, i.id
+        ORDER BY p.city, p.park, p.username_hash, p.id, i.id
     """
 
-    # adapt parameter markers from ? to %s
-    # _build_where_clause returns placeholders for SQLite; we need to convert them
-    pg_params: list[str] = []
-    pg_where = where_sql.replace("?", "%s")
-    pg_params.extend(params)
-
     cursor = conn.cursor()
-    cursor.execute(query.replace(where_sql, pg_where), pg_params)
+    cursor.execute(query, params)
     rows = cursor.fetchall()
-    return _batches_from_rows(rows, min_images)
+
+    # If image_root provided, prepend it to the path column (index 6)
+    if image_root:
+        adjusted = []
+        for row in rows:
+            r = list(row)
+            r[6] = str(Path(image_root) / r[6])
+            adjusted.append(tuple(r))
+        rows = adjusted
+
+    return _batches_from_rows(rows, min_images, max_images=max_images)
 
 
 def build_qwen_messages(batch: QwenUserBatchInput, instruction: str) -> list[dict]:
