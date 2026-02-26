@@ -65,7 +65,11 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
             """
             CREATE TABLE IF NOT EXISTS images (
                 id SERIAL PRIMARY KEY,
-                post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+                -- post_id may be null for orphaned uploads; the orchestrator
+                -- will typically associate images with posts when importing
+                -- CSV data.  leaving it nullable avoids insert failures when
+                -- ingesting an image folder directly.
+                post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
                 username_hash TEXT
             );
             """
@@ -172,8 +176,10 @@ def insert_image(
 ) -> int:
     """Insert an image record and return its id.
 
-    ``username_hash`` may be derived from the filename so downstream analysis
-    can link back to the origin. ``path`` is accepted but not stored in Postgres.
+    ``post_id`` may be ``None`` when the image is uploaded standalone; the
+    database now permits null values for this column. ``username_hash`` may be
+    derived from the filename so downstream analysis can link back to the
+    origin. ``path`` is accepted but not stored in Postgres.
     """
     with conn.cursor() as cur:
         cur.execute(

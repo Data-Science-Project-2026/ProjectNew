@@ -65,7 +65,19 @@ use `docker-compose down --volumes --rmi all` to tidy up completely.
 start again with `up --build`; this ensures you’re not running stale code.
 
 You can also rebuild a single service without touching the others. For
-example, to recreate only the BioClip container:
+example, if you've modified `src/pipeline/orchestrator.py` or any other
+code and need those changes in the container, rebuild the orchestrator
+image:
+
+```sh
+# rebuild only orchestrator with updated code
+docker-compose build orchestrator
+```
+
+and then run it again (see the ingest/upload examples below).  The
+same pattern works for `bioclip`, `bert`, or `qwen`.
+
+For example, to recreate only the BioClip container:
 
 ```sh
 # stop the single container
@@ -95,24 +107,56 @@ Two common ways to trigger ingestion while the containers are running (or even w
 
 ```sh
 docker-compose exec orchestrator \
-	python -m src.pipeline.orchestrator upload-posts --csv-dir /data/csvs --image-root /data/images
+	upload-posts --csv-dir /data/csvs --image-root /data/images
 
 # or to ingest image folders directly
 docker-compose exec orchestrator \
-	python -m src.pipeline.orchestrator upload-images --folders /data/new_photos --image-root /data/images
+	upload-images --folders /data/new_photos --image-root /data/images
 ```
 
 - More commonly you will use a one‑off container (works even when the service has exited):
 
 ```sh
 docker-compose run --rm orchestrator \
-	python -m src.pipeline.orchestrator upload-posts --csv-dir /data/csvs --image-root /data/images
+	upload-posts --csv-dir /data/csvs --image-root /data/images
 ```
 
 Notes:
 - The `--image-root` path should point to a directory writable by the orchestrator (the default used by this repo is `/data/images`).
 - CSV rows may include relative image paths; when using `upload-posts` provide `--image-root` so the ingestor can resolve those paths. If you use `upload-images` the ingestor will copy each file into `/data/images` and name it by numeric image id.
+- If you only care about a particular model (e.g. Qwen) you can skip others by using the `--skip-bio`/`--skip-bert` flags or by pointing them at a running service instead of loading locally. Example of a Qwen-only upload:
+
+  ```sh
+  docker-compose run --rm orchestrator \
+      --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
+      --qwen-service-url http://qwen:5000 \
+      --skip-bio --skip-bert \
+      upload-images --folders /data/images --image-root /data/images
+  ```
+
+  This prevents the orchestrator from downloading the large BioClip weights when you're just testing the Qwen endpoint.
+
 - On Windows PowerShell use the equivalent `New-Item -ItemType Directory -Path data\csvs,data\images` to create folders.
+
+
+### Running the integration tests
+
+A pair of pytest tests exercise the orchestrator against the Bioclip and
+Qwen containers. They copy three sample images from
+`data/images/53深圳市宝安区西乡公园` into a temporary directory, start the
+necessary services with `docker-compose`, and then invoke the pipeline
+programmatically.
+
+To run them locally (requires Docker & docker-compose):
+
+```sh
+# start just the infra; tests will bring the containers up/down themselves
+docker-compose up -d postgres bioclip qwen
+pytest src/pipeline/tests/test_container_integration.py
+```
+
+The tests use the same DSN as the compose file and assume the containers are
+reachable on `localhost` ports 5432, 5000 and 5002.
 
 ### Containers for models
 

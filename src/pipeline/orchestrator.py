@@ -47,19 +47,27 @@ class Pipeline:
         bio_service_url: Optional[str] = None,
         bert_service_url: Optional[str] = None,
         qwen_service_url: Optional[str] = None,
+        skip_bio: bool = False,
+        skip_bert: bool = False,
+        skip_qwen: bool = False,
     ) -> None:
         self.dsn = dsn
         # if service urls provided we avoid loading local models until
-        # the caller explicitly needs them.
+        # the caller explicitly needs them.  skip_* flags allow tests where a
+        # model should be omitted entirely (e.g. qwen-only runs).
         self.bio_service_url = bio_service_url
         self.bert_service_url = bert_service_url
         self.qwen_service_url = qwen_service_url
+        self.skip_bio = skip_bio
+        self.skip_bert = skip_bert
+        self.skip_qwen = skip_qwen
 
-        if not self.bio_service_url:
+        # local model instantiation
+        if not self.bio_service_url and not self.skip_bio:
             self.bio = BioClipModel(**bio_clip_args)
         else:
             self.bio = None
-        if not self.bert_service_url:
+        if not self.bert_service_url and not self.skip_bert:
             self.bert = PsychologicalStateAnalyzer(**(bert_args or {}))
         else:
             self.bert = None
@@ -190,7 +198,7 @@ class Pipeline:
                             logger.exception("failed to read image %s", fp)
                             blobs.append(b"")
 
-                    # dispatch to service or local model
+                    # dispatch to service, local model, or skip
                     if self.bio_service_url:
                         payload = {
                             "images": [base64.b64encode(b).decode("ascii") for b in blobs]
@@ -198,8 +206,11 @@ class Pipeline:
                         r = requests.post(f"{self.bio_service_url.rstrip('/')}/analyze_images", json=payload)
                         r.raise_for_status()
                         results = r.json().get("results", [])
-                    else:
+                    elif self.bio:
                         results = self.bio.analyze_image_blobs(blobs, threshold=0.05)
+                    else:
+                        # no model available, return empty tags
+                        results = [([], []) for _ in blobs]
 
                     for img_id, (species, confidence) in zip(ids, results):
                         db.update_image_analysis(
@@ -355,6 +366,9 @@ class Pipeline:
                 for path in folder.rglob("*"):
                     if not path.is_file():
                         continue
+                    # skip hidden/metadata files and CSVs
+                    if path.name.startswith('.') or path.suffix.lower() in {'.csv', '.txt'}:
+                        continue
                     stem = path.stem
                     username_hash = stem.split("_")[0] if "_" in stem else None
                     try:
@@ -409,6 +423,11 @@ def main() -> None:
     svc_arg.add_argument("--bert-service-url", default=None, help="URL for the Bert container")
     svc_arg.add_argument("--qwen-service-url", default=None, help="URL for the Qwen container")
 
+    skip_arg = parser.add_argument_group("skip models")
+    skip_arg.add_argument("--skip-bio", action="store_true", help="do not load or call BioClip locally (use service or skip)")
+    skip_arg.add_argument("--skip-bert", action="store_true", help="do not load or call Bert locally")
+    skip_arg.add_argument("--skip-qwen", action="store_true", help="do not load or call Qwen locally")
+
     args = parser.parse_args()
 
     pipeline = Pipeline(
@@ -422,6 +441,9 @@ def main() -> None:
         bio_service_url=args.bio_service_url,
         bert_service_url=args.bert_service_url,
         qwen_service_url=args.qwen_service_url,
+        skip_bio=args.skip_bio,
+        skip_bert=args.skip_bert,
+        skip_qwen=args.skip_qwen,
     )
 
     logging.basicConfig(level=logging.INFO)
