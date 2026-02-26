@@ -70,6 +70,16 @@ locally (the default) or point at one or more of these containers using the
 ``bio_service_url``, ``sentiment_service_url`` and ``qwen_service_url``
 arguments.
 
+Results are recorded in Postgres but not in the images table itself; species
+labels and activity tags live in separate ``image_species`` and
+``image_activity`` tables respectively so that each image may accumulate
+multiple entries over time.
+
+The BioClip container additionally ships a command‑line analyzer (``python -m
+models.BioClip.analyzer``) which can be used directly inside the image to poll
+a Postgres database and score pending images.  This allows the same
+container to function either as a web service or as a standalone worker.
+
 #### Building and running
 
 ```sh
@@ -127,7 +137,7 @@ python -m pipeline.orchestrator upload-posts --csv-dir /path/to/csvs \
 
 # ingest raw image folders
 python -m pipeline.orchestrator upload-images --folders /path/one /path/two \
-    --db-dsn "dbname=..."
+    [--image-root /path/to/store] --db-dsn "dbname=..."
 
 # run analysis on whatever data has been imported
 python -m pipeline.orchestrator analyze \
@@ -142,8 +152,9 @@ The same module may also be imported and driven programmatically, allowing for
 more advanced concurrency strategies (e.g. multiple workers each fetching the
 next unprocessed batch).
 
-> **Storage details:**  the database no longer contains binary image data.  the
-> ``images`` table simply records the file **path** along with any analysis
-> results; the orchestrator opens the original files from disk when it needs to
-> run the models.  This keeps the Postgres instance lean and avoids storing
-> millions of large blobs.
+> **Storage details:**  the database no longer contains binary image data or
+> file paths.  During ingestion the orchestrator copies each image into a
+> user-specified ``image_root`` (default ``data/images``) and stores only the
+> numeric id and optional username hash.  When analyzing it looks up files by
+> id under the same directory.  This keeps the Postgres instance lean and
+> avoids persisting any sensitive paths or blobs.

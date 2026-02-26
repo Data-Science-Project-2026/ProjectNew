@@ -39,11 +39,12 @@ def _serialize_optional(values: Sequence[object] | None) -> str | None:
 def ensure_schema(conn: psycopg2.extensions.connection) -> None:
     """Create the tables if they don't already exist.
 
-    The final production database does not store image binary data, but it
-    still keeps an ``images`` table that records a file path along with the
-    analysis results.  That allows the orchestrator to re-open the original
-    files when it needs to run the models without ever persisting blobs in the
-    database itself.
+    The production database does not store image binary data or file paths.
+    The ``images`` table only records a numeric id and an optional
+    ``username_hash``; the orchestrator is responsible for copying files to an
+    external storage root and looking them up by id when analysis is needed.
+    This keeps the PostgreSQL instance lean and avoids persisting sensitive
+    file locations.
     """
     with conn.cursor() as cur:
         cur.execute(
@@ -65,10 +66,27 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
             CREATE TABLE IF NOT EXISTS images (
                 id SERIAL PRIMARY KEY,
                 post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-                username_hash TEXT,
-                species TEXT[],
-                confidence REAL[],
-                activity TEXT
+                username_hash TEXT
+            );
+            """
+        )
+        # additional tables for many‑to‑one species and activity entries
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS image_species (
+                id SERIAL PRIMARY KEY,
+                image_id INTEGER NOT NULL REFERENCES images(id) ON DELETE CASCADE,
+                species TEXT NOT NULL,
+                confidence REAL
+            );
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS image_activity (
+                id SERIAL PRIMARY KEY,
+                image_id INTEGER NOT NULL REFERENCES images(id) ON DELETE CASCADE,
+                activity TEXT NOT NULL
             );
             """
         )
@@ -173,25 +191,27 @@ def insert_image(
 
 def fetch_unanalyzed_images(
     conn: psycopg2.extensions.connection, limit: int
-) -> list[int]:
-    """Return image IDs for rows without analysis yet.
-    
-    Note: path is not stored in Postgres, so callers must obtain paths from
-    another source (e.g., the original CSV files or a separate key-value store).
+) -> list[tuple[int, str | None]]:
+    """Return (id, username_hash) tuples for rows without species data yet.
+
+    Because species information now lives in a separate table, we select
+    images that have *no* corresponding rows in ``image_species``.  The
+    returned username_hash may be ``None``.
     """
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT id
-            FROM images
-            WHERE species IS NULL AND confidence IS NULL
-            ORDER BY id
+            SELECT i.id, i.username_hash
+            FROM images AS i
+            LEFT JOIN image_species AS s ON s.image_id = i.id
+            WHERE s.id IS NULL
+            ORDER BY i.id
             LIMIT %s
             """,
             (limit,),
         )
         rows = cur.fetchall()
-    return [int(r[0]) for r in rows]
+    return [(int(r[0]), r[1]) for r in rows]
 
 
 def update_image_analysis(
@@ -201,16 +221,24 @@ def update_image_analysis(
     species: Sequence[str] | None,
     confidence: Sequence[float] | None,
 ) -> None:
-    """Write species/confidence results for a given image id."""
+    """Replace the species/confidence rows for an image.
+
+    The values are stored in the ``image_species`` table; existing entries
+    for the given ``image_id`` are deleted before the new ones are inserted.
+    """
+    if species is None:
+        species = []
+    if confidence is None:
+        confidence = []
     with conn.cursor() as cur:
-        cur.execute(
-            """
-            UPDATE images
-            SET species = %s, confidence = %s
-            WHERE id = %s
-            """,
-            (species, confidence, image_id),
-        )
+        # remove any prior tags
+        cur.execute("DELETE FROM image_species WHERE image_id = %s", (image_id,))
+        # insert new rows
+        for sp, conf in zip(species, confidence):
+            cur.execute(
+                "INSERT INTO image_species (image_id, species, confidence) VALUES (%s, %s, %s)",
+                (image_id, sp, conf),
+            )
     conn.commit()
 
 
@@ -220,13 +248,15 @@ def update_image_activity(
     image_id: int,
     activity: str,
 ) -> None:
-    """Set activity string for an image row."""
+    """Append an activity record for a given image.
+
+    Multiple activities may be associated with the same image; each call
+    inserts a new row into ``image_activity``.
+    """
     with conn.cursor() as cur:
         cur.execute(
-            """
-            UPDATE images SET activity = %s WHERE id = %s
-            """,
-            (activity, image_id),
+            "INSERT INTO image_activity (image_id, activity) VALUES (%s, %s)",
+            (image_id, activity),
         )
     conn.commit()
 
