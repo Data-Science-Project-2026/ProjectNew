@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import base64
+import shutil
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -146,16 +147,23 @@ class Pipeline:
         workers: int = 1,
         image_root: Optional[Path] = None,
     ) -> int:
-        """Run BioCLIP on unanalyzed images using file paths stored in the DB.
+        """Run BioCLIP on unanalyzed images using files stored on disk.
 
-        Since the database only contains paths, each worker will open the file
-        from ``image_root`` (which must be provided or the stored path must be
-        absolute) and read the bytes before calling the model.  Behavior is
-        otherwise similar to the previous implementation.
+        The Postgres database no longer retains file paths; instead the
+        ingestor copies each image to ``image_root`` (default ``data/images``)
+        using the numeric image id as the filename.  ``fetch_unanalyzed_images``
+        returns ``(id, username_hash)`` tuples.  ``image_root`` **must** be
+        provided when using Postgres so that the worker can locate each file.
+
+        Results are written to the normalized ``image_species`` table rather
+        than the ``images`` row itself.  Multiple species entries may be
+        recorded per image.  Activities are handled similarly elsewhere.
 
         ``workers`` threads share the workload; ``max_batches`` limits how many
         batches each thread processes (per-worker).
         """
+        if image_root is None:
+            image_root = Path("data/images")
         total_processed = 0
 
         def _worker() -> int:
@@ -165,12 +173,16 @@ class Pipeline:
                     rows = db.fetch_unanalyzed_images(conn, batch_size)
                     if not rows:
                         break
-                    ids, paths = zip(*rows)
+                    ids, hashes = zip(*rows)
                     blobs: list[bytes] = []
-                    for p in paths:
-                        fp = Path(p)
-                        if not fp.is_absolute() and image_root is not None:
-                            fp = image_root / fp
+                    for img_id in ids:
+                        # locate file by id in the image_root directory
+                        found = list(Path(image_root).glob(f"{img_id}.*"))
+                        if not found:
+                            logger.warning("image file for id %s not found", img_id)
+                            blobs.append(b"")
+                            continue
+                        fp = found[0]
                         try:
                             with open(fp, "rb") as f:
                                 blobs.append(f.read())
@@ -317,14 +329,22 @@ class Pipeline:
     def ingest_images(
         self,
         folders: Iterable[Path],
+        image_storage: Optional[Path] = None,
     ) -> int:
-        """Walk one or more folders (including subdirectories) and add image
-        paths to the database.
+        """Walk one or more folders (including subdirectories) and ingest images.
 
         ``username_hash`` is assumed to be the first component of each file's
-        stem (split on underscore).  Progress for each top-level folder is
-        recorded in ``ingestion_status`` by name.
+        stem (split on underscore).  Each image is copied into
+        ``image_storage`` using its database id as the filename; **no path is
+        stored** in PostgreSQL, fulfilling our privacy requirement.  Progress
+        for each top-level folder is recorded in ``ingestion_status`` by name.
+        
+        ``image_storage`` defaults to ``data/images`` relative to the repo root.
         """
+        if image_storage is None:
+            image_storage = Path("data/images")
+        image_storage.mkdir(parents=True, exist_ok=True)
+
         inserted = 0
         with db.connect(self.dsn) as conn:
             db.ensure_schema(conn)
@@ -338,15 +358,21 @@ class Pipeline:
                     stem = path.stem
                     username_hash = stem.split("_")[0] if "_" in stem else None
                     try:
-                        db.insert_image(
+                        image_id = db.insert_image(
                             conn,
                             post_id=None,
-                            path=str(path),
+                            path=str(path),  # passed for compatibility but ignored by PG
                             username_hash=username_hash,
                         )
                     except Exception:
                         logger.exception("failed to insert image %s", path)
                         continue
+                    # copy file to storage identified by id and original suffix
+                    dest = image_storage / f"{image_id}{path.suffix}"
+                    try:
+                        shutil.copy2(path, dest)
+                    except Exception:
+                        logger.exception("failed to copy image %s to %s", path, dest)
                     inserted += 1
                 db.upsert_ingestion_status(conn, filename=str(folder), status="done")
         return inserted
@@ -367,6 +393,7 @@ def main() -> None:
 
     up_img = sub.add_parser("upload-images", help="Ingest folders of images")
     up_img.add_argument("--folders", nargs="+", required=True, help="folders to scan for images")
+    up_img.add_argument("--image-root", required=False, help="directory where images will be copied (default data/images)")
 
     analyze = sub.add_parser("analyze", help="Run BioCLIP/QL models on ingested data")
     analyze.add_argument("--batch-size", type=int, default=1000)
@@ -405,8 +432,9 @@ def main() -> None:
         logger.info("ingested %d posts", n)
     elif args.command == "upload-images":
         folders = [Path(p) for p in args.folders]
-        n = pipeline.ingest_images(folders)
-        logger.info("ingested %d image paths", n)
+        storage = Path(args.image_root) if args.image_root else None
+        n = pipeline.ingest_images(folders, image_storage=storage)
+        logger.info("ingested %d images", n)
     elif args.command == "analyze":
         nimg = pipeline.analyze_images(batch_size=args.batch_size, max_batches=args.max_batches, workers=args.workers, image_root=Path(args.image_root) if args.image_root else None)
         logger.info("processed %d images", nimg)

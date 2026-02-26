@@ -150,10 +150,18 @@ def test_ingest_images_folder(tmp_path: Path):
 
     # record the hashes passed to the database helper so we can verify
     observed_hashes: list = []
-    orig_insert = pgmod2.insert_image
+    # use the sqlite insert under the hood so we can inspect the DB later,
+    # but drop the path argument to simulate Postgres behaviour
     def _capture(conn, *, post_id, path, username_hash=None, **kwargs):
         observed_hashes.append(username_hash)
-        return orig_insert(conn, post_id=post_id, path=path, username_hash=username_hash, **kwargs)
+        # call the sqlite helper directly (ignores username_hash internally)
+        return sqlmod2.insert_image(
+            conn,
+            post_id=post_id,
+            path=path,
+            username_hash=username_hash,
+            **kwargs,
+        )
     pgmod2.insert_image = _capture
 
     pipeline2 = Pipeline(
@@ -169,19 +177,37 @@ def test_ingest_images_folder(tmp_path: Path):
         },
     )
 
-    n = pipeline2.ingest_images([root])
+    storage = tmp_path / "store"
+    n = pipeline2.ingest_images([root], image_storage=storage)
     assert n == 2
     # we expected the first filename to yield "abc123" and the second None
     assert observed_hashes == ["abc123", None]
+    # ensure files were copied into the storage directory named by id
+    stored = sorted(storage.iterdir())
+    assert len(stored) == 2
+    assert all(f.stem.isdigit() for f in stored)
 
     with sqlite3.connect(str(dbfile)) as conn:
         rows = conn.execute("SELECT filename, status FROM ingestion_status").fetchall()
         assert len(rows) == 1
         assert rows[0][1] == "done"
-        imgs = conn.execute("SELECT path, username_hash FROM images").fetchall()
+        imgs = conn.execute("SELECT username_hash FROM images").fetchall()
         assert len(imgs) == 2
-        # database may not persist the hash in sqlite, so just ensure the column exists
-        assert all(len(r) == 2 for r in imgs)
+    # verify model receives the two blobs from the stored files
+    orig_analyze = bcmod2.BioClipModel.analyze_image_blobs
+    seen: list = []
+    def fake_analyze(self, blobs, threshold=0.05):
+        seen.extend(blobs)
+        return [([], []) for _ in blobs]
+    bcmod2.BioClipModel.analyze_image_blobs = fake_analyze
+    pipeline2.analyze_images(batch_size=10, image_root=storage)
+    # should have seen exactly two image blobs matching the originals
+    assert len(seen) == 2
+    with open(root / "abc123_imageA.jpg", "rb") as f1, open(root / "nohash.jpg", "rb") as f2:
+        assert seen[0] == f1.read()
+        assert seen[1] == f2.read()
+    # restore
+    bcmod2.BioClipModel.analyze_image_blobs = orig_analyze
     pgmod2.connect = real_connect2
     # restore BioClipModel init
     bcmod2.BioClipModel.__init__ = real_bioclip_init2
