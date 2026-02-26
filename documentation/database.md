@@ -12,41 +12,35 @@
 
 ## Database
 
-### Datafolder to SQL database conversion
+### Data Ingestion into PostgreSQL
 
-Instructions for conversion of raw data folders (CSV + image subfolders) into a single SQLite database.
+The orchestrator imports CSV files and images into PostgreSQL. The CSV files must contain columns like `city`, `park`, `username`, `comment`, `timestamp`, `rating`, and optionally `image` (relative path).
 
-Each *location* folder must contain:
+#### 1. Upload CSV files with posts
 
-- Exactly one CSV file
-- One or more `class_*` subfolders containing images
-
-Example layout:
-
-- `6深圳_携程图像文本/`
-  - `2深圳市盐田区大梅沙海滨公园/`
-    - `2深圳市盐田区大梅沙海滨公园.csv`
-    - `class_0/…`
-    - `class_1/…`
-    - …
-
-#### 1. Import all location folders under a parent directory
-
-From the project root:
+Place CSV files in `data/csvs/` on the host and run:
 
 ```bash
-python3 src/database/csv_to_sql.py <folder_path>
+docker-compose run --rm orchestrator \
+  --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
+  upload-posts --csv-dir /data/csvs --image-root /data/images
 ```
 
-For example:
+#### 2. Upload image folders separately
+
+Place images in `data/images/` or another folder and run:
 
 ```bash
-python3 src/database/csv_to_sql.py 6深圳_携程图像文本
+docker-compose run --rm orchestrator \
+  --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
+  upload-images --folders /data/images --image-root /data/images
 ```
+
+Images are copied into a managed directory (default `data/images/`) using their numeric image ID as the filename. **PostgreSQL does not store the file paths or image blobs—only numeric IDs and optional username hashes.**
 
 ### Schema
 
-The SQLite database has two tables: `posts` and `images`.
+PostgreSQL stores post and image metadata in normalized tables. Images themselves are stored on disk, not in the database.
 
 #### `posts`
 
@@ -55,7 +49,7 @@ The SQLite database has two tables: `posts` and `images`.
 | `id`             | INTEGER | PRIMARY KEY AUTOINCREMENT   | Post identifier                      |
 | `city`           | TEXT    | NOT NULL                    | City name parsed from parent folder  |
 | `park`           | TEXT    | NOT NULL                    | Park name parsed from the CSV file   |
-| `username`       | TEXT    | NOT NULL                    | User name from CSV                   |
+| `username_hash`  | TEXT    | NOT NULL                    | SHA256 hash of username (privacy)    |
 | `comment`        | TEXT    |                             | User comment (may be `NULL`)         |
 | `time`           | TEXT    |                             | Timestamp string (may be `NULL`)     |
 | `rating`         | TEXT    |                             | Rating string/score (may be `NULL`)  |
@@ -67,7 +61,7 @@ The SQLite database has two tables: `posts` and `images`.
 | ------------- | ------- | ---------------------------------- | ----------------------------------- |
 | `id`          | INTEGER | PRIMARY KEY AUTOINCREMENT         | Image row identifier                |
 | `post_id`     | INTEGER | NOT NULL, FK → `posts(id)`        | Post this image belongs to          |
-| `image`       | BLOB    | NOT NULL                          | Raw image bytes (e.g. JPEG/PNG)     |
+| `username_hash` | TEXT |                                    | Optional username hash from filename|
 
 The species labels and activities are now stored in separate tables
 (`image_species` and `image_activity`) to allow multiple entries per image.
@@ -122,19 +116,18 @@ classDiagram
     images "1" <-- "0..*" image_activity : has
 ```
 
-To inspect the schema and a size summary from the command line:
+To connect to the PostgreSQL database directly:
 
 ```bash
-python -m src.database.sql
+psql -U myuser -d mydb -h localhost -p 5432
 ```
 
-Example output:
+Then run queries like:
 
-```bash
-Database Summary:
-  Posts: 5813 rows (~578.9 KB)
-  Images: 7565 rows (~609.8 MB)
-  Approx storage for row data: 610.3 MB
+```sql
+SELECT COUNT(*) FROM posts;
+SELECT COUNT(*) FROM images;
+SELECT * FROM image_species WHERE image_id = 42;
 ```
 
 ### Preview post render
@@ -175,22 +168,20 @@ FONT_PATH = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 From the project root:
 
 ```bash
-python -m src.database.render_post_with_id 42 --db data.db
+python -m src.database.render_post_with_id 42 --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" --image-root ./data/images
 ```
 
 Where:
 
 - `42` is the `posts.id` you want to inspect  
-- `--db` points to your SQLite file (default: `data.db`)
+- `--db-dsn` points to your PostgreSQL instance
+- `--image-root` points to the directory where images are stored (default: `./data/images`)
 
 This will:
 
 - open a Matplotlib window showing all images for the post (up to 3 columns, multiple rows)
-- render a title showing City, Park, username, rating, time, and a wrapped comment
+- render a title showing City, Park, username hash, rating, time, and a wrapped comment
 - print a copy‑pastable metadata block to the terminal for documentation or analysis.
-
-
-```
 
 **Chinese font (for CJK comments and titles)**
 
@@ -212,22 +203,3 @@ Update `FONT_PATH` in `src/database/render_post_with_id.py` if needed:
 ```python
 FONT_PATH = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 ```
-
-#### 2. Render a post by ID
-
-From the project root:
-
-```bash
-python -m src.database.render_post_with_id 42 --db data.db
-```
-
-Where:
-
-- `42` is the `posts.id` you want to inspect  
-- `--db` points to your SQLite file (default: `data.db`)
-
-This will:
-
-- open a Matplotlib window showing all images for the post (up to 3 columns, multiple rows)
-- render a title showing City, Park, username, rating, time, and a wrapped comment
-- print a copy‑pastable metadata block to the terminal for documentation or analysis.
