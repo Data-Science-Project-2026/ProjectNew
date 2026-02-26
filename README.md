@@ -38,7 +38,10 @@ tests and import utilities.
 
 A `docker-compose.yml` file is provided at the repo root that can build and
 orchestrate the orchestrator and model containers together (Postgres +
-services).  Typical commands:
+services).  By default the orchestrator service is configured to run a
+single ingestion command and then exit, so it is _not_ a long‑running
+process.  You can still upload data by starting a fresh container (see
+below) or by overriding the command to keep it alive.  Typical commands:
 
 ```sh
 # build images and start everything in the background
@@ -74,6 +77,42 @@ docker-compose up -d --build bioclip
 ```
 
 Replace `bioclip` with `bert`, `qwen`, or `orchestrator` as needed.
+
+### Uploading CSVs or Images into the Orchestrator (while containers are running)
+
+When using `docker-compose` the repository `data/` directory is mounted into the
+`orchestrator` container at `/data`. Place your input files under that tree so the
+running container can access them. Example layout on the host:
+
+```sh
+mkdir -p data/csvs data/images
+# copy CSV files into data/csvs and any loose images into data/images or another folder
+```
+
+Two common ways to trigger ingestion while the containers are running (or even when the orchestrator has already stopped, since a new container will be launched):
+
+- **If the orchestrator is still running** you can exec into it as shown below:
+
+```sh
+docker-compose exec orchestrator \
+	python -m src.pipeline.orchestrator upload-posts --csv-dir /data/csvs --image-root /data/images
+
+# or to ingest image folders directly
+docker-compose exec orchestrator \
+	python -m src.pipeline.orchestrator upload-images --folders /data/new_photos --image-root /data/images
+```
+
+- More commonly you will use a one‑off container (works even when the service has exited):
+
+```sh
+docker-compose run --rm orchestrator \
+	python -m src.pipeline.orchestrator upload-posts --csv-dir /data/csvs --image-root /data/images
+```
+
+Notes:
+- The `--image-root` path should point to a directory writable by the orchestrator (the default used by this repo is `/data/images`).
+- CSV rows may include relative image paths; when using `upload-posts` provide `--image-root` so the ingestor can resolve those paths. If you use `upload-images` the ingestor will copy each file into `/data/images` and name it by numeric image id.
+- On Windows PowerShell use the equivalent `New-Item -ItemType Directory -Path data\csvs,data\images` to create folders.
 
 ### Containers for models
 

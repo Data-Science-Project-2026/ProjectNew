@@ -25,3 +25,8 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Data files
+data/
+!data/.gitkeep
+!data/**/.gitkeep
