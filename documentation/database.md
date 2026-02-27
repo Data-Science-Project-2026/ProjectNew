@@ -23,7 +23,7 @@ Place CSV files in `data/csvs/` on the host and run:
 ```bash
 docker-compose run --rm orchestrator \
   --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
-  upload-posts --csv-dir /data/csvs --image-root /data/images
+  upload-posts --city-folder /data/6Shenzhen
 ```
 
 #### 2. Upload image folders separately
