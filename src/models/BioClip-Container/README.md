@@ -33,3 +33,23 @@ docker run --rm \
 ```
 
 Environment variables allow configuration of model paths and options.
+
+## Auto-generation of species token files
+
+On startup, the container now checks whether these files exist:
+
+* `src/models/BioClip/species_names_latin.txt`
+* `src/models/BioClip/species_tokens_latin.pt`
+
+If missing, it automatically runs:
+
+```sh
+python3 src/models/BioClip/tokenize_excel_species.py \
+  src/models/BioClip/Species_China.xlsx \
+  src/models/BioClip/species_names_latin.txt \
+  src/models/BioClip/species_tokens_latin.pt
+```
+
+You can override the source XLSX path with:
+
+* `SPECIES_SOURCE_XLSX` (default: `src/models/BioClip/Species_China.xlsx`)

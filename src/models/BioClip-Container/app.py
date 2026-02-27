@@ -1,5 +1,8 @@
 import os
 import base64
+import subprocess
+import sys
+from pathlib import Path
 from flask import Flask, request, jsonify
 
 # ensure that the parent package is on the path; when building the Docker
@@ -12,13 +15,43 @@ app = Flask(__name__)
 # configuration from environment variables
 SPECIES_TOKENS = os.environ.get("SPECIES_TOKENS_PATH", "src/models/BioClip/species_tokens_latin.pt")
 SPECIES_NAMES = os.environ.get("SPECIES_NAMES_PATH", "src/models/BioClip/species_names_latin.txt")
+SPECIES_SOURCE_XLSX = os.environ.get("SPECIES_SOURCE_XLSX", "src/models/BioClip/Species_China.xlsx")
 USE_HALF = bool(os.environ.get("USE_HALF", "False").lower() in ("1", "true"))
 TEXT_BATCH_SIZE = int(os.environ.get("TEXT_BATCH_SIZE", 4048))
+
+
+def _ensure_species_assets() -> None:
+    tokens_path = Path(SPECIES_TOKENS)
+    names_path = Path(SPECIES_NAMES)
+    xlsx_path = Path(SPECIES_SOURCE_XLSX)
+
+    if tokens_path.exists() and names_path.exists():
+        return
+
+    if not xlsx_path.exists():
+        raise FileNotFoundError(
+            f"Missing species source file: {xlsx_path}. Cannot generate BioClip token assets."
+        )
+
+    tokens_path.parent.mkdir(parents=True, exist_ok=True)
+    names_path.parent.mkdir(parents=True, exist_ok=True)
+
+    subprocess.run(
+        [
+            sys.executable,
+            "src/models/BioClip/tokenize_excel_species.py",
+            str(xlsx_path),
+            str(names_path),
+            str(tokens_path),
+        ],
+        check=True,
+    )
 
 # initialize the BioClip model; failure to load the token files
 # should not crash the entire container during development.  we
 # catch the FileNotFoundError and fall back to a dummy instance.
 try:
+    _ensure_species_assets()
     model = BioClipModel(
         species_tokens_path=SPECIES_TOKENS,
         species_names_path=SPECIES_NAMES,

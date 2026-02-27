@@ -58,19 +58,32 @@ class Pipeline:
         self.skip_bio = skip_bio
         self.skip_bert = skip_bert
         self.skip_qwen = skip_qwen
+        self.bio_clip_args = dict(bio_clip_args)
+        self.bert_args = dict(bert_args or {})
 
-        # local model instantiation (lazy imports to avoid heavy deps when skipped)
-        if not self.bio_service_url and not self.skip_bio:
-            from models.BioClip.model import BioClipModel
-            self.bio = BioClipModel(**bio_clip_args)
-        else:
-            self.bio = None
-        if not self.bert_service_url and not self.skip_bert:
-            from models.Bert.llm_analyzer import PsychologicalStateAnalyzer
-            self.bert = PsychologicalStateAnalyzer(**(bert_args or {}))
-        else:
-            self.bert = None
+        # local model instances are now loaded on first use so commands like
+        # upload-posts do not require BioClip/Bert dependencies.
+        self.bio = None
+        self.bert = None
         self.qwen_args = qwen_args or {}
+
+    def _get_bio_model(self):
+        if self.skip_bio or self.bio_service_url:
+            return None
+        if self.bio is None:
+            from models.BioClip.model import BioClipModel
+
+            self.bio = BioClipModel(**self.bio_clip_args)
+        return self.bio
+
+    def _get_bert_model(self):
+        if self.skip_bert or self.bert_service_url:
+            return None
+        if self.bert is None:
+            from models.Bert.llm_analyzer import PsychologicalStateAnalyzer
+
+            self.bert = PsychologicalStateAnalyzer(**self.bert_args)
+        return self.bert
 
     # ingestion
     def ingest_posts(
@@ -216,7 +229,7 @@ class Pipeline:
                         r = requests.post(f"{self.bio_service_url.rstrip('/')}/analyze_images", json=payload)
                         r.raise_for_status()
                         results = r.json().get("results", [])
-                    elif self.bio:
+                    elif self._get_bio_model() is not None:
                         results = self.bio.analyze_image_blobs(blobs, threshold=0.05)
                     else:
                         # no model available, return empty tags
@@ -265,7 +278,12 @@ class Pipeline:
                         r.raise_for_status()
                         scores = r.json().get("scores", [])
                     else:
-                        scores = self.bert.batch_analyze(list(comments))
+                        bert_model = self._get_bert_model()
+                        if bert_model is None:
+                            raise RuntimeError(
+                                "No Bert analyzer available: provide --bert-service-url or remove --skip-bert"
+                            )
+                        scores = bert_model.batch_analyze(list(comments))
 
                     for pid, score_dict in zip(post_ids, scores):
                         db.update_bert_sentiment(
