@@ -102,7 +102,7 @@ Once the services are running you can invoke the orchestrator like this:
 
 ```sh
 python -m pipeline.orchestrator analyze \
-    --image-root /data/images --db-dsn "dbname=mydb" \
+    --city-folder /data/6Shenzhen --db-dsn "dbname=mydb" \
     --bio-service-url http://localhost:5000 \
     --sentiment-service-url http://localhost:5001 \
     --qwen-service-url http://localhost:5002

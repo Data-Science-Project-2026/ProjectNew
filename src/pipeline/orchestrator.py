@@ -5,12 +5,13 @@ import hashlib
 import json
 import logging
 import os
+import re
 import base64
 import shutil
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Dict
 
 from database import postgres as db
 from models.Qwen.user_sql_reader import (
@@ -84,63 +85,126 @@ class Pipeline:
 
             self.bert = PsychologicalStateAnalyzer(**self.bert_args)
         return self.bert
+    
+    def _build_image_lookup(folder: Path) -> Dict[str, Path]:
+        """Build a filename → path lookup for images.
+
+        First looks in ``class_*`` sub-directories (the original data layout).
+        If no ``class_*`` dirs exist, falls back to scanning the folder directly
+        for image files (flat layout like Hohhot data).
+        """
+        lookup: Dict[str, Path] = {}
+        class_dirs = list(folder.glob("class_*"))
+        if class_dirs:
+            for class_dir in class_dirs:
+                if not class_dir.is_dir():
+                    continue
+                for image_path in class_dir.rglob("*"):
+                    if image_path.is_file():
+                        lookup.setdefault(image_path.name, image_path)
+        else:
+            # flat layout: images sit directly in the folder
+            for image_path in folder.iterdir():
+                if image_path.is_file() and image_path.suffix.lower() in (".jpg", ".jpeg", ".png", ".bmp", ".webp", ".gif"):
+                    lookup.setdefault(image_path.name, image_path)
+        return lookup
 
     # ingestion
     def ingest_posts(
         self,
-        csv_paths: Iterable[Path],
-        image_root: Optional[Path] = None,
+        city_folder: Path,
         max_posts: Optional[int] = None,
+        debug: bool = False,
     ) -> int:
-        """Read CSV files and add records to Postgres, tracking progress.
+        """Ingest posts for all park CSVs inside a city folder.
 
-        The CSV filename is recorded in ``ingestion_status`` so a later run can
-        resume from ``last_processed_row``.  ``max_posts`` may be used for
-        testing; if provided we stop after that many rows across all files.
+        Expects `city_folder` to contain CSV files like
+        ``1_21_Heiqiao_Park_Chaoyang_District_Beijing.csv`` and corresponding
+        park folders with the same stem holding images (either in `class_*`
+        subdirs or directly in the folder). Handles CSVs with or without the
+        image filename column by using filename heuristics when needed.
         """
-        """Read CSV files and add records (and optionally images) to Postgres.
+        city_path = Path(city_folder)
+        if not city_path.is_dir():
+            raise FileNotFoundError(f"City folder not found: {city_path}")
 
-        ``csv_paths`` may be a list of concrete files or a glob pattern.
-        ``image_root`` is the directory where relative image paths should be
-        resolved.  If a row does not reference an image or the file cannot be
-        read, ``image`` is left ``NULL`` and ingestion continues.
+        # parse city name like '1Beijing' -> 'Beijing' or '6深圳_...' -> '深圳'
+        m = re.match(r"^\d+([^_]+)_", city_path.name)
+        if m:
+            city_name = m.group(1)
+        else:
+            m2 = re.match(r"^\d+(.+)", city_path.name)
+            city_name = m2.group(1) if m2 else city_path.name
 
-        Returns the number of posts ingested.
-        """
         count = 0
+        image_count = 0
         with db.connect(self.dsn) as conn:
             db.ensure_schema(conn)
 
-            for path in csv_paths:
-                logger.info("ingesting %s", path)
-                db.upsert_ingestion_status(conn, filename=str(path), status="processing", last_processed_row=0)
+            for csv_path in sorted(city_path.glob("*.csv")):
+                logger.info("ingesting CSV %s", csv_path)
+                db.upsert_ingestion_status(conn, filename=str(csv_path), status="processing", last_processed_row=0)
 
-                # derive city / park from CSV filename
-                # e.g. "3_1_Panshan_Scenic_Area_Jizhou_District_Tianjin.csv"
-                csv_stem = Path(path).stem  # "3_1_Panshan_..._Tianjin"
-                # take last part after splitting by _ as city guess
-                csv_city = csv_stem.rsplit("_", 1)[-1] if "_" in csv_stem else csv_stem
-                csv_park = csv_stem
+                csv_stem = csv_path.stem
+                # park label like 'Heiqiao_Park_Chaoyang_District_Beijing'
+                mpark = re.match(r'^(?:\d+_)*(.+)', csv_stem)
+                park_label = mpark.group(1) if mpark else csv_stem
 
-                with open(path, newline="", encoding="utf-8-sig") as f:
-                    reader = csv.DictReader(f)
+                # park folder typically has the same stem as the csv file
+                park_dir = city_path / csv_stem
+                if not park_dir.is_dir():
+                    # fallback to using label-only folder
+                    park_dir = city_path / park_label
+
+                image_lookup: Dict[str, Path] = {}
+                if park_dir.is_dir():
+                    image_lookup = type(self)._build_image_lookup(park_dir)
+
+                with open(csv_path, newline="", encoding="utf-8-sig") as fh:
+                    reader = csv.DictReader(fh)
+                    fieldnames = reader.fieldnames or []
+                    normalized_fields = {f.strip().lower() for f in fieldnames}
+                    has_image_column = any(n in normalized_fields for n in ("图像文件名列表", "image", "images", "图像", "image_filenames", "filenames"))
+
+                    def _get(r: dict, *keys: str) -> str:
+                        for k in keys:
+                            v = r.get(k)
+                            if v is not None and str(v).strip() != "":
+                                return str(v).strip()
+                        return ""
+
                     for idx, row in enumerate(reader, start=1):
                         if max_posts and count >= max_posts:
-                            db.upsert_ingestion_status(conn, filename=str(path), status="done", last_processed_row=count)
+                            db.upsert_ingestion_status(conn, filename=str(csv_path), status="done", last_processed_row=count)
                             return count
 
-                        # read Chinese column names (from csv_to_sql convention)
-                        username = (row.get("用户名") or row.get("username") or "").strip()
+                        username = _get(row, "用户名", "原始用户名", "username", "user", "user_name", "name", "昵称")
+                        if not username:
+                            continue
                         h = hashlib.sha256(username.encode("utf-8")).hexdigest()
 
-                        comment = (row.get("评论") or row.get("text") or "").strip() or None
-                        timestamp = (row.get("时间") or row.get("timestamp") or "").strip() or None
-                        rating = (row.get("评分") or row.get("rating") or "").strip() or None
+                        comment = _get(row, "评论", "text", "comment", "内容") or None
+                        # cleanse timestamp: extract an ISO-like date/time or fallback to YYYY-MM-DD
+                        raw_time = _get(row, "时间", "timestamp", "time", "date", "日期")
+                        timestamp = None
+                        if raw_time:
+                            m = re.search(r"\d{4}-\d{1,2}-\d{1,2}(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?", raw_time)
+                            if m:
+                                timestamp = m.group(0)
+                            else:
+                                # try Chinese date like 2020年06月05日 or similar
+                                m2 = re.search(r"(\d{4})\D+(\d{1,2})\D+(\d{1,2})", raw_time)
+                                if m2:
+                                    y, mo, da = m2.group(1), int(m2.group(2)), int(m2.group(3))
+                                    timestamp = f"{y}-{mo:02d}-{da:02d}"
+                        rating = _get(row, "评分", "rating", "score") or None
+
+                        park_val = park_label
 
                         post_id = db.insert_post(
                             conn,
-                            city=row.get("city", csv_city) or csv_city,
-                            park=row.get("park", csv_park) or csv_park,
+                            city=city_name,
+                            park=park_val,
                             username=username,
                             username_hash=h,
                             comment=comment,
@@ -148,27 +212,90 @@ class Pipeline:
                             rating=rating,
                         )
                         count += 1
-                        db.upsert_ingestion_status(conn, filename=str(path), status="processing", last_processed_row=idx)
 
-                        # handle multi-image: semicolon-separated filenames
-                        raw_images = row.get("图像文件名列表") or row.get("image") or ""
-                        filenames = [s.strip() for s in raw_images.replace("|", ";").replace(",", ";").split(";") if s.strip()]
-
-                        for img_name in filenames:
-                            if image_root is not None:
-                                full = image_root / img_name
-                                if not full.exists():
-                                    logger.debug("image %s not found", full)
+                        if has_image_column and image_lookup:
+                            raw_images = row.get("图像文件名列表") or row.get("image") or ""
+                            # try a few header names when present
+                            if not raw_images:
+                                raw_images = _get(row, "图像文件名列表", "image", "images", "image_filenames", "filenames")
+                            filenames = [s.strip() for s in raw_images.replace("|", ";").replace(",", ";").split(";") if s.strip()]
+                            for fname in filenames:
+                                resolved = image_lookup.get(Path(fname).name)
+                                if resolved is None:
+                                    logger.debug("image %s not found in %s", fname, park_dir)
                                     continue
-                            db.insert_image(
-                                conn,
-                                post_id=post_id,
-                                path=img_name,
-                                username_hash=h,
-                            )
+                                db.insert_image(conn, post_id=post_id, path=str(resolved), username_hash=h)
+                                image_count += 1
+                        else:
+                            # attach all images whose filename starts with or contains the username
+                            if image_lookup:
+                                matched = []
+                                for name, p in image_lookup.items():
+                                    # normalize separators and compare
+                                    if name.startswith(username) or name.startswith(username + "_") or name.startswith(username + "-") or username in name:
+                                        matched.append(p)
+                                for p in matched:
+                                    db.insert_image(conn, post_id=post_id, path=str(p), username_hash=h)
+                                    image_count += 1
 
-                db.upsert_ingestion_status(conn, filename=str(path), status="done", last_processed_row=count)
+                        db.upsert_ingestion_status(conn, filename=str(csv_path), status="processing", last_processed_row=idx)
+
+                db.upsert_ingestion_status(conn, filename=str(csv_path), status="done", last_processed_row=count)
+        logger.info("ingested %d posts and %d images from %s", count, image_count, city_path)
+
+        if debug:
+            self.print_sample_posts(limit=5)
+
         return count
+
+    def print_sample_posts(self, limit: int = 5) -> None:
+        """Select `limit` random posts and log the post row plus associated images.
+
+        Tries a direct `post_id` lookup first; if no rows are found, falls back to
+        matching images by `username_hash` so samples are informative even when
+        images were ingested without `post_id` linkage.
+        """
+        try:
+            with db.connect(self.dsn) as conn2:
+                with conn2.cursor() as cur:
+                    cur.execute(
+                        "SELECT id, city, park, username_hash, comment, time, rating FROM posts ORDER BY RANDOM() LIMIT %s",
+                        (limit,),
+                    )
+                    posts = cur.fetchall()
+                    post_ids = [p[0] for p in posts]
+                    if not post_ids:
+                        logger.info("no posts available to sample")
+                        return
+
+                    # fetch all images linked to these post ids in one query (use IN with placeholders)
+                    placeholders = ",".join(["%s"] * len(post_ids))
+                    cur.execute(
+                        f"SELECT id, post_id, username_hash, path FROM images WHERE post_id IN ({placeholders})",
+                        tuple(post_ids),
+                    )
+                    imgs = cur.fetchall()
+                    images_by_post: Dict[int, List[dict]] = {}
+                    for i in imgs:
+                        iid, pid, uh, path = i[0], i[1], i[2], i[3]
+                        images_by_post.setdefault(pid, []).append({"id": iid, "username_hash": uh, "path": path})
+
+                    for p in posts:
+                        pid = p[0]
+                        post_obj = {
+                            "id": p[0],
+                            "city": p[1],
+                            "park": p[2],
+                            "username_hash": p[3],
+                            "comment": p[4],
+                            "time": str(p[5]) if p[5] is not None else None,
+                            "rating": p[6],
+                        }
+                        images = images_by_post.get(pid, [])
+                        logger.info("SAMPLE POST: %s", json.dumps(post_obj, ensure_ascii=False))
+                        logger.info("ASSOCIATED IMAGES: %s", json.dumps(images, ensure_ascii=False))
+        except Exception:
+            logger.exception("failed to fetch sample posts/images for inspection")
 
     # model execution helpers
     def analyze_images(
@@ -572,10 +699,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Manage pipeline ingestion and analysis")
     sub = parser.add_subparsers(dest="command")
 
-    up_csv = sub.add_parser("upload-posts", help="Ingest one or more CSV files containing posts")
-    up_csv.add_argument("--csv-dir", required=True, help="directory containing CSV files")
-    up_csv.add_argument("--image-root", required=False, help="root folder for image paths (optional)")
+    up_csv = sub.add_parser("upload-posts", help="Ingest posts from a city folder containing park CSVs")
+    up_csv.add_argument("--city-folder", required=True, help="city folder containing CSV files and park image folders")
+    up_csv.add_argument("--image-root", required=False, help="root folder for image paths (optional, unused for city-folder ingestion)")
     up_csv.add_argument("--max-posts", type=int, default=None)
+    up_csv.add_argument("--debug", action="store_true", help="log sample posts and images for debugging")
 
     up_img = sub.add_parser("upload-images", help="Ingest folders of images")
     up_img.add_argument("--folders", nargs="+", required=True, help="folders to scan for images")
@@ -647,9 +775,9 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
 
     if args.command == "upload-posts":
-        files = Path(args.csv_dir).glob("*.csv")
-        n = pipeline.ingest_posts(files, image_root=Path(args.image_root) if args.image_root else None, max_posts=args.max_posts)
-        logger.info("ingested %d posts", n)
+        city_folder = Path(args.city_folder)
+        n = pipeline.ingest_posts(city_folder, max_posts=args.max_posts, debug=args.debug)
+        logger.info("ingested %d posts from %s", n, city_folder)
         # analyze with Qwen
         if not args.skip_qwen:
             nusers = pipeline.run_qwen()

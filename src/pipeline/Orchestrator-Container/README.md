@@ -18,7 +18,7 @@ example, to ingest CSVs and images you might run:
 
 ```sh
 docker run --rm -v /data:/data pipeline-orchestrator upload-posts \
-    --csv-dir /data/csvs --image-root /data/images \
+    --city-folder /mnt/f/data/6Shenzhen \
     --db-dsn "dbname=mydb" \
     --bio-service-url http://bio:5000 \
     --sentiment-service-url http://bert:5000 \
