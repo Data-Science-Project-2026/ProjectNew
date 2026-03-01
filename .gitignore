@@ -2,8 +2,6 @@
 .vscode
 *__pycache__
 6深圳_携程图像文本
-*.pt
-*.txt
 
 # Docker
 *.tar

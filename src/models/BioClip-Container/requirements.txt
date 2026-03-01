@@ -1,0 +1,7 @@
+flask
+requests
+open_clip_torch
+torch
+transformers
+pandas
+openpyxl
