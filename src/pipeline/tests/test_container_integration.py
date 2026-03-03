@@ -68,7 +68,7 @@ def test_bioclip_container(services, sample_images):
 
     # ingest the three files and then analyse them via the container
     pipeline.ingest_images([sample_images], image_storage=sample_images)
-    processed = pipeline.analyze_images(batch_size=3, image_root=sample_images)
+    processed = pipeline.analyze_images(batch_size=3)
     assert processed == 3
 
 

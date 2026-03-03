@@ -39,12 +39,9 @@ def _serialize_optional(values: Sequence[object] | None) -> str | None:
 def ensure_schema(conn: psycopg2.extensions.connection) -> None:
     """Create the tables if they don't already exist.
 
-    The production database does not store image binary data or file paths.
-    The ``images`` table only records a numeric id and an optional
-    ``username_hash``; the orchestrator is responsible for copying files to an
-    external storage root and looking them up by id when analysis is needed.
-    This keeps the PostgreSQL instance lean and avoids persisting sensitive
-    file locations.
+    Images are referenced by file path in the ``images`` table; binary data is
+    still kept out of Postgres. The orchestrator/model readers load blobs
+    directly from the stored path.
     """
     with conn.cursor() as cur:
         cur.execute(
@@ -70,8 +67,15 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
                 id SERIAL PRIMARY KEY,
                 post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
                 username_hash TEXT,
-                path TEXT
+                path TEXT,
+                analyzed_bio BOOLEAN NOT NULL DEFAULT FALSE
             );
+            """
+        )
+        cur.execute(
+            """
+            ALTER TABLE images
+            ADD COLUMN IF NOT EXISTS analyzed_bio BOOLEAN NOT NULL DEFAULT FALSE
             """
         )
         # additional tables for many‑to‑one species and activity entries
@@ -217,7 +221,8 @@ def insert_image(
     ``post_id`` may be ``None`` when the image is uploaded standalone; the
     database now permits null values for this column. ``username_hash`` may be
     derived from the filename so downstream analysis can link back to the
-    origin. ``path`` is accepted but not stored in Postgres.
+    origin. ``path`` is persisted so analyzers can read the image directly
+    from its recorded location.
     """
     with conn.cursor() as cur:
         cur.execute(
@@ -236,19 +241,21 @@ def insert_image(
 def fetch_unanalyzed_images(
     conn: psycopg2.extensions.connection, limit: int
 ) -> list[tuple[int, str | None]]:
-    """Return (id, username_hash) tuples for rows without species data yet.
+    """Return (id, path) tuples for rows without species data yet.
 
-    Because species information now lives in a separate table, we select
-    images that have *no* corresponding rows in ``image_species``.  The
-    returned username_hash may be ``None``.
+    Images are considered *unanalyzed* when ``images.analyzed_bio`` is false.
+    This avoids infinite reprocessing loops when a model returns no species for
+    an image.
+
+    The returned ``path`` field may be ``NULL`` in the database, in which case
+    callers should decide how to locate the corresponding file.
     """
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT i.id, i.username_hash
+            SELECT i.id, i.path
             FROM images AS i
-            LEFT JOIN image_species AS s ON s.image_id = i.id
-            WHERE s.id IS NULL
+            WHERE i.analyzed_bio = FALSE
             ORDER BY i.id
             LIMIT %s
             """,
@@ -269,6 +276,8 @@ def update_image_analysis(
 
     The values are stored in the ``image_species`` table; existing entries
     for the given ``image_id`` are deleted before the new ones are inserted.
+    The image is always marked as analyzed, even when species/confidence are
+    empty.
     """
     if species is None:
         species = []
@@ -283,6 +292,10 @@ def update_image_analysis(
                 "INSERT INTO image_species (image_id, species, confidence) VALUES (%s, %s, %s)",
                 (image_id, sp, conf),
             )
+        cur.execute(
+            "UPDATE images SET analyzed_bio = TRUE WHERE id = %s",
+            (image_id,),
+        )
     conn.commit()
 
 

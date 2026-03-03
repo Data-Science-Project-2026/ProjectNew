@@ -238,14 +238,12 @@ def build_qwen_user_batches_pg(
     username: str | None = None,
     min_images: int = 1,
     max_images: int = 0,
-    image_root: str | None = None,
 ) -> List[QwenUserBatchInput]:
     """Same as :func:`build_qwen_user_batches` but works over a Postgres cursor.
 
     ``conn`` may be any PEP 249 connection object (including psycopg2).
-    Postgres uses ``username_hash`` instead of ``username`` and stores
-    optional ``path`` on images.  ``image_root`` is prepended to the
-    stored path when reading image files from disk.
+    Postgres uses ``username_hash`` instead of ``username`` and stores the
+    image file path directly; the path is used as-is to read image blobs.
     """
     clauses: list[str] = ["i.path IS NOT NULL"]
     params: list[str] = []
@@ -278,15 +276,6 @@ def build_qwen_user_batches_pg(
     cursor = conn.cursor()
     cursor.execute(query, params)
     rows = cursor.fetchall()
-
-    # If image_root provided, prepend it to the path column (index 6)
-    if image_root:
-        adjusted = []
-        for row in rows:
-            r = list(row)
-            r[6] = str(Path(image_root) / r[6])
-            adjusted.append(tuple(r))
-        rows = adjusted
 
     return _batches_from_rows(rows, min_images, max_images=max_images)
 

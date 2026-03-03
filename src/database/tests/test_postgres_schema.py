@@ -47,7 +47,7 @@ def test_species_and_activity_tables(tmp_path: Path):
         img_id = pgmod.insert_image(conn, post_id=None, path="/foo.jpg", username_hash=None)
         # initially it should be returned as unanalyzed
         rows = pgmod.fetch_unanalyzed_images(conn, 10)
-        assert rows == [(img_id, None)]
+        assert rows == [(img_id, "/foo.jpg")]
 
         # add species data
         pgmod.update_image_analysis(conn, image_id=img_id, species=["cat", "dog"], confidence=[0.5, 0.8])

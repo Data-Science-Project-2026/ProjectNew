@@ -36,7 +36,7 @@ docker-compose run --rm orchestrator \
   upload-images --folders /data/images --image-root /data/images
 ```
 
-Images are copied into a managed directory (default `data/images/`) using their numeric image ID as the filename. PostgreSQL stores metadata only (IDs, optional path/labels/scores), not image binary blobs.
+Images are copied into a managed directory (default `data/images/`) when using `upload-images`, and PostgreSQL stores metadata only (including the source path in `images.path`), not image binary blobs.
 
 ### Schema
 
@@ -66,6 +66,7 @@ PostgreSQL stores post/image/Qwen metadata in normalized tables. Image binaries 
 | `post_id`       | INTEGER | FK → `posts(id)`, nullable     | Linked post (optional for standalone uploads) |
 | `username_hash` | TEXT    |                                | Optional hash parsed from image/file context |
 | `path`          | TEXT    |                                | Stored source/relative image path metadata |
+| `analyzed_bio`  | BOOLEAN | NOT NULL, DEFAULT `FALSE`      | Marker to avoid repeated BioCLIP reprocessing |
 
 #### `image_species`
 
@@ -148,6 +149,7 @@ classDiagram
         int post_id
         text username_hash
         text path
+        bool analyzed_bio
     }
     class image_species {
         int id

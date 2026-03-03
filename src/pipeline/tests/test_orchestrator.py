@@ -93,7 +93,7 @@ def test_ingest_and_analysis(tmp_path: Path):
     # image analysis requires a working DB and models; just call to ensure it
     # doesn't crash if the tables exist
     try:
-        _ = pipeline.analyze_images(batch_size=1, max_batches=1, image_root=img_dir)
+        _ = pipeline.analyze_images(batch_size=1, max_batches=1)
     except Exception:
         pass
     finally:
@@ -200,7 +200,7 @@ def test_ingest_images_folder(tmp_path: Path):
         seen.extend(blobs)
         return [([], []) for _ in blobs]
     bcmod2.BioClipModel.analyze_image_blobs = fake_analyze
-    pipeline2.analyze_images(batch_size=10, image_root=storage)
+    pipeline2.analyze_images(batch_size=10)
     # should have seen exactly two image blobs matching the originals
     assert len(seen) == 2
     with open(root / "abc123_imageA.jpg", "rb") as f1, open(root / "nohash.jpg", "rb") as f2:
@@ -275,7 +275,7 @@ def test_service_urls(tmp_path: Path):
     )
 
     # run analytics; we don't care about return values, just that requests were made
-    pipeline.analyze_images(batch_size=1, max_batches=1, image_root=None)
+    pipeline.analyze_images(batch_size=1, max_batches=1)
     pipeline.analyze_posts(batch_size=1)
     pipeline.run_qwen()
 

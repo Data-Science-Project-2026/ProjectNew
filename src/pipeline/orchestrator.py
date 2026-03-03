@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Iterable, List, Optional, Dict
 
-from database import postgres as db
+from src.database import postgres as db
 from models.Qwen.user_sql_reader import (
     build_qwen_user_batches,
     build_qwen_user_batches_pg,
@@ -303,25 +303,15 @@ class Pipeline:
         batch_size: int = 1000,
         max_batches: Optional[int] = None,
         workers: int = 1,
-        image_root: Optional[Path] = None,
     ) -> int:
-        """Run BioCLIP on unanalyzed images using files stored on disk.
+        """Run BioCLIP on unanalyzed images using the stored file path.
 
-        The Postgres database no longer retains file paths; instead the
-        ingestor copies each image to ``image_root`` (default ``data/images``)
-        using the numeric image id as the filename.  ``fetch_unanalyzed_images``
-        returns ``(id, username_hash)`` tuples.  ``image_root`` **must** be
-        provided when using Postgres so that the worker can locate each file.
-
-        Results are written to the normalized ``image_species`` table rather
-        than the ``images`` row itself.  Multiple species entries may be
-        recorded per image.  Activities are handled similarly elsewhere.
-
-        ``workers`` threads share the workload; ``max_batches`` limits how many
-        batches each thread processes (per-worker).
+        ``fetch_unanalyzed_images`` returns ``(id, path)`` and the analyzer reads
+        each image directly from that path. Results are written to ``image_species``;
+        multiple species may be recorded per image. ``workers`` threads share the
+        workload; ``max_batches`` limits how many batches each thread processes
+        (per-worker).
         """
-        if image_root is None:
-            image_root = Path("data/images")
         total_processed = 0
 
         def _worker() -> int:
@@ -331,21 +321,27 @@ class Pipeline:
                     rows = db.fetch_unanalyzed_images(conn, batch_size)
                     if not rows:
                         break
-                    ids, hashes = zip(*rows)
+                    ids: list[int] = []
                     blobs: list[bytes] = []
-                    for img_id in ids:
-                        # locate file by id in the image_root directory
-                        found = list(Path(image_root).glob(f"{img_id}.*"))
-                        if not found:
-                            logger.warning("image file for id %s not found", img_id)
+                    for img_id, img_path in rows:
+                        ids.append(img_id)
+
+                        if not img_path:
+                            logger.warning("image path missing for id %s", img_id)
                             blobs.append(b"")
                             continue
-                        fp = found[0]
+
+                        p = Path(img_path)
+                        if not p.is_file():
+                            logger.warning("image file for id %s path %s not found", img_id, img_path)
+                            blobs.append(b"")
+                            continue
+
                         try:
-                            with open(fp, "rb") as f:
+                            with open(p, "rb") as f:
                                 blobs.append(f.read())
                         except Exception:
-                            logger.exception("failed to read image %s", fp)
+                            logger.exception("failed to read image %s", p)
                             blobs.append(b"")
 
                     # dispatch to service, local model, or skip
@@ -458,7 +454,6 @@ class Pipeline:
                 username=self.qwen_args.get("username"),
                 min_images=self.qwen_args.get("min_images", 1),
                 max_images=self.qwen_args.get("max_images", 5),
-                image_root=self.qwen_args.get("image_root"),
             )
         if max_users is not None:
             batches = batches[:max_users]
@@ -645,14 +640,16 @@ class Pipeline:
 
         ``username_hash`` is assumed to be the first component of each file's
         stem (split on underscore).  Each image is copied into
-        ``image_storage`` using its database id as the filename; **no path is
-        stored** in PostgreSQL, fulfilling our privacy requirement.  Progress
-        for each top-level folder is recorded in ``ingestion_status`` by name.
+        ``image_storage`` using its database id as the filename; the copy path
+        is stored in Postgres so analyzers can load the blob directly.
+        Progress for each top-level folder is recorded in ``ingestion_status``
+        by name.
         
         ``image_storage`` defaults to ``data/images`` relative to the repo root.
         """
         if image_storage is None:
             image_storage = Path("data/images")
+        image_storage = image_storage.resolve()
         image_storage.mkdir(parents=True, exist_ok=True)
 
         inserted = 0
@@ -713,7 +710,6 @@ def main() -> None:
     analyze.add_argument("--batch-size", type=int, default=1000)
     analyze.add_argument("--max-batches", type=int, default=None)
     analyze.add_argument("--workers", type=int, default=1)
-    analyze.add_argument("--image-root", required=False, help="root for image files when analyzing")
 
     qwen_arg = parser.add_argument_group("qwen configuration")
     qwen_arg.add_argument("--qwen-instruction", default="", help="System instruction for Qwen VL model (inline text)")
@@ -742,6 +738,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    image_root_arg = getattr(args, "image_root", None)
     dsn = args.db_dsn or os.environ.get("PIPELINE_DATABASE_DSN", "")
     pipeline = Pipeline(
         dsn=dsn,
@@ -762,7 +759,6 @@ def main() -> None:
             "username": args.qwen_username,
             "min_images": args.qwen_min_images,
             "max_images": args.qwen_max_images,
-            "image_root": args.image_root,
         },
         bio_service_url=args.bio_service_url,
         bert_service_url=args.bert_service_url,
@@ -784,11 +780,11 @@ def main() -> None:
             logger.info("analyzed %d user batches with Qwen", nusers)
     elif args.command == "upload-images":
         folders = [Path(p) for p in args.folders]
-        storage = Path(args.image_root) if args.image_root else None
+        storage = Path(image_root_arg) if image_root_arg else None
         n = pipeline.ingest_images(folders, image_storage=storage)
         logger.info("ingested %d images", n)
     elif args.command == "analyze":
-        nimg = pipeline.analyze_images(batch_size=args.batch_size, max_batches=args.max_batches, workers=args.workers, image_root=Path(args.image_root) if args.image_root else None)
+        nimg = pipeline.analyze_images(batch_size=args.batch_size, max_batches=args.max_batches, workers=args.workers)
         logger.info("processed %d images", nimg)
         npost = pipeline.analyze_posts(batch_size=args.batch_size, workers=args.workers)
         logger.info("scored %d posts", npost)

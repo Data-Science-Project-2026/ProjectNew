@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 class BioClipAnalyzer:
     """Run batch image analysis against a Postgres backend.
 
-    The orchestrator is expected to copy incoming images into a shared
-    filesystem directory (``image_root``) using the database ID as the
-    filename.  This class repeatedly queries ``fetch_unanalyzed_images`` to
-    obtain the next batch of IDs and then loads the corresponding files
-    before dispatching them to a ``BioClipModel`` instance.
+    Images are read from the file paths stored in the database; ``image_root``
+    serves as a fallback for relative paths or legacy id-based filenames.
+    This class repeatedly queries ``fetch_unanalyzed_images`` to obtain the
+    next batch of IDs and then loads the corresponding files before
+    dispatching them to a ``BioClipModel`` instance.
     """
 
     def __init__(
@@ -52,20 +52,32 @@ class BioClipAnalyzer:
                     rows = db.fetch_unanalyzed_images(conn, self.batch_size)
                     if not rows:
                         break
-                    ids, _hashes = zip(*rows)
-
+                    ids: list[int] = []
                     blobs: list[bytes] = []
-                    for img_id in ids:
-                        candidates = list(self.image_root.glob(f"{img_id}.*"))
+                    for row in rows:
+                        img_id = row[0]
+                        img_path = row[1] if len(row) > 1 else None
+                        ids.append(img_id)
+
+                        candidates: list[Path] = []
+                        if img_path:
+                            p = Path(img_path)
+                            candidates.append(p)
+                            if not p.is_absolute():
+                                candidates.append(self.image_root / p)
                         if not candidates:
-                            logger.warning("image file for id %s not found", img_id)
+                            candidates = list(self.image_root.glob(f"{img_id}.*"))
+
+                        chosen = next((c for c in candidates if c.is_file()), None)
+                        if chosen is None:
+                            logger.warning("image file for id %s path %s not found", img_id, img_path)
                             blobs.append(b"")
                             continue
                         try:
-                            with open(candidates[0], "rb") as f:
+                            with open(chosen, "rb") as f:
                                 blobs.append(f.read())
                         except Exception:
-                            logger.exception("failed to read image %s", candidates[0])
+                            logger.exception("failed to read image %s", chosen)
                             blobs.append(b"")
 
                     if self.model is None:
