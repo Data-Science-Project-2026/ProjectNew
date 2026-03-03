@@ -116,7 +116,7 @@ cd src/pipeline/Orchestrator-Container
 docker build -t pipeline-orchestrator .
 
 docker run --rm -v /data:/data pipeline-orchestrator upload-posts \
-    --csv-dir /data/csvs --image-root /data/images \
+    --city-folder /data/6Shenzhen \
     --db-dsn "dbname=mydb" \
     --bio-service-url http://bio:5000 \
     --sentiment-service-url http://bert:5000 \
@@ -132,8 +132,7 @@ subcommands:
 
 ```sh
 # ingest posts from CSVs (optional image root for relative paths)
-python -m pipeline.orchestrator upload-posts --csv-dir /path/to/csvs \
-    [--image-root /path/to/images] --db-dsn "dbname=..."
+python -m pipeline.orchestrator upload-posts --city-folder /data/6Shenzhen --db-dsn "dbname=..."
 
 # ingest raw image folders
 python -m pipeline.orchestrator upload-images --folders /path/one /path/two \
