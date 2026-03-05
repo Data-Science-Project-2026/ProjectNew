@@ -19,6 +19,7 @@ The species tokens are fetched from a `.pt` file that contains the tokens that h
 
 - The pipeline sends a batch of images as raw bytes.
 - Each image is preprocessed and passed through the BioCLIP image encoder.
+- This process produces the **image tokens**.
 
 ### 2) Species tokens are compared to image tokens
 
