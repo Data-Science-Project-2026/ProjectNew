@@ -7,21 +7,21 @@
 ```mermaid
 flowchart LR
  subgraph Inputs
-  TextDB[(Posts / comments)]
-  ImageDB[(Images)]
+  TextDB[(Texts)]
+  ImageDB[(Image metadata)]
  end
 
- TextDB --> BERT[BERT sentiment baseline]
+ TextDB --> BERT[BERT sentiment]
  TextDB --> QwenText[Qwen3.5 text analysis]
 
- ImageDB --> BioCLIP[BioCLIP species candidates]
+ ImageDB --> BioCLIP[BioCLIP]
  ImageDB --> QwenVision[Qwen3.5 image analysis]
 
  BioCLIP --> SpeciesFusion[Species fusion]
  QwenVision --> SpeciesFusion
 
- QwenVision --> ActivityHead[Human activity output]
- QwenVision --> ImageContext[Object / scene / landscape metadata]
+ QwenVision --> ActivityHead[Human activity]
+ QwenVision --> ImageContext[Scene metadata]
 
  BERT --> SentimentFusion[Sentiment fusion]
  QwenText --> SentimentFusion
