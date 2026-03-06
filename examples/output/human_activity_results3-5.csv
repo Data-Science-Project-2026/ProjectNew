@@ -1,0 +1,2961 @@
+﻿image_index,image_filename,image_summary,visible_species_in_image,landscape_elements,human_activities_in_image,plants_detected_names,animals_detected_names,human_activities_detected_labels,plants_detected_raw,animals_detected_raw,human_activities_detected_raw,raw_response,parse_ok,error
+1,10深圳市福田区红树林海滨生态公园_288175_3.jpg,park path scene,Canna lily; Mango tree,paved path; grass lawn; trees; lake; sky,cycling; walking,Canna indica; Mangifera indica,[],cycling; walking,"[{""scientific_name"": ""Canna indica"", ""count_estimate"": ""many"", ""confidence"": 0.85}, {""scientific_name"": ""Mangifera indica"", ""count_estimate"": ""multiple"", ""confidence"": 0.72}]",[],"[{""activity"": ""cycling"", ""count_estimate"": ""1"", ""confidence"": 0.92}, {""activity"": ""walking"", ""count_estimate"": ""3"", ""confidence"": 0.88}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""park path scene"",
+      ""visible_species_in_image"": [
+        ""Canna lily"",
+        ""Mango tree""
+      ],
+      ""landscape_elements"": [
+        ""paved path"",
+        ""grass lawn"",
+        ""trees"",
+        ""lake"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""cycling"",
+        ""walking""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Canna indica"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.85
+        },
+        {
+          ""scientific_name"": ""Mangifera indica"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.72
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""cycling"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.92
+        },
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""3"",
+          ""confidence"": 0.88
+        }
+      ]
+    }
+  ]
+}",True,
+2,11深圳市宝安区凤凰山_大元脸葡萄_9.jpg,Hikers on rocky peak,[],rocky cliff; overcast sky,hiking; standing,unknown,[],hiking,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""several"", ""confidence"": 0.6}]",[],"[{""activity"": ""hiking"", ""count_estimate"": ""5"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Hikers on rocky peak"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""rocky cliff"",
+        ""overcast sky""
+      ],
+      ""human_activities_in_image"": [
+        ""hiking"",
+        ""standing""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""several"",
+          ""confidence"": 0.6
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""hiking"",
+          ""count_estimate"": ""5"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+3,11深圳市宝安区凤凰山_小娃撑游艇_14.jpg,group hiking stream,[],stream; rocks; forest,hiking; wading,unknown,[],hiking; wading,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""many"", ""confidence"": 0.45}]",[],"[{""activity"": ""hiking"", ""count_estimate"": ""6"", ""confidence"": 0.92}, {""activity"": ""wading"", ""count_estimate"": ""1"", ""confidence"": 0.88}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""group hiking stream"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""stream"",
+        ""rocks"",
+        ""forest""
+      ],
+      ""human_activities_in_image"": [
+        ""hiking"",
+        ""wading""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.45
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""hiking"",
+          ""count_estimate"": ""6"",
+          ""confidence"": 0.92
+        },
+        {
+          ""activity"": ""wading"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.88
+        }
+      ]
+    }
+  ]
+}",True,
+4,14深圳市大鹏新区大鹏半岛地质公园公园_XXRonnie_1.jpg,Rainy day visitors,[],paved plaza; stone steps; trees; building; mountains; clouds,walking; holding umbrellas; visiting,unknown,[],walking with umbrellas,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""multiple"", ""confidence"": 0.65}]",[],"[{""activity"": ""walking with umbrellas"", ""count_estimate"": ""10"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Rainy day visitors"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""paved plaza"",
+        ""stone steps"",
+        ""trees"",
+        ""building"",
+        ""mountains"",
+        ""clouds""
+      ],
+      ""human_activities_in_image"": [
+        ""walking"",
+        ""holding umbrellas"",
+        ""visiting""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.65
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""walking with umbrellas"",
+          ""count_estimate"": ""10"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+5,16深圳市南山区华侨城国家湿地公园_M62389_2.jpg,child viewing with binoculars,[],deck; trees; sky,viewing through telescope,[],[],using telescope,[],[],"[{""activity"": ""using telescope"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""child viewing with binoculars"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""deck"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""viewing through telescope""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""using telescope"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+6,17深圳市龙华区阳台山森林公园_Vivian小丸子_4.jpg,Woman posing on path,[],path; trees; mountains; sky,posing; walking,[],[],posing; walking,[],[],"[{""activity"": ""posing"", ""count_estimate"": ""1"", ""confidence"": 0.95}, {""activity"": ""walking"", ""count_estimate"": ""2"", ""confidence"": 0.85}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Woman posing on path"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""path"",
+        ""trees"",
+        ""mountains"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""posing"",
+        ""walking""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""posing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.85
+        }
+      ]
+    }
+  ]
+}",True,
+7,17深圳市龙华区阳台山森林公园_吃饭了没上市_3.jpg,Monument in park,[],mountains; trees; lawn; paved path; statue,standing; walking,[],[],standing,[],[],"[{""activity"": ""standing"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Monument in park"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""mountains"",
+        ""trees"",
+        ""lawn"",
+        ""paved path"",
+        ""statue""
+      ],
+      ""human_activities_in_image"": [
+        ""standing"",
+        ""walking""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""standing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+8,17深圳市龙华区阳台山森林公园_扶疏子_10.jpg,statue on bench,[],tree trunk; wooden bench; paved path; green foliage,[],unknown,[],[],"[{""scientific_name"": ""unknown"", ""count_estimate"": ""many"", ""confidence"": 0.65}]",[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""statue on bench"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""tree trunk"",
+        ""wooden bench"",
+        ""paved path"",
+        ""green foliage""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.65
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+9,18深圳市龙岗区园山风景区_李邵平_3.jpg,hikers in forest,[],forest path; trees; foliage,walking; hiking,unknown,[],walking,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""multiple"", ""confidence"": 0.5}]",[],"[{""activity"": ""walking"", ""count_estimate"": ""2"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""hikers in forest"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""forest path"",
+        ""trees"",
+        ""foliage""
+      ],
+      ""human_activities_in_image"": [
+        ""walking"",
+        ""hiking""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.5
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+10,18深圳市龙岗区园山风景区_真诚7577_2.jpg,people swimming at waterfall,[],waterfall; river; rock; trees,swimming; standing in water; climbing rock,[],[],swimming; standing in water; climbing rock,[],[],"[{""activity"": ""swimming"", ""count_estimate"": ""3"", ""confidence"": 0.95}, {""activity"": ""standing in water"", ""count_estimate"": ""1"", ""confidence"": 0.95}, {""activity"": ""climbing rock"", ""count_estimate"": ""1"", ""confidence"": 0.85}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""people swimming at waterfall"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""waterfall"",
+        ""river"",
+        ""rock"",
+        ""trees""
+      ],
+      ""human_activities_in_image"": [
+        ""swimming"",
+        ""standing in water"",
+        ""climbing rock""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""swimming"",
+          ""count_estimate"": ""3"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""standing in water"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""climbing rock"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.85
+        }
+      ]
+    }
+  ]
+}",True,
+11,19深圳市龙岗区鹏飞公园_M260605_1.jpg,child on playground,[],playground equipment; trees; grass,climbing; running,[],[],climbing; running,[],[],"[{""activity"": ""climbing"", ""count_estimate"": ""1"", ""confidence"": 0.95}, {""activity"": ""running"", ""count_estimate"": ""1"", ""confidence"": 0.85}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""child on playground"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""playground equipment"",
+        ""trees"",
+        ""grass""
+      ],
+      ""human_activities_in_image"": [
+        ""climbing"",
+        ""running""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""climbing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""running"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.85
+        }
+      ]
+    }
+  ]
+}",True,
+12,19深圳市龙岗区鹏飞公园_洛克旅行_8.jpg,children playing at beach,[],beach; sand; ocean; mountains,playing in water; bending down,[],[],playing in water,[],[],"[{""activity"": ""playing in water"", ""count_estimate"": ""2"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""children playing at beach"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""beach"",
+        ""sand"",
+        ""ocean"",
+        ""mountains""
+      ],
+      ""human_activities_in_image"": [
+        ""playing in water"",
+        ""bending down""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""playing in water"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+13,1天津市蓟州区盘山_M10332_3.jpg,child eating noodles,[],pavement; building; table,eating; using chopsticks,[],[],eating,[],[],"[{""activity"": ""eating"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""child eating noodles"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""pavement"",
+        ""building"",
+        ""table""
+      ],
+      ""human_activities_in_image"": [
+        ""eating"",
+        ""using chopsticks""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""eating"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+14,1天津市蓟州区盘山_M325599_1.jpg,Boy by waterfall,[],waterfall; rocks; trees; fog,posing for photo,unknown,[],posing,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""multiple"", ""confidence"": 0.85}]",[],"[{""activity"": ""posing"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Boy by waterfall"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""waterfall"",
+        ""rocks"",
+        ""trees"",
+        ""fog""
+      ],
+      ""human_activities_in_image"": [
+        ""posing for photo""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""posing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+15,1天津市蓟州区盘山_M512101_9.jpg,Stone statue face,[],tree trunk; sky,[],[],[],[],[],[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Stone statue face"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""tree trunk"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+16,1天津市蓟州区盘山_Y涵0709_2.jpg,woman in stream,[],stream; rocks; trees; forest,sitting; playing water gun,unknown,[],sitting; playing water gun,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""many"", ""confidence"": 0.85}]",[],"[{""activity"": ""sitting"", ""count_estimate"": ""1"", ""confidence"": 0.95}, {""activity"": ""playing water gun"", ""count_estimate"": ""1"", ""confidence"": 0.92}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""woman in stream"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""stream"",
+        ""rocks"",
+        ""trees"",
+        ""forest""
+      ],
+      ""human_activities_in_image"": [
+        ""sitting"",
+        ""playing water gun""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""sitting"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""playing water gun"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.92
+        }
+      ]
+    }
+  ]
+}",True,
+17,1天津市蓟州区盘山_不可触碰撞的鱼_10.jpg,stone statues in rocky landscape,[],rock; stone steps; trees,[],unknown,[],[],"[{""scientific_name"": ""unknown"", ""count_estimate"": ""multiple"", ""confidence"": 0.75}]",[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""stone statues in rocky landscape"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""rock"",
+        ""stone steps"",
+        ""trees""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.75
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+18,1天津市蓟州区盘山_安静96_1.jpg,Laughing Buddha statue,[],trees; rocks; stone steps; stone statues,[],unknown,[],[],"[{""scientific_name"": ""unknown"", ""count_estimate"": ""multiple"", ""confidence"": 0.95}]",[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Laughing Buddha statue"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""trees"",
+        ""rocks"",
+        ""stone steps"",
+        ""stone statues""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+19,1深圳市南山区深圳野生动物园_1345311_2.jpg,Tourists feeding tiger,Panthera tigris,cage; enclosure; ground,feeding animal; sitting; pointing,[],Panthera tigris,feeding; sitting,[],"[{""scientific_name"": ""Panthera tigris"", ""count_estimate"": ""1"", ""confidence"": 0.85}]","[{""activity"": ""feeding"", ""count_estimate"": ""1"", ""confidence"": 0.92}, {""activity"": ""sitting"", ""count_estimate"": ""6"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Tourists feeding tiger"",
+      ""visible_species_in_image"": [
+        ""Panthera tigris""
+      ],
+      ""landscape_elements"": [
+        ""cage"",
+        ""enclosure"",
+        ""ground""
+      ],
+      ""human_activities_in_image"": [
+        ""feeding animal"",
+        ""sitting"",
+        ""pointing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Panthera tigris"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""feeding"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.92
+        },
+        {
+          ""activity"": ""sitting"",
+          ""count_estimate"": ""6"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+20,1深圳市南山区深圳野生动物园_1566626_2.jpg,elephant ride show,Elephas maximus,forest; concrete ground; rock wall,riding elephant; standing near elephant,Ficus microcarpa; unknown species,Elephas maximus,riding elephant; standing,"[{""scientific_name"": ""Ficus microcarpa"", ""count_estimate"": ""multiple"", ""confidence"": 0.85}, {""scientific_name"": ""unknown species"", ""count_estimate"": ""1"", ""confidence"": 0.6}]","[{""scientific_name"": ""Elephas maximus"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","[{""activity"": ""riding elephant"", ""count_estimate"": ""2"", ""confidence"": 0.9}, {""activity"": ""standing"", ""count_estimate"": ""1"", ""confidence"": 0.9}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""elephant ride show"",
+      ""visible_species_in_image"": [
+        ""Elephas maximus""
+      ],
+      ""landscape_elements"": [
+        ""forest"",
+        ""concrete ground"",
+        ""rock wall""
+      ],
+      ""human_activities_in_image"": [
+        ""riding elephant"",
+        ""standing near elephant""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Ficus microcarpa"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.85
+        },
+        {
+          ""scientific_name"": ""unknown species"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.6
+        }
+      ],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Elephas maximus"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""riding elephant"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.9
+        },
+        {
+          ""activity"": ""standing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.9
+        }
+      ]
+    }
+  ]
+}",True,
+21,1深圳市南山区深圳野生动物园_300520_6.jpg,Circus performance,[],stage; barrier,performing; standing; watching,[],[],performing; watching,[],[],"[{""activity"": ""performing"", ""count_estimate"": ""multiple"", ""confidence"": 0.95}, {""activity"": ""watching"", ""count_estimate"": ""multiple"", ""confidence"": 0.85}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Circus performance"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""stage"",
+        ""barrier""
+      ],
+      ""human_activities_in_image"": [
+        ""performing"",
+        ""standing"",
+        ""watching""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""performing"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""watching"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.85
+        }
+      ]
+    }
+  ]
+}",True,
+22,1深圳市南山区深圳野生动物园_CamilleQQW_2.jpg,feeding pigs,Sus scrofa domesticus,paved ground; building facade,feeding animals; crouching; holding bottle,[],Sus scrofa domesticus,feeding animals,[],"[{""scientific_name"": ""Sus scrofa domesticus"", ""count_estimate"": ""2"", ""confidence"": 0.95}]","[{""activity"": ""feeding animals"", ""count_estimate"": ""2"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""feeding pigs"",
+      ""visible_species_in_image"": [
+        ""Sus scrofa domesticus""
+      ],
+      ""landscape_elements"": [
+        ""paved ground"",
+        ""building facade""
+      ],
+      ""human_activities_in_image"": [
+        ""feeding animals"",
+        ""crouching"",
+        ""holding bottle""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Sus scrofa domesticus"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""feeding animals"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+23,1深圳市南山区深圳野生动物园_K_S__2.jpg,Child feeding fish,Cyprinus carpio,pond; chain-link fence; concrete path; trees,feeding fish; standing by water,[],Cyprinus carpio,feeding fish,[],"[{""scientific_name"": ""Cyprinus carpio"", ""count_estimate"": ""multiple"", ""confidence"": 0.95}]","[{""activity"": ""feeding fish"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Child feeding fish"",
+      ""visible_species_in_image"": [
+        ""Cyprinus carpio""
+      ],
+      ""landscape_elements"": [
+        ""pond"",
+        ""chain-link fence"",
+        ""concrete path"",
+        ""trees""
+      ],
+      ""human_activities_in_image"": [
+        ""feeding fish"",
+        ""standing by water""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Cyprinus carpio"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""feeding fish"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+24,1深圳市南山区深圳野生动物园_KerryChi_1.jpg,Child on ride,[],trees; building,riding; sitting,[],[],riding,[],[],"[{""activity"": ""riding"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Child on ride"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""trees"",
+        ""building""
+      ],
+      ""human_activities_in_image"": [
+        ""riding"",
+        ""sitting""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""riding"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+25,1深圳市南山区深圳野生动物园_Lansling_1.jpg,equestrian show,[],stage; curtain; painted backdrop,riding horses; performing,[],Equus ferus caballus,riding,[],"[{""scientific_name"": ""Equus ferus caballus"", ""count_estimate"": ""5"", ""confidence"": 0.98}]","[{""activity"": ""riding"", ""count_estimate"": ""5"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""equestrian show"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""stage"",
+        ""curtain"",
+        ""painted backdrop""
+      ],
+      ""human_activities_in_image"": [
+        ""riding horses"",
+        ""performing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Equus ferus caballus"",
+          ""count_estimate"": ""5"",
+          ""confidence"": 0.98
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""riding"",
+          ""count_estimate"": ""5"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+26,1深圳市南山区深圳野生动物园_M296412_6.jpg,Child in red coat,[],aquarium display; glass tank; artificial plants,posing for photo; standing,[],[],posing for photo,[],[],"[{""activity"": ""posing for photo"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Child in red coat"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""aquarium display"",
+        ""glass tank"",
+        ""artificial plants""
+      ],
+      ""human_activities_in_image"": [
+        ""posing for photo"",
+        ""standing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""posing for photo"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+27,1深圳市南山区深圳野生动物园_M355505_1.jpg,person eating ice cream,[],trees; pavement; tents,eating; standing,unknown,[],eating ice cream; standing,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""multiple"", ""confidence"": 0.85}]",[],"[{""activity"": ""eating ice cream"", ""count_estimate"": ""1"", ""confidence"": 0.95}, {""activity"": ""standing"", ""count_estimate"": ""1"", ""confidence"": 0.9}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""person eating ice cream"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""trees"",
+        ""pavement"",
+        ""tents""
+      ],
+      ""human_activities_in_image"": [
+        ""eating"",
+        ""standing""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""eating ice cream"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""standing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.9
+        }
+      ]
+    }
+  ]
+}",True,
+28,1深圳市南山区深圳野生动物园_M355505_3.jpg,Family with camel,Camelus ferus,pavement; bamboo forest; signboard,riding camel; photographing; standing,[],Camelus ferus,riding camel; photographing,[],"[{""scientific_name"": ""Camelus ferus"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","[{""activity"": ""riding camel"", ""count_estimate"": ""2"", ""confidence"": 0.98}, {""activity"": ""photographing"", ""count_estimate"": ""1"", ""confidence"": 0.97}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Family with camel"",
+      ""visible_species_in_image"": [
+        ""Camelus ferus""
+      ],
+      ""landscape_elements"": [
+        ""pavement"",
+        ""bamboo forest"",
+        ""signboard""
+      ],
+      ""human_activities_in_image"": [
+        ""riding camel"",
+        ""photographing"",
+        ""standing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Camelus ferus"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""riding camel"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.98
+        },
+        {
+          ""activity"": ""photographing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.97
+        }
+      ]
+    }
+  ]
+}",True,
+29,1深圳市南山区深圳野生动物园_M363723_3.jpg,horses and riders,Equus ferus caballus,dirt path; fence; trees; sky,horse riding,[],Equus ferus caballus,riding horses,[],"[{""scientific_name"": ""Equus ferus caballus"", ""count_estimate"": ""2"", ""confidence"": 0.95}]","[{""activity"": ""riding horses"", ""count_estimate"": ""2"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""horses and riders"",
+      ""visible_species_in_image"": [
+        ""Equus ferus caballus""
+      ],
+      ""landscape_elements"": [
+        ""dirt path"",
+        ""fence"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""horse riding""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Equus ferus caballus"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""riding horses"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+30,1深圳市南山区深圳野生动物园_M373618_1.jpg,Man with large snake,Python regius,paved path; plants; statue,holding snake; standing; looking at camera,[],Python regius,holding snake,[],"[{""scientific_name"": ""Python regius"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","[{""activity"": ""holding snake"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Man with large snake"",
+      ""visible_species_in_image"": [
+        ""Python regius""
+      ],
+      ""landscape_elements"": [
+        ""paved path"",
+        ""plants"",
+        ""statue""
+      ],
+      ""human_activities_in_image"": [
+        ""holding snake"",
+        ""standing"",
+        ""looking at camera""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Python regius"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""holding snake"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+31,1深圳市南山区深圳野生动物园_Mandy_ZR_2.jpg,Family at fountain,[],fountain; paved path; trees; sky,standing; taking photos,[],[],standing,[],[],"[{""activity"": ""standing"", ""count_estimate"": ""3"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Family at fountain"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""fountain"",
+        ""paved path"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""standing"",
+        ""taking photos""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""standing"",
+          ""count_estimate"": ""3"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+32,1深圳市南山区深圳野生动物园__TX86_1.jpg,zebras and visitors,Equus quagga,fence; enclosure; trees; pathway,watching animals; standing; observing,[],Equus quagga,observing animals,[],"[{""scientific_name"": ""Equus quagga"", ""count_estimate"": ""3"", ""confidence"": 0.98}]","[{""activity"": ""observing animals"", ""count_estimate"": ""multiple"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""zebras and visitors"",
+      ""visible_species_in_image"": [
+        ""Equus quagga""
+      ],
+      ""landscape_elements"": [
+        ""fence"",
+        ""enclosure"",
+        ""trees"",
+        ""pathway""
+      ],
+      ""human_activities_in_image"": [
+        ""watching animals"",
+        ""standing"",
+        ""observing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Equus quagga"",
+          ""count_estimate"": ""3"",
+          ""confidence"": 0.98
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""observing animals"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+33,1深圳市南山区深圳野生动物园__WeCh161239_4.jpg,family ride train,[],green grass; trees; fence; sky,riding miniature train; sitting together,[],[],riding miniature train,[],[],"[{""activity"": ""riding miniature train"", ""count_estimate"": ""2"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""family ride train"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""green grass"",
+        ""trees"",
+        ""fence"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""riding miniature train"",
+        ""sitting together""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""riding miniature train"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+34,1深圳市南山区深圳野生动物园__WeCh161239_8.jpg,Child watching shark,Carcharhinus sp.,aquarium tank; mosaic tiles; water,observing marine life,[],Carcharhinus sp.,watching shark,[],"[{""scientific_name"": ""Carcharhinus sp."", ""count_estimate"": ""1"", ""confidence"": 0.85}]","[{""activity"": ""watching shark"", ""count_estimate"": ""1"", ""confidence"": 0.92}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Child watching shark"",
+      ""visible_species_in_image"": [
+        ""Carcharhinus sp.""
+      ],
+      ""landscape_elements"": [
+        ""aquarium tank"",
+        ""mosaic tiles"",
+        ""water""
+      ],
+      ""human_activities_in_image"": [
+        ""observing marine life""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Carcharhinus sp."",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""watching shark"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.92
+        }
+      ]
+    }
+  ]
+}",True,
+35,1深圳市南山区深圳野生动物园__YX1474_2.jpg,giraffe feeding child,Giraffa camelopardalis,zoo enclosure; trees; pathway,feeding giraffe; holding child; observing animals,[],Giraffa camelopardalis,feeding giraffe; holding child; observing animals,[],"[{""scientific_name"": ""Giraffa camelopardalis"", ""count_estimate"": ""3"", ""confidence"": 0.95}]","[{""activity"": ""feeding giraffe"", ""count_estimate"": ""1"", ""confidence"": 0.98}, {""activity"": ""holding child"", ""count_estimate"": ""1"", ""confidence"": 0.97}, {""activity"": ""observing animals"", ""count_estimate"": ""2"", ""confidence"": 0.96}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""giraffe feeding child"",
+      ""visible_species_in_image"": [
+        ""Giraffa camelopardalis""
+      ],
+      ""landscape_elements"": [
+        ""zoo enclosure"",
+        ""trees"",
+        ""pathway""
+      ],
+      ""human_activities_in_image"": [
+        ""feeding giraffe"",
+        ""holding child"",
+        ""observing animals""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Giraffa camelopardalis"",
+          ""count_estimate"": ""3"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""feeding giraffe"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        },
+        {
+          ""activity"": ""holding child"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.97
+        },
+        {
+          ""activity"": ""observing animals"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.96
+        }
+      ]
+    }
+  ]
+}",True,
+36,1深圳市南山区深圳野生动物园_whyailiumin_1.jpg,crowded event,[],[],sitting; watching performance; taking selfie,[],[],sitting; watching performance; taking selfie,[],[],"[{""activity"": ""sitting"", ""count_estimate"": ""many"", ""confidence"": 0.95}, {""activity"": ""watching performance"", ""count_estimate"": ""many"", ""confidence"": 0.92}, {""activity"": ""taking selfie"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""crowded event"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [],
+      ""human_activities_in_image"": [
+        ""sitting"",
+        ""watching performance"",
+        ""taking selfie""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""sitting"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""watching performance"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.92
+        },
+        {
+          ""activity"": ""taking selfie"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+37,1深圳市南山区深圳野生动物园_出差中_2.jpg,people riding horses,Equus ferus caballus,dirt track; fence; trees; sky,riding horses,[],Equus ferus caballus,riding horses,[],"[{""scientific_name"": ""Equus ferus caballus"", ""count_estimate"": ""3"", ""confidence"": 0.95}]","[{""activity"": ""riding horses"", ""count_estimate"": ""3"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""people riding horses"",
+      ""visible_species_in_image"": [
+        ""Equus ferus caballus""
+      ],
+      ""landscape_elements"": [
+        ""dirt track"",
+        ""fence"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""riding horses""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Equus ferus caballus"",
+          ""count_estimate"": ""3"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""riding horses"",
+          ""count_estimate"": ""3"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+38,1深圳市南山区深圳野生动物园_匿名用户30_6.jpg,child holding stick with parrot,Coracina novaehollandiae,paved path; fence; trees; lake; park,holding bird on stick; observing bird,[],Coracina novaehollandiae,holding bird on stick; observing bird,[],"[{""scientific_name"": ""Coracina novaehollandiae"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","[{""activity"": ""holding bird on stick"", ""count_estimate"": ""1"", ""confidence"": 0.98}, {""activity"": ""observing bird"", ""count_estimate"": ""1"", ""confidence"": 0.97}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""child holding stick with parrot"",
+      ""visible_species_in_image"": [
+        ""Coracina novaehollandiae""
+      ],
+      ""landscape_elements"": [
+        ""paved path"",
+        ""fence"",
+        ""trees"",
+        ""lake"",
+        ""park""
+      ],
+      ""human_activities_in_image"": [
+        ""holding bird on stick"",
+        ""observing bird""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Coracina novaehollandiae"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""holding bird on stick"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        },
+        {
+          ""activity"": ""observing bird"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.97
+        }
+      ]
+    }
+  ]
+}",True,
+39,20深圳市南山区南山公园_王小柱是真疯了_1.jpg,three people outdoors,[],trees; dirt slope,taking photo; standing together,[],[],taking photo,[],[],"[{""activity"": ""taking photo"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""three people outdoors"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""trees"",
+        ""dirt slope""
+      ],
+      ""human_activities_in_image"": [
+        ""taking photo"",
+        ""standing together""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""taking photo"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+40,21深圳市南山区中山公园_Smad_3.jpg,people playing badminton,[],paved path; trees; park,playing badminton; standing; walking,unknown,[],playing badminton; standing,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""multiple"", ""confidence"": 0.65}]",[],"[{""activity"": ""playing badminton"", ""count_estimate"": ""4"", ""confidence"": 0.95}, {""activity"": ""standing"", ""count_estimate"": ""2"", ""confidence"": 0.85}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""people playing badminton"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""paved path"",
+        ""trees"",
+        ""park""
+      ],
+      ""human_activities_in_image"": [
+        ""playing badminton"",
+        ""standing"",
+        ""walking""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.65
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""playing badminton"",
+          ""count_estimate"": ""4"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""standing"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.85
+        }
+      ]
+    }
+  ]
+}",True,
+41,25深圳市罗湖区洪湖公园_小娃撑游艇_19.jpg,Birdwatchers with cameras,[],river; rocks; trees; fence,photography; birdwatching,[],[],photography,[],[],"[{""activity"": ""photography"", ""count_estimate"": ""3"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Birdwatchers with cameras"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""river"",
+        ""rocks"",
+        ""trees"",
+        ""fence""
+      ],
+      ""human_activities_in_image"": [
+        ""photography"",
+        ""birdwatching""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""photography"",
+          ""count_estimate"": ""3"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+42,27深圳市罗湖区广东梧桐山国家森林公园_噼里啪啦_10.jpg,Rainy mountain path,[],stone steps; wooden railing; lush forest; foggy mountainside,sitting on bench; holding umbrella,[],[],sitting under umbrella,[],[],"[{""activity"": ""sitting under umbrella"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Rainy mountain path"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""stone steps"",
+        ""wooden railing"",
+        ""lush forest"",
+        ""foggy mountainside""
+      ],
+      ""human_activities_in_image"": [
+        ""sitting on bench"",
+        ""holding umbrella""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""sitting under umbrella"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+43,27深圳市罗湖区广东梧桐山国家森林公园_红糖泡泡_7.jpg,Decorative hanging figures,[],trees; grass,[],[],[],[],[],[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Decorative hanging figures"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""trees"",
+        ""grass""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+44,27深圳市罗湖区广东梧桐山国家森林公园_起名字好难呦_8.jpg,Person in police station,[],[],standing; posing for photo,[],[],standing,[],[],"[{""activity"": ""standing"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Person in police station"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [],
+      ""human_activities_in_image"": [
+        ""standing"",
+        ""posing for photo""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""standing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+45,28深圳市福田区深圳中心公园风景区_微微_1.jpg,hikers on mountain,[],mountain; grass; steps; lake; sky,sitting; photographing view,[],[],sitting; photographing view,[],[],"[{""activity"": ""sitting"", ""count_estimate"": ""3"", ""confidence"": 0.98}, {""activity"": ""photographing view"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""hikers on mountain"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""mountain"",
+        ""grass"",
+        ""steps"",
+        ""lake"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""sitting"",
+        ""photographing view""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""sitting"",
+          ""count_estimate"": ""3"",
+          ""confidence"": 0.98
+        },
+        {
+          ""activity"": ""photographing view"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+46,28深圳市福田区深圳中心公园风景区_精灵背包游侠_1.jpg,Selfie in a park,[],park; pond; trees; path,taking photo,[],[],selfie,[],[],"[{""activity"": ""selfie"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Selfie in a park"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""park"",
+        ""pond"",
+        ""trees"",
+        ""path""
+      ],
+      ""human_activities_in_image"": [
+        ""taking photo""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""selfie"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+47,29深圳市福田区深圳国际园林花卉博览园_LIUGE_3.jpg,Scream sculpture in park,[],wooden deck; trees; sky,walking; standing,[],[],walking,[],[],"[{""activity"": ""walking"", ""count_estimate"": ""multiple"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Scream sculpture in park"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""wooden deck"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""walking"",
+        ""standing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+48,29深圳市福田区深圳国际园林花卉博览园_Vivian小丸子_6.jpg,woman in garden,Dracaena marginata,white wall; stone path; potted plant,posing for photo; standing,Dracaena marginata,[],posing,"[{""scientific_name"": ""Dracaena marginata"", ""count_estimate"": ""1"", ""confidence"": 0.85}]",[],"[{""activity"": ""posing"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""woman in garden"",
+      ""visible_species_in_image"": [
+        ""Dracaena marginata""
+      ],
+      ""landscape_elements"": [
+        ""white wall"",
+        ""stone path"",
+        ""potted plant""
+      ],
+      ""human_activities_in_image"": [
+        ""posing for photo"",
+        ""standing""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Dracaena marginata"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""posing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+49,29深圳市福田区深圳国际园林花卉博览园_yuyanjia_4.jpg,Wall with portraits,[],wall; roof; light fixture,[],[],[],[],[],[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Wall with portraits"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""wall"",
+        ""roof"",
+        ""light fixture""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+50,29深圳市福田区深圳国际园林花卉博览园_月亮姐姐_2.jpg,Woman on swing,[],sand; trees; swings,sitting on swing,[],[],sitting on swing,[],[],"[{""activity"": ""sitting on swing"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Woman on swing"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""sand"",
+        ""trees"",
+        ""swings""
+      ],
+      ""human_activities_in_image"": [
+        ""sitting on swing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""sitting on swing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+51,2天津市蓟州区黄崖关长城_M40901_6.jpg,hiker on stairs,[],brick wall; stone steps,climbing stairs,[],[],climbing,[],[],"[{""activity"": ""climbing"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""hiker on stairs"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""brick wall"",
+        ""stone steps""
+      ],
+      ""human_activities_in_image"": [
+        ""climbing stairs""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""climbing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+52,2天津市蓟州区黄崖关长城_M6431_1.jpg,visitors on Great Wall,[],mountains; sky; Great Wall,walking; climbing stairs; touring,[],[],walking,[],[],"[{""activity"": ""walking"", ""count_estimate"": ""multiple"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""visitors on Great Wall"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""mountains"",
+        ""sky"",
+        ""Great Wall""
+      ],
+      ""human_activities_in_image"": [
+        ""walking"",
+        ""climbing stairs"",
+        ""touring""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+53,2天津市蓟州区黄崖关长城_M7263_3.jpg,person picking fruit,Malus domestica,orchard; trees; grass; sky,picking fruit; reaching up,Malus domestica,[],picking fruit,"[{""scientific_name"": ""Malus domestica"", ""count_estimate"": ""multiple"", ""confidence"": 0.85}]",[],"[{""activity"": ""picking fruit"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""person picking fruit"",
+      ""visible_species_in_image"": [
+        ""Malus domestica""
+      ],
+      ""landscape_elements"": [
+        ""orchard"",
+        ""trees"",
+        ""grass"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""picking fruit"",
+        ""reaching up""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Malus domestica"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""picking fruit"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+54,2天津市蓟州区黄崖关长城_不要努力的人_1.jpg,woman on Great Wall,[],Great Wall; mountain; sky,standing; posing,unknown,[],standing; posing,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""many"", ""confidence"": 0.5}]",[],"[{""activity"": ""standing"", ""count_estimate"": ""1"", ""confidence"": 0.9}, {""activity"": ""posing"", ""count_estimate"": ""1"", ""confidence"": 0.9}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""woman on Great Wall"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""Great Wall"",
+        ""mountain"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""standing"",
+        ""posing""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.5
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""standing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.9
+        },
+        {
+          ""activity"": ""posing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.9
+        }
+      ]
+    }
+  ]
+}",True,
+55,2天津市蓟州区黄崖关长城_开心大猫_1.jpg,statue and ancient wall,[],hill; ancient wall; sky,[],[],[],[],[],[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""statue and ancient wall"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""hill"",
+        ""ancient wall"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+56,2深圳市盐田区大梅沙海滨公园__ucwe199900_7.jpg,paddleboarding on beach,[],beach; water; mountains; building,paddling; sitting,[],[],paddling,[],[],"[{""activity"": ""paddling"", ""count_estimate"": ""2"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""paddleboarding on beach"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""beach"",
+        ""water"",
+        ""mountains"",
+        ""building""
+      ],
+      ""human_activities_in_image"": [
+        ""paddling"",
+        ""sitting""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""paddling"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+57,2深圳市盐田区大梅沙海滨公园_一米立子_6.jpg,couple walking on beach,[],beach; sand; sea; waves,walking; swimming; playing,[],[],walking; swimming,[],[],"[{""activity"": ""walking"", ""count_estimate"": ""2"", ""confidence"": 0.95}, {""activity"": ""swimming"", ""count_estimate"": ""multiple"", ""confidence"": 0.85}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""couple walking on beach"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""beach"",
+        ""sand"",
+        ""sea"",
+        ""waves""
+      ],
+      ""human_activities_in_image"": [
+        ""walking"",
+        ""swimming"",
+        ""playing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""swimming"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.85
+        }
+      ]
+    }
+  ]
+}",True,
+58,2深圳市盐田区大梅沙海滨公园_人鱼小公主_9.jpg,woman at beach,[],ocean; waves; beach,playing in water,[],[],playing in water,[],[],"[{""activity"": ""playing in water"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""woman at beach"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""ocean"",
+        ""waves"",
+        ""beach""
+      ],
+      ""human_activities_in_image"": [
+        ""playing in water""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""playing in water"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+59,31深圳市南山区燕晗山郊野公园_噼里啪啦_4.jpg,child playing stream,[],stream; bamboo forest; dirt path; rocks,playing; standing on rocks,[],[],standing on rocks,[],[],"[{""activity"": ""standing on rocks"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""child playing stream"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""stream"",
+        ""bamboo forest"",
+        ""dirt path"",
+        ""rocks""
+      ],
+      ""human_activities_in_image"": [
+        ""playing"",
+        ""standing on rocks""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""standing on rocks"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+60,33广东省深圳市翠竹公园_M12992_4.jpg,shooter at range,[],grass; barrier,aiming rifle,[],[],aiming rifle,[],[],"[{""activity"": ""aiming rifle"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""shooter at range"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""grass"",
+        ""barrier""
+      ],
+      ""human_activities_in_image"": [
+        ""aiming rifle""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""aiming rifle"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+61,33广东省深圳市翠竹公园_M12992_5.jpg,wooden statue in woods,[],trees; grass; dirt path,[],[],[],[],[],[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""wooden statue in woods"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""trees"",
+        ""grass"",
+        ""dirt path""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+62,33广东省深圳市翠竹公园_caiyingwendy_1.jpg,child on swing,[],trees; artificial grass; pathway,swinging; taking photos,[],[],playing on swing; photographing,[],[],"[{""activity"": ""playing on swing"", ""count_estimate"": ""1"", ""confidence"": 0.98}, {""activity"": ""photographing"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""child on swing"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""trees"",
+        ""artificial grass"",
+        ""pathway""
+      ],
+      ""human_activities_in_image"": [
+        ""swinging"",
+        ""taking photos""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""playing on swing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        },
+        {
+          ""activity"": ""photographing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+63,33广东省深圳市翠竹公园_吉祥锦鲤_3.jpg,water park scene,[],pool; blue shade cloth; sky; palm trees,swimming; playing water games,[],[],swimming,[],[],"[{""activity"": ""swimming"", ""count_estimate"": ""multiple"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""water park scene"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""pool"",
+        ""blue shade cloth"",
+        ""sky"",
+        ""palm trees""
+      ],
+      ""human_activities_in_image"": [
+        ""swimming"",
+        ""playing water games""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""swimming"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+64,33广东省深圳市翠竹公园_噼里啪啦_6.jpg,child on ropes course,[],wooden platform; forest; trees,climbing; taking photo,[],[],ropes course activity,[],[],"[{""activity"": ""ropes course activity"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""child on ropes course"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""wooden platform"",
+        ""forest"",
+        ""trees""
+      ],
+      ""human_activities_in_image"": [
+        ""climbing"",
+        ""taking photo""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""ropes course activity"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+65,33广东省深圳市翠竹公园_噼里啪啦_7.jpg,Man on rope bridge,[],forest; wooden platform; rope bridge,walking; crossing bridge,[],[],walking,[],[],"[{""activity"": ""walking"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Man on rope bridge"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""forest"",
+        ""wooden platform"",
+        ""rope bridge""
+      ],
+      ""human_activities_in_image"": [
+        ""walking"",
+        ""crossing bridge""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+66,33广东省深圳市翠竹公园_瑶啊摇啊摇_1.jpg,elderly woman walking,[],stone wall; paved path; trees; sky,walking; holding water bottle,[],[],walking,[],[],"[{""activity"": ""walking"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""elderly woman walking"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""stone wall"",
+        ""paved path"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""walking"",
+        ""holding water bottle""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+67,33广东省深圳市翠竹公园_瑶啊摇啊摇_2.jpg,elderly woman on stone wall,[],stone wall; tree; sky,sitting; posing for photo,[],[],sitting; posing for photo,[],[],"[{""activity"": ""sitting"", ""count_estimate"": ""1"", ""confidence"": 0.95}, {""activity"": ""posing for photo"", ""count_estimate"": ""1"", ""confidence"": 0.85}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""elderly woman on stone wall"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""stone wall"",
+        ""tree"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""sitting"",
+        ""posing for photo""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""sitting"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""posing for photo"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.85
+        }
+      ]
+    }
+  ]
+}",True,
+68,34深圳市龙岗区龙园_亲亲股太乐_20.jpg,woman in sunflower field,Helianthus annuus,sunflower field; trees; windmill; sky,posing for photo; standing among plants,Helianthus annuus,[],posing for photo,"[{""scientific_name"": ""Helianthus annuus"", ""count_estimate"": ""many"", ""confidence"": 0.95}]",[],"[{""activity"": ""posing for photo"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""woman in sunflower field"",
+      ""visible_species_in_image"": [
+        ""Helianthus annuus""
+      ],
+      ""landscape_elements"": [
+        ""sunflower field"",
+        ""trees"",
+        ""windmill"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""posing for photo"",
+        ""standing among plants""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Helianthus annuus"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""posing for photo"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+69,34深圳市龙岗区龙园_亲亲股太乐_7.jpg,Man in hanging swing,[],flower field; trees; grass,sitting; relaxing,unknown,[],sitting,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""many"", ""confidence"": 0.65}]",[],"[{""activity"": ""sitting"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Man in hanging swing"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""flower field"",
+        ""trees"",
+        ""grass""
+      ],
+      ""human_activities_in_image"": [
+        ""sitting"",
+        ""relaxing""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.65
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""sitting"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+70,34深圳市龙岗区龙园_亲亲股太乐_8.jpg,flower field with statues,Cosmos bipinnatus,flower field; buildings; tent; trees; sky,[],Cosmos bipinnatus,[],[],"[{""scientific_name"": ""Cosmos bipinnatus"", ""count_estimate"": ""many"", ""confidence"": 0.85}]",[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""flower field with statues"",
+      ""visible_species_in_image"": [
+        ""Cosmos bipinnatus""
+      ],
+      ""landscape_elements"": [
+        ""flower field"",
+        ""buildings"",
+        ""tent"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Cosmos bipinnatus"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+71,34深圳市龙岗区龙园_香港暑名演员_12.jpg,Man practicing martial arts,[],temple interior; statue,martial arts practice,[],[],martial arts practice,[],[],"[{""activity"": ""martial arts practice"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Man practicing martial arts"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""temple interior"",
+        ""statue""
+      ],
+      ""human_activities_in_image"": [
+        ""martial arts practice""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""martial arts practice"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+72,35深圳市罗湖区人民公园_Vivian小丸子_4.jpg,woman on bridge,[],bridge; sky; clouds; city buildings; railing,posing for photo; standing,[],[],posing,[],[],"[{""activity"": ""posing"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""woman on bridge"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""bridge"",
+        ""sky"",
+        ""clouds"",
+        ""city buildings"",
+        ""railing""
+      ],
+      ""human_activities_in_image"": [
+        ""posing for photo"",
+        ""standing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""posing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+73,36深圳市南山区月亮湾公园_何亚艮Gen_9.jpg,Outdoor event line,[],tents; trees; mountains; paved path; benches,queuing; standing; walking,Celosia argentea,[],queuing,"[{""scientific_name"": ""Celosia argentea"", ""count_estimate"": ""large patch"", ""confidence"": 0.95}]",[],"[{""activity"": ""queuing"", ""count_estimate"": ""many"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Outdoor event line"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""tents"",
+        ""trees"",
+        ""mountains"",
+        ""paved path"",
+        ""benches""
+      ],
+      ""human_activities_in_image"": [
+        ""queuing"",
+        ""standing"",
+        ""walking""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Celosia argentea"",
+          ""count_estimate"": ""large patch"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""queuing"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+74,37深圳市龙岗区布吉公园_tt梦幻小妖_1.jpg,Boats on lake with flowering tree,Cercis chinensis,lake; trees; sky,sitting in boats,Cercis chinensis,[],sitting in boats,"[{""scientific_name"": ""Cercis chinensis"", ""count_estimate"": ""1"", ""confidence"": 0.85}]",[],"[{""activity"": ""sitting in boats"", ""count_estimate"": ""multiple"", ""confidence"": 0.92}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Boats on lake with flowering tree"",
+      ""visible_species_in_image"": [
+        ""Cercis chinensis""
+      ],
+      ""landscape_elements"": [
+        ""lake"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""sitting in boats""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Cercis chinensis"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""sitting in boats"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.92
+        }
+      ]
+    }
+  ]
+}",True,
+75,39深圳市南山区四海公园_zoey_1.jpg,boy by lake,Canna indica,lake; grass; paved path; buildings,standing; looking,Canna indica,[],standing,"[{""scientific_name"": ""Canna indica"", ""count_estimate"": ""multiple"", ""confidence"": 0.95}]",[],"[{""activity"": ""standing"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""boy by lake"",
+      ""visible_species_in_image"": [
+        ""Canna indica""
+      ],
+      ""landscape_elements"": [
+        ""lake"",
+        ""grass"",
+        ""paved path"",
+        ""buildings""
+      ],
+      ""human_activities_in_image"": [
+        ""standing"",
+        ""looking""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Canna indica"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""standing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+76,3深圳市盐田区小梅沙海滨乐园_1866129_1.jpg,Decorative display panel,[],paved ground,[],[],[],[],[],[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Decorative display panel"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""paved ground""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+77,3深圳市盐田区小梅沙海滨乐园_M24826_7.jpg,group in traditional dress,[],beach; sand; mountains; ocean,standing; posing for photo,[],[],posing for photo,[],[],"[{""activity"": ""posing for photo"", ""count_estimate"": ""multiple"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""group in traditional dress"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""beach"",
+        ""sand"",
+        ""mountains"",
+        ""ocean""
+      ],
+      ""human_activities_in_image"": [
+        ""standing"",
+        ""posing for photo""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""posing for photo"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+78,3深圳市盐田区小梅沙海滨乐园_M27loufq_1.jpg,inflatable characters outside,[],paved ground; blue building; trees; sky,standing near inflatable; walking,[],[],standing,[],[],"[{""activity"": ""standing"", ""count_estimate"": ""1"", ""confidence"": 0.85}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""inflatable characters outside"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""paved ground"",
+        ""blue building"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""standing near inflatable"",
+        ""walking""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""standing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.85
+        }
+      ]
+    }
+  ]
+}",True,
+79,3深圳市盐田区小梅沙海滨乐园_krawy_2.jpg,flying boat ride,[],sea; sand beach; buildings; mountains,riding flyboard; sitting on jet ski; walking on beach,[],[],riding flyboard; sitting on jet ski; walking on beach,[],[],"[{""activity"": ""riding flyboard"", ""count_estimate"": ""1"", ""confidence"": 0.95}, {""activity"": ""sitting on jet ski"", ""count_estimate"": ""1"", ""confidence"": 0.85}, {""activity"": ""walking on beach"", ""count_estimate"": ""multiple"", ""confidence"": 0.75}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""flying boat ride"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""sea"",
+        ""sand beach"",
+        ""buildings"",
+        ""mountains""
+      ],
+      ""human_activities_in_image"": [
+        ""riding flyboard"",
+        ""sitting on jet ski"",
+        ""walking on beach""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""riding flyboard"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""sitting on jet ski"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.85
+        },
+        {
+          ""activity"": ""walking on beach"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.75
+        }
+      ]
+    }
+  ]
+}",True,
+80,40深圳市龙华区龙华公园_M23810_1.jpg,breakdancing competition,[],indoor floor; banner,breakdancing; watching performance,[],[],breakdancing; watching,[],[],"[{""activity"": ""breakdancing"", ""count_estimate"": ""1"", ""confidence"": 0.95}, {""activity"": ""watching"", ""count_estimate"": ""multiple"", ""confidence"": 0.92}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""breakdancing competition"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""indoor floor"",
+        ""banner""
+      ],
+      ""human_activities_in_image"": [
+        ""breakdancing"",
+        ""watching performance""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""breakdancing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""watching"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.92
+        }
+      ]
+    }
+  ]
+}",True,
+81,42深圳市南山区大沙河公园_享受生活2013_3.jpg,Rowers on lake,[],lake; trees; grass; bridge,rowing,[],[],rowing,[],[],"[{""activity"": ""rowing"", ""count_estimate"": ""4"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Rowers on lake"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""lake"",
+        ""trees"",
+        ""grass"",
+        ""bridge""
+      ],
+      ""human_activities_in_image"": [
+        ""rowing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""rowing"",
+          ""count_estimate"": ""4"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+82,44深圳市宝安区平峦山公园_何亚艮Gen_1.jpg,hiker at rock face,[],rock formation; vegetation; sky,taking photo; standing,unknown,[],taking photo,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""multiple"", ""confidence"": 0.65}]",[],"[{""activity"": ""taking photo"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""hiker at rock face"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""rock formation"",
+        ""vegetation"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""taking photo"",
+        ""standing""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.65
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""taking photo"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+83,48深圳市石芽岭公园_噼里啪啦_3.jpg,child outdoors,[],path; trees; foliage; stone wall,standing,[],[],standing,[],[],"[{""activity"": ""standing"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""child outdoors"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""path"",
+        ""trees"",
+        ""foliage"",
+        ""stone wall""
+      ],
+      ""human_activities_in_image"": [
+        ""standing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""standing"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+84,4深圳市福田区深圳湾公园_DTYYing_3.jpg,people digging sand,[],beach; sand; sky; distant hills,digging in sand; playing,[],[],digging,[],[],"[{""activity"": ""digging"", ""count_estimate"": ""2"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""people digging sand"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""beach"",
+        ""sand"",
+        ""sky"",
+        ""distant hills""
+      ],
+      ""human_activities_in_image"": [
+        ""digging in sand"",
+        ""playing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""digging"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+85,50深圳市南山区荔林公园_mike1010_1.jpg,Person walking up stairs,Bauhinia blakeana,stone staircase; bamboo; hedge; trees,walking,Bauhinia blakeana; Bambusa sp.,[],walking,"[{""scientific_name"": ""Bauhinia blakeana"", ""count_estimate"": ""1"", ""confidence"": 0.85}, {""scientific_name"": ""Bambusa sp."", ""count_estimate"": ""multiple"", ""confidence"": 0.9}]",[],"[{""activity"": ""walking"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Person walking up stairs"",
+      ""visible_species_in_image"": [
+        ""Bauhinia blakeana""
+      ],
+      ""landscape_elements"": [
+        ""stone staircase"",
+        ""bamboo"",
+        ""hedge"",
+        ""trees""
+      ],
+      ""human_activities_in_image"": [
+        ""walking""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Bauhinia blakeana"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.85
+        },
+        {
+          ""scientific_name"": ""Bambusa sp."",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.9
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+86,5深圳市罗湖区仙湖植物园_233539_5.jpg,Statue in rose garden,Rosa,garden; statue; pink roses; red roses,[],Rosa,[],[],"[{""scientific_name"": ""Rosa"", ""count_estimate"": ""multiple"", ""confidence"": 0.85}]",[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Statue in rose garden"",
+      ""visible_species_in_image"": [
+        ""Rosa""
+      ],
+      ""landscape_elements"": [
+        ""garden"",
+        ""statue"",
+        ""pink roses"",
+        ""red roses""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Rosa"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+87,5深圳市罗湖区仙湖植物园_噼里啪啦_31.jpg,garden scarecrow,Phyllostachys nigra,gravel path; bamboo grove; flower beds; rocks,[],Phyllostachys nigra; unknown flowering plant,[],[],"[{""scientific_name"": ""Phyllostachys nigra"", ""count_estimate"": ""multiple"", ""confidence"": 0.92}, {""scientific_name"": ""unknown flowering plant"", ""count_estimate"": ""several"", ""confidence"": 0.75}]",[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""garden scarecrow"",
+      ""visible_species_in_image"": [
+        ""Phyllostachys nigra""
+      ],
+      ""landscape_elements"": [
+        ""gravel path"",
+        ""bamboo grove"",
+        ""flower beds"",
+        ""rocks""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Phyllostachys nigra"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.92
+        },
+        {
+          ""scientific_name"": ""unknown flowering plant"",
+          ""count_estimate"": ""several"",
+          ""confidence"": 0.75
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+88,7深圳市龙岗区西涌沙滩_伊礼まさき_1.jpg,people on jet ski,[],beach; ocean; sky; hills,riding jet ski; walking,[],[],riding jet ski; walking,[],[],"[{""activity"": ""riding jet ski"", ""count_estimate"": ""1"", ""confidence"": 0.95}, {""activity"": ""walking"", ""count_estimate"": ""2"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""people on jet ski"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""beach"",
+        ""ocean"",
+        ""sky"",
+        ""hills""
+      ],
+      ""human_activities_in_image"": [
+        ""riding jet ski"",
+        ""walking""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""riding jet ski"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        },
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+89,8深圳市南山区青青世界_300949_9.jpg,boy drinking coconut,[],paved path; umbrella; trees,drinking; sitting,[],[],drinking,[],[],"[{""activity"": ""drinking"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""boy drinking coconut"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""paved path"",
+        ""umbrella"",
+        ""trees""
+      ],
+      ""human_activities_in_image"": [
+        ""drinking"",
+        ""sitting""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""drinking"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+90,8深圳市南山区青青世界_M251263_3.jpg,child jumping near flowers,Ipomoea cairica,stone wall; pathway; dirt ground; metal fence,jumping; playing,Ipomoea cairica,[],jumping,"[{""scientific_name"": ""Ipomoea cairica"", ""count_estimate"": ""many"", ""confidence"": 0.85}]",[],"[{""activity"": ""jumping"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""child jumping near flowers"",
+      ""visible_species_in_image"": [
+        ""Ipomoea cairica""
+      ],
+      ""landscape_elements"": [
+        ""stone wall"",
+        ""pathway"",
+        ""dirt ground"",
+        ""metal fence""
+      ],
+      ""human_activities_in_image"": [
+        ""jumping"",
+        ""playing""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Ipomoea cairica"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""jumping"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+91,8深圳市南山区青青世界_匿名用户3_3.jpg,person pushing cart,[],paved path; wooden post,pushing cart; walking,[],[],pushing cart,[],[],"[{""activity"": ""pushing cart"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""person pushing cart"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""paved path"",
+        ""wooden post""
+      ],
+      ""human_activities_in_image"": [
+        ""pushing cart"",
+        ""walking""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""pushing cart"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+92,8深圳市南山区青青世界_无月轩睿_3.jpg,artwork of girl with lotus,[],[],[],Nelumbo nucifera,[],[],"[{""scientific_name"": ""Nelumbo nucifera"", ""count_estimate"": ""multiple"", ""confidence"": 0.95}]",[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""artwork of girl with lotus"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""Nelumbo nucifera"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+93,8深圳市南山区青青世界_红红火火4982_1.jpg,Child feeding rabbits,Oryctolagus cuniculus,paved path; building; trees; sky,feeding animals; standing,[],Oryctolagus cuniculus,feeding,[],"[{""scientific_name"": ""Oryctolagus cuniculus"", ""count_estimate"": ""2"", ""confidence"": 0.95}]","[{""activity"": ""feeding"", ""count_estimate"": ""1"", ""confidence"": 0.98}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Child feeding rabbits"",
+      ""visible_species_in_image"": [
+        ""Oryctolagus cuniculus""
+      ],
+      ""landscape_elements"": [
+        ""paved path"",
+        ""building"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [
+        ""feeding animals"",
+        ""standing""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [
+        {
+          ""scientific_name"": ""Oryctolagus cuniculus"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.95
+        }
+      ],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""feeding"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.98
+        }
+      ]
+    }
+  ]
+}",True,
+94,8深圳市南山区青青世界_绿叶飘零_1.jpg,People on rope bridge,[],rope bridge; waterway; trees; foliage,crossing bridge; posing for photo,unknown,[],walking across bridge,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""many"", ""confidence"": 0.85}]",[],"[{""activity"": ""walking across bridge"", ""count_estimate"": ""2"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""People on rope bridge"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""rope bridge"",
+        ""waterway"",
+        ""trees"",
+        ""foliage""
+      ],
+      ""human_activities_in_image"": [
+        ""crossing bridge"",
+        ""posing for photo""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""many"",
+          ""confidence"": 0.85
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""walking across bridge"",
+          ""count_estimate"": ""2"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+95,8深圳市南山区青青世界_苏丹港汉娜_4.jpg,visitor at dinosaur exhibit,[],wooden platform; rainforest; dinosaur statue,viewing exhibit; holding umbrella,[],[],viewing exhibit,[],[],"[{""activity"": ""viewing exhibit"", ""count_estimate"": ""1"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""visitor at dinosaur exhibit"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""wooden platform"",
+        ""rainforest"",
+        ""dinosaur statue""
+      ],
+      ""human_activities_in_image"": [
+        ""viewing exhibit"",
+        ""holding umbrella""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""viewing exhibit"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+96,9深圳市南山区深圳人才公园_Cteraix_3.jpg,park sculpture,[],lawn; trees; sky; buildings,walking,[],[],walking,[],[],"[{""activity"": ""walking"", ""count_estimate"": ""1"", ""confidence"": 0.85}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""park sculpture"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""lawn"",
+        ""trees"",
+        ""sky"",
+        ""buildings""
+      ],
+      ""human_activities_in_image"": [
+        ""walking""
+      ],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""1"",
+          ""confidence"": 0.85
+        }
+      ]
+    }
+  ]
+}",True,
+97,9深圳市南山区深圳人才公园_Yeliq111_3.jpg,bronze statues in park,[],trees; paved ground; skyscraper,[],[],[],[],[],[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""bronze statues in park"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""trees"",
+        ""paved ground"",
+        ""skyscraper""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+98,9深圳市南山区深圳人才公园_pncsp_3.jpg,Newton statue garden,unknown tree,lawn; paved path; trees; sky,[],unknown,[],[],"[{""scientific_name"": ""unknown"", ""count_estimate"": ""multiple"", ""confidence"": 0.5}]",[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""Newton statue garden"",
+      ""visible_species_in_image"": [
+        ""unknown tree""
+      ],
+      ""landscape_elements"": [
+        ""lawn"",
+        ""paved path"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": [],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.5
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": []
+    }
+  ]
+}",True,
+99,9深圳市南山区深圳人才公园_姜如意_7.jpg,People walking on a bridge,[],bridge; river; trees; sky; buildings,walking; strolling,unknown,[],walking,"[{""scientific_name"": ""unknown"", ""count_estimate"": ""multiple"", ""confidence"": 0.45}]",[],"[{""activity"": ""walking"", ""count_estimate"": ""6"", ""confidence"": 0.95}]","{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""People walking on a bridge"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""bridge"",
+        ""river"",
+        ""trees"",
+        ""sky"",
+        ""buildings""
+      ],
+      ""human_activities_in_image"": [
+        ""walking"",
+        ""strolling""
+      ],
+      ""plants_detected"": [
+        {
+          ""scientific_name"": ""unknown"",
+          ""count_estimate"": ""multiple"",
+          ""confidence"": 0.45
+        }
+      ],
+      ""animals_detected"": [],
+      ""human_activities_detected"": [
+        {
+          ""activity"": ""walking"",
+          ""count_estimate"": ""6"",
+          ""confidence"": 0.95
+        }
+      ]
+    }
+  ]
+}",True,
+100,9深圳市南山区深圳人才公园_第二号爱人_2.jpg,bronze statues in park,[],paved path; trees; sky,[],[],[],[],[],[],[],"{
+  ""image_analysis_per_image"": [
+    {
+      ""image_summary"": ""bronze statues in park"",
+      ""visible_species_in_image"": [],
+      ""landscape_elements"": [
+        ""paved path"",
+        ""trees"",
+        ""sky""
+      ],
+      ""human_activities_in_image"": []
+    }
+  ]
+}",True,

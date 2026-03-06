@@ -1,0 +1,2626 @@
+﻿source_row,用户名,emotions,influence_of_emotions,text_species_mentions,feeling_correlated_to_text_species,text_activities_or_facilities,feeling_correlated_to_text_activities_or_facilities,comment_sentiment_score_0_to_1,raw_response,parse_ok,error
+1,1天津市蓟州区盘山_Winnie0222,Excitement; Contentment; Amusement,Discounted tickets,[],[],climbing; viewing scenery; checking in spots; staying at homestays; dining,climbing - relaxing; viewing scenery - broadening perspective; checking in spots - good for photos; staying at homestays - convenient; dining - affordable,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Excitement"",
+      ""Contentment"",
+      ""Amusement""
+    ],
+    ""influence_of_emotions"": ""Discounted tickets"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""climbing"",
+      ""viewing scenery"",
+      ""checking in spots"",
+      ""staying at homestays"",
+      ""dining""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""climbing - relaxing"",
+      ""viewing scenery - broadening perspective"",
+      ""checking in spots - good for photos"",
+      ""staying at homestays - convenient"",
+      ""dining - affordable""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+2,1天津市蓟州区盘山_不可触碰撞的鱼,Awe; Wonder; Appreciation,Scenic beauty,[],[],Hiking; Climbing steps; Wu Yun Tower; Small theater ruins; Performing arts,Wu Yun Tower - Awe; Small theater ruins - Historical interest; Performing arts - Cultural appreciation,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Awe"",
+      ""Wonder"",
+      ""Appreciation""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Climbing steps"",
+      ""Wu Yun Tower"",
+      ""Small theater ruins"",
+      ""Performing arts""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Wu Yun Tower - Awe"",
+      ""Small theater ruins - Historical interest"",
+      ""Performing arts - Cultural appreciation""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+3,1天津市蓟州区盘山_不可触碰撞的鱼,Appreciation; Contentment; Awe,Artistic craftsmanship,[],[],sculptures; relief carvings; mountain paths; forest areas; rocks; pines; tourism viewing,sculptures - admiration; relief carvings - vividness; mountain paths - distribution; forest areas - harmony; rocks - complementary beauty; pines - scenic contrast; tourism viewing - enjoyment,0.92,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Appreciation"",
+      ""Contentment"",
+      ""Awe""
+    ],
+    ""influence_of_emotions"": ""Artistic craftsmanship"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""sculptures"",
+      ""relief carvings"",
+      ""mountain paths"",
+      ""forest areas"",
+      ""rocks"",
+      ""pines"",
+      ""tourism viewing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""sculptures - admiration"",
+      ""relief carvings - vividness"",
+      ""mountain paths - distribution"",
+      ""forest areas - harmony"",
+      ""rocks - complementary beauty"",
+      ""pines - scenic contrast"",
+      ""tourism viewing - enjoyment""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.92
+    }
+  }
+}",True,
+4,1天津市蓟州区盘山_不可触碰撞的鱼,Admiration; Awe; Contentment,Historical grandeur,Ginkgo biloba,Ginkgo biloba - Ancient majesty,Temple visit; Tourism; Religious pilgrimage; Cultural heritage viewing; Poetry appreciation,Temple visit - Spiritual reverence; Tourism - Aesthetic delight; Religious pilgrimage - Devotional peace; Cultural heritage viewing - Historical awe; Poetry appreciation - Cultural pride,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Awe"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Historical grandeur"",
+    ""text_species_mentions"": [
+      ""Ginkgo biloba""
+    ],
+    ""feeling_correlated_to_text_species"": [
+      ""Ginkgo biloba - Ancient majesty""
+    ],
+    ""text_activities_or_facilities"": [
+      ""Temple visit"",
+      ""Tourism"",
+      ""Religious pilgrimage"",
+      ""Cultural heritage viewing"",
+      ""Poetry appreciation""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Temple visit - Spiritual reverence"",
+      ""Tourism - Aesthetic delight"",
+      ""Religious pilgrimage - Devotional peace"",
+      ""Cultural heritage viewing - Historical awe"",
+      ""Poetry appreciation - Cultural pride""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+5,1天津市蓟州区盘山_不可触碰撞的鱼,Admiration; Contentment; Awe,Historical grandeur,[],[],visiting temple; cable car ride; stone inscriptions; statues; monastery complex,visiting temple - Awe; cable car ride - Scenic view; stone inscriptions - Historical pride; statues - Reverence; monastery complex - Grandeur,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Contentment"",
+      ""Awe""
+    ],
+    ""influence_of_emotions"": ""Historical grandeur"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""visiting temple"",
+      ""cable car ride"",
+      ""stone inscriptions"",
+      ""statues"",
+      ""monastery complex""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""visiting temple - Awe"",
+      ""cable car ride - Scenic view"",
+      ""stone inscriptions - Historical pride"",
+      ""statues - Reverence"",
+      ""monastery complex - Grandeur""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+6,1天津市蓟州区盘山_不可触碰撞的鱼,Awe; Gratitude; Contentment,Spiritual atmosphere,[],[],Cable car ride; Temple visit; Hiking; Prayer plaques; Bell pavilion; Stone stele; Buddhist stupa,Cable car ride - Wonder; Temple visit - Serenity; Hiking - Challenge; Prayer plaques - Devotion; Bell pavilion - Reverence; Stone stele - History; Buddhist stupa - Peace,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Awe"",
+      ""Gratitude"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Spiritual atmosphere"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Cable car ride"",
+      ""Temple visit"",
+      ""Hiking"",
+      ""Prayer plaques"",
+      ""Bell pavilion"",
+      ""Stone stele"",
+      ""Buddhist stupa""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car ride - Wonder"",
+      ""Temple visit - Serenity"",
+      ""Hiking - Challenge"",
+      ""Prayer plaques - Devotion"",
+      ""Bell pavilion - Reverence"",
+      ""Stone stele - History"",
+      ""Buddhist stupa - Peace""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+7,1天津市蓟州区盘山_不可触碰撞的鱼,Admiration; Pride; Contentment,Historical grandeur,[],[],visiting temples; building pagodas; gardens; mountain climbing; writing poems; inscribing stones; carving inscriptions,visiting temples - awe; building pagodas - reverence; gardens - appreciation; mountain climbing - admiration; writing poems - inspiration; inscribing stones - legacy; carving inscriptions - preservation,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Pride"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Historical grandeur"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""visiting temples"",
+      ""building pagodas"",
+      ""gardens"",
+      ""mountain climbing"",
+      ""writing poems"",
+      ""inscribing stones"",
+      ""carving inscriptions""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""visiting temples - awe"",
+      ""building pagodas - reverence"",
+      ""gardens - appreciation"",
+      ""mountain climbing - admiration"",
+      ""writing poems - inspiration"",
+      ""inscribing stones - legacy"",
+      ""carving inscriptions - preservation""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+8,1天津市蓟州区盘山_Mjr1022,Pride; Satisfaction; Contentment,Scenic beauty,[],[],climbing mountain; cloud pine cable car; small South Heaven Gate; main peak; back mountain route; Mercedes-Benz business car; farmhouse stays,climbing mountain - enjoyable; cloud pine cable car - crowded; small South Heaven Gate - impressive; main peak - historic; back mountain route - recommended for elderly; Mercedes-Benz business car - convenient; farmhouse stays - cost saving,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Pride"",
+      ""Satisfaction"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""climbing mountain"",
+      ""cloud pine cable car"",
+      ""small South Heaven Gate"",
+      ""main peak"",
+      ""back mountain route"",
+      ""Mercedes-Benz business car"",
+      ""farmhouse stays""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""climbing mountain - enjoyable"",
+      ""cloud pine cable car - crowded"",
+      ""small South Heaven Gate - impressive"",
+      ""main peak - historic"",
+      ""back mountain route - recommended for elderly"",
+      ""Mercedes-Benz business car - convenient"",
+      ""farmhouse stays - cost saving""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+9,1天津市蓟州区盘山_爱旅游的大白鲸,Pride; Contentment; Relaxation,Reaching summit,Pinus,Pinus - Peaceful sounds,Hiking; Climbing stairs; Resting; Ski lift; Fountains; Rock formations; Temple; Parking lot; Toilet; Walking,Hiking - Cool shade; Climbing stairs - Challenging; Resting - Convenient break; Ski lift - Efficient transport; Fountains - Playful for kids; Rock formations - Scenic views; Temple - Spiritual stop; Parking lot - Start point; Toilet - Necessary facility; Walking - Accompanied by pine waves,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Pride"",
+      ""Contentment"",
+      ""Relaxation""
+    ],
+    ""influence_of_emotions"": ""Reaching summit"",
+    ""text_species_mentions"": [
+      ""Pinus""
+    ],
+    ""feeling_correlated_to_text_species"": [
+      ""Pinus - Peaceful sounds""
+    ],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Climbing stairs"",
+      ""Resting"",
+      ""Ski lift"",
+      ""Fountains"",
+      ""Rock formations"",
+      ""Temple"",
+      ""Parking lot"",
+      ""Toilet"",
+      ""Walking""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Cool shade"",
+      ""Climbing stairs - Challenging"",
+      ""Resting - Convenient break"",
+      ""Ski lift - Efficient transport"",
+      ""Fountains - Playful for kids"",
+      ""Rock formations - Scenic views"",
+      ""Temple - Spiritual stop"",
+      ""Parking lot - Start point"",
+      ""Toilet - Necessary facility"",
+      ""Walking - Accompanied by pine waves""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+10,1天津市蓟州区盘山_老玩童,Admiration; Pride,Historical grandeur,[],[],mountain climbing; tourism; leisure,mountain climbing - reverence; tourism - appreciation; leisure - enjoyment,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Pride""
+    ],
+    ""influence_of_emotions"": ""Historical grandeur"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""mountain climbing"",
+      ""tourism"",
+      ""leisure""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""mountain climbing - reverence"",
+      ""tourism - appreciation"",
+      ""leisure - enjoyment""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+11,1天津市蓟州区盘山_小车迷,Disappointment; Contentment,Crowds and fatigue,[],[],Cable car; Hiking; Queueing,Cable car - Frustration; Hiking - Exhaustion; Queueing - Delay,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Disappointment"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Crowds and fatigue"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Cable car"",
+      ""Hiking"",
+      ""Queueing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car - Frustration"",
+      ""Hiking - Exhaustion"",
+      ""Queueing - Delay""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+12,1天津市蓟州区盘山_张家老飞侠,Appreciation; Satisfaction; Relaxation,Scenic beauty,[],[],cable car; farmhouse inn; fountain,cable car - Convenient; farmhouse inn - Comfortable; fountain - Scenic,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Appreciation"",
+      ""Satisfaction"",
+      ""Relaxation""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""cable car"",
+      ""farmhouse inn"",
+      ""fountain""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""cable car - Convenient"",
+      ""farmhouse inn - Comfortable"",
+      ""fountain - Scenic""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+13,1天津市蓟州区盘山_叁剑飚血,Contentment; Annoyance,Crowd density,[],[],Queuing; Hiking; Ticket purchasing,Queuing - Frustration; Hiking - Recommendation; Ticket purchasing - Caution,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Annoyance""
+    ],
+    ""influence_of_emotions"": ""Crowd density"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Queuing"",
+      ""Hiking"",
+      ""Ticket purchasing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Queuing - Frustration"",
+      ""Hiking - Recommendation"",
+      ""Ticket purchasing - Caution""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+14,1天津市蓟州区盘山_旅行家系我,Relief; Amusement; Satisfaction,Unexpected delay,[],[],Bus ride; Highway travel; Traffic jam,Bus ride - Frustration; Highway travel - Surprise; Traffic jam - Annoyance,0.75,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Relief"",
+      ""Amusement"",
+      ""Satisfaction""
+    ],
+    ""influence_of_emotions"": ""Unexpected delay"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Bus ride"",
+      ""Highway travel"",
+      ""Traffic jam""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Bus ride - Frustration"",
+      ""Highway travel - Surprise"",
+      ""Traffic jam - Annoyance""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.75
+    }
+  }
+}",True,
+15,1天津市蓟州区盘山_水晶石水晶石,Contentment; Appreciation,Shady shade,[],[],walking; photography; cable car; eco-friendly bus,walking - scenic viewing; photography - recommended; cable car - convenient; eco-friendly bus - alternative option,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Appreciation""
+    ],
+    ""influence_of_emotions"": ""Shady shade"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""walking"",
+      ""photography"",
+      ""cable car"",
+      ""eco-friendly bus""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""walking - scenic viewing"",
+      ""photography - recommended"",
+      ""cable car - convenient"",
+      ""eco-friendly bus - alternative option""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+16,1天津市蓟州区盘山_把剑长歌,Appreciation; Relief; Amusement,Scenery and effort,Oriental magpie-robin,Oriental magpie-robin - Joyful song,Hiking; Cable car,Hiking - Tiring but rewarding; Cable car - Convenient option,0.75,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Appreciation"",
+      ""Relief"",
+      ""Amusement""
+    ],
+    ""influence_of_emotions"": ""Scenery and effort"",
+    ""text_species_mentions"": [
+      ""Oriental magpie-robin""
+    ],
+    ""feeling_correlated_to_text_species"": [
+      ""Oriental magpie-robin - Joyful song""
+    ],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Cable car""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Tiring but rewarding"",
+      ""Cable car - Convenient option""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.75
+    }
+  }
+}",True,
+17,1天津市蓟州区盘山__CFT04873,Exhaustion; Gratitude; Caution,Physical fatigue,[],[],climbing Mount Pan Shan; visiting Wansong Temple; climbing Guayue Peak; riding cable car,climbing - too tiring; Wansong Temple - recommended stop; Guayue Peak - little scenery; cable car - long queue,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Exhaustion"",
+      ""Gratitude"",
+      ""Caution""
+    ],
+    ""influence_of_emotions"": ""Physical fatigue"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""climbing Mount Pan Shan"",
+      ""visiting Wansong Temple"",
+      ""climbing Guayue Peak"",
+      ""riding cable car""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""climbing - too tiring"",
+      ""Wansong Temple - recommended stop"",
+      ""Guayue Peak - little scenery"",
+      ""cable car - long queue""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+18,1天津市蓟州区盘山_水儿Doris,Admiration; Pride,Historical legacy,[],[],Tourism; Leisure; Cultural heritage,Tourism - Appreciation; Leisure - Relaxation; Cultural heritage - Pride,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Pride""
+    ],
+    ""influence_of_emotions"": ""Historical legacy"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Tourism"",
+      ""Leisure"",
+      ""Cultural heritage""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Tourism - Appreciation"",
+      ""Leisure - Relaxation"",
+      ""Cultural heritage - Pride""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+19,1天津市蓟州区盘山_海纳百川,Awe; Admiration,Grandeur of peaks,[],[],Climbing peaks; Viewing sunrise; Viewing city lights; Visiting temple; Listening to bell tolls; Observing mountain formations,Climbing - Awe; Sunrise - Wonder; City lights - Beauty; Temple - Reverence; Bell - Serenity; Mountain formations - Admiration,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Awe"",
+      ""Admiration""
+    ],
+    ""influence_of_emotions"": ""Grandeur of peaks"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Climbing peaks"",
+      ""Viewing sunrise"",
+      ""Viewing city lights"",
+      ""Visiting temple"",
+      ""Listening to bell tolls"",
+      ""Observing mountain formations""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Climbing - Awe"",
+      ""Sunrise - Wonder"",
+      ""City lights - Beauty"",
+      ""Temple - Reverence"",
+      ""Bell - Serenity"",
+      ""Mountain formations - Admiration""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+20,1天津市蓟州区盘山_海纳百川,Admiration; Pride,Historical grandeur,[],[],visiting temples; climbing mountains; reading poetry; royal tours,temples - reverence; mountains - awe; poetry - inspiration; tours - appreciation,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Pride""
+    ],
+    ""influence_of_emotions"": ""Historical grandeur"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""visiting temples"",
+      ""climbing mountains"",
+      ""reading poetry"",
+      ""royal tours""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""temples - reverence"",
+      ""mountains - awe"",
+      ""poetry - inspiration"",
+      ""tours - appreciation""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+21,1天津市蓟州区盘山_果汁分你一半,Admiration; Pride; Contentment,Historical grandeur,[],[],hiking; visiting scenic spots; reading poetry; cultural exploration,hiking - awe; visiting scenic spots - pride; reading poetry - appreciation; cultural exploration - fascination,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Pride"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Historical grandeur"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""hiking"",
+      ""visiting scenic spots"",
+      ""reading poetry"",
+      ""cultural exploration""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""hiking - awe"",
+      ""visiting scenic spots - pride"",
+      ""reading poetry - appreciation"",
+      ""cultural exploration - fascination""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+22,1天津市蓟州区盘山_绝对正经人,Admiration; Contentment,Historical grandeur,[],[],hiking; cultural tourism,hiking - awe; cultural tourism - appreciation,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Historical grandeur"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""hiking"",
+      ""cultural tourism""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""hiking - awe"",
+      ""cultural tourism - appreciation""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+23,1天津市蓟州区盘山_老少皆宜程世荣,Contentment; Anticipation,Quiet atmosphere,[],[],Visiting; Touring,Visiting - Appreciation; Touring - Anticipation,0.75,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Anticipation""
+    ],
+    ""influence_of_emotions"": ""Quiet atmosphere"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Visiting"",
+      ""Touring""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Visiting - Appreciation"",
+      ""Touring - Anticipation""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.75
+    }
+  }
+}",True,
+24,1天津市蓟州区盘山_果汁分你一半,Awe; Contentment,Scenic beauty,pine tree,pine tree - peaceful presence,hiking; waterfalls; scenic viewing,hiking - serene exploration; waterfalls - refreshing sight; scenic viewing - awe-inspiring,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Awe"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [
+      ""pine tree""
+    ],
+    ""feeling_correlated_to_text_species"": [
+      ""pine tree - peaceful presence""
+    ],
+    ""text_activities_or_facilities"": [
+      ""hiking"",
+      ""waterfalls"",
+      ""scenic viewing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""hiking - serene exploration"",
+      ""waterfalls - refreshing sight"",
+      ""scenic viewing - awe-inspiring""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+25,1天津市蓟州区盘山_钱的女人,Gratitude; Contentment; Excitement,Overcoming regret,[],[],cable car ride; hiking; night view,cable car ride - highly recommended; hiking - enjoyable and relaxing; night view - peaceful beauty,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Gratitude"",
+      ""Contentment"",
+      ""Excitement""
+    ],
+    ""influence_of_emotions"": ""Overcoming regret"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""cable car ride"",
+      ""hiking"",
+      ""night view""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""cable car ride - highly recommended"",
+      ""hiking - enjoyable and relaxing"",
+      ""night view - peaceful beauty""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+26,1天津市蓟州区盘山_五岳之首山山,Contentment; Gratitude; Amusement,Family outing success,fish,fish - feeding pleasure,hiking; fountain; waterfall; artificial lake; parking lot; food and drink stalls,hiking - scenic view; fountain - cultural interest; waterfall - beautiful scenery; artificial lake - fun activity; parking lot - convenient; food and drink stalls - practical but advised against on-site purchase,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Gratitude"",
+      ""Amusement""
+    ],
+    ""influence_of_emotions"": ""Family outing success"",
+    ""text_species_mentions"": [
+      ""fish""
+    ],
+    ""feeling_correlated_to_text_species"": [
+      ""fish - feeding pleasure""
+    ],
+    ""text_activities_or_facilities"": [
+      ""hiking"",
+      ""fountain"",
+      ""waterfall"",
+      ""artificial lake"",
+      ""parking lot"",
+      ""food and drink stalls""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""hiking - scenic view"",
+      ""fountain - cultural interest"",
+      ""waterfall - beautiful scenery"",
+      ""artificial lake - fun activity"",
+      ""parking lot - convenient"",
+      ""food and drink stalls - practical but advised against on-site purchase""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+27,1天津市蓟州区盘山_爱旅游的小敏子,Contentment; Excitement; Romance,Scenic beauty,[],[],Mountain climbing; Couples visiting,Mountain climbing - Exhaustion but happiness; Couples visiting - Romantic and charming,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Excitement"",
+      ""Romance""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Mountain climbing"",
+      ""Couples visiting""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Mountain climbing - Exhaustion but happiness"",
+      ""Couples visiting - Romantic and charming""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+28,1天津市蓟州区盘山_M512101,Excitement; Appreciation; Contentment,Nature beauty,[],[],Hiking; Pan Mountain annual pass,Hiking - Pride and leadership; Pan Mountain annual pass - Joy of exploration,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Excitement"",
+      ""Appreciation"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Nature beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Pan Mountain annual pass""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Pride and leadership"",
+      ""Pan Mountain annual pass - Joy of exploration""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+29,1天津市蓟州区盘山_天下逍遥郎,Disappointment; Concern; Dissatisfaction,"High cost, poor value",centipede-like insect,Centipede-like insect - Nausea,Mountain hiking; Cable car; Scenic bus; Ticket check; Viewing pavilion; Flowing light舍利塔 (Lighting舍利 Tower); Walking downhill,Mountain hiking - Boring/Unremarkable; Cable car - Convenient but expensive; Scenic bus - Part of ticket package; Ticket check - Necessary procedure; Viewing pavilion - Reached but scenery not impressive; Flowing light舍利塔 - Not a highlight; Walking downhill - Recommended over cable car for savings,0.25,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Disappointment"",
+      ""Concern"",
+      ""Dissatisfaction""
+    ],
+    ""influence_of_emotions"": ""High cost, poor value"",
+    ""text_species_mentions"": [
+      ""centipede-like insect""
+    ],
+    ""feeling_correlated_to_text_species"": [
+      ""Centipede-like insect - Nausea""
+    ],
+    ""text_activities_or_facilities"": [
+      ""Mountain hiking"",
+      ""Cable car"",
+      ""Scenic bus"",
+      ""Ticket check"",
+      ""Viewing pavilion"",
+      ""Flowing light舍利塔 (Lighting舍利 Tower)"",
+      ""Walking downhill""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Mountain hiking - Boring/Unremarkable"",
+      ""Cable car - Convenient but expensive"",
+      ""Scenic bus - Part of ticket package"",
+      ""Ticket check - Necessary procedure"",
+      ""Viewing pavilion - Reached but scenery not impressive"",
+      ""Flowing light舍利塔 - Not a highlight"",
+      ""Walking downhill - Recommended over cable car for savings""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.25
+    }
+  }
+}",True,
+30,1天津市蓟州区盘山_渭南松赞干布,[],N/A,[],[],cable car,[],0.5,"{
+  ""text_analysis"": {
+    ""emotions"": [],
+    ""influence_of_emotions"": ""N/A"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""cable car""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.50
+    }
+  }
+}",True,
+31,1天津市蓟州区盘山_宣达,Contentment; Appreciation; Cautiousness,Travel planning,[],[],Planning a route; Full or half-day tour; Main entrance; Cable car,Planning - Practicality; Tour choice - Decision making; Entrance - Access point; Cable car - Not recommended,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [""Contentment"", ""Appreciation"", ""Cautiousness""],
+    ""influence_of_emotions"": ""Travel planning"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Planning a route"",
+      ""Full or half-day tour"",
+      ""Main entrance"",
+      ""Cable car""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Planning - Practicality"",
+      ""Tour choice - Decision making"",
+      ""Entrance - Access point"",
+      ""Cable car - Not recommended""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+32,1天津市蓟州区盘山_M26115,Relief; Satisfaction,Smooth trip,[],[],Self-driving; Cable car; Walking up mountain; Climbing stairs; Wansong Temple,Self-driving - Smooth; Cable car - Convenient; Walking up mountain - Challenging; Climbing stairs - Tiring; Wansong Temple - Interesting sights,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Relief"",
+      ""Satisfaction""
+    ],
+    ""influence_of_emotions"": ""Smooth trip"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Self-driving"",
+      ""Cable car"",
+      ""Walking up mountain"",
+      ""Climbing stairs"",
+      ""Wansong Temple""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Self-driving - Smooth"",
+      ""Cable car - Convenient"",
+      ""Walking up mountain - Challenging"",
+      ""Climbing stairs - Tiring"",
+      ""Wansong Temple - Interesting sights""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+33,1天津市蓟州区盘山_tigerA,Contentment; Appreciation; Relaxation,Scenic variety,[],[],Grand gateway archway; Ticket purchase; Cable car; Staircase climbing; Wansong Temple; Stream/Creek,Gateway - Impressive; Cable car - Convenient; Climbing - Exercise beneficial; Temple - Goal achieved; Stream - Cooling relief,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [""Contentment"", ""Appreciation"", ""Relaxation""],
+    ""influence_of_emotions"": ""Scenic variety"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Grand gateway archway"",
+      ""Ticket purchase"",
+      ""Cable car"",
+      ""Staircase climbing"",
+      ""Wansong Temple"",
+      ""Stream/Creek""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Gateway - Impressive"",
+      ""Cable car - Convenient"",
+      ""Climbing - Exercise beneficial"",
+      ""Temple - Goal achieved"",
+      ""Stream - Cooling relief""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+34,1天津市蓟州区盘山_吃榆,Disappointment; Admiration,Physical difficulty,[],[],Cable car ride up; Cable car ride down; Hiking,Cable car - Neutral; Hiking - Dislike; Mountain summit - Beauty,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [""Disappointment"", ""Admiration""],
+    ""influence_of_emotions"": ""Physical difficulty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Cable car ride up"",
+      ""Cable car ride down"",
+      ""Hiking""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car - Neutral"",
+      ""Hiking - Dislike"",
+      ""Mountain summit - Beauty""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+35,1天津市蓟州区盘山_小幸运,Satisfaction; Relief; Contentment,Value and scenery,[],[],Cable car ride; Hiking; Family outing,Cable car ride - Relaxation; Hiking - Endurance; Family outing - Enjoyment,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Satisfaction"",
+      ""Relief"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Value and scenery"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Cable car ride"",
+      ""Hiking"",
+      ""Family outing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car ride - Relaxation"",
+      ""Hiking - Endurance"",
+      ""Family outing - Enjoyment""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+36,1天津市蓟州区盘山_芊芊云朵,Admiration; Awe,Historical grandeur,[],[],Panning Mountain tour; Imperial villa; Scenic spot,Panning Mountain tour - Awe; Imperial villa - Grandeur; Scenic spot - Splendor,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Awe""
+    ],
+    ""influence_of_emotions"": ""Historical grandeur"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Panning Mountain tour"",
+      ""Imperial villa"",
+      ""Scenic spot""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Panning Mountain tour - Awe"",
+      ""Imperial villa - Grandeur"",
+      ""Scenic spot - Splendor""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+37,1天津市蓟州区盘山_M291262,[],,[],[],Pan Mountain Scenic Area; Jingdong First Mountain,Pan Mountain Scenic Area - Informative; Jingdong First Mountain - Respectful,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [],
+    ""influence_of_emotions"": """",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Pan Mountain Scenic Area"",
+      ""Jingdong First Mountain""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Pan Mountain Scenic Area - Informative"",
+      ""Jingdong First Mountain - Respectful""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+38,1天津市蓟州区盘山_JamesCHN,Pride; Contentment; Admiration,Overcoming challenges,[],[],Hiking; Cable car; Bus; Pagoda,Hiking - Joyful process; Cable car - Efficient transport; Bus - Convenient return; Pagoda - Spiritual destination,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Pride"",
+      ""Contentment"",
+      ""Admiration""
+    ],
+    ""influence_of_emotions"": ""Overcoming challenges"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Cable car"",
+      ""Bus"",
+      ""Pagoda""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Joyful process"",
+      ""Cable car - Efficient transport"",
+      ""Bus - Convenient return"",
+      ""Pagoda - Spiritual destination""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+39,1天津市蓟州区盘山_M351833,Contentment; Pride; Relaxation,Family bonding,[],[],Hiking; Walking uphill; Downhill descent; Pan Mountain,Hiking - Pride and joy; Walking uphill - Nostalgia; Pan Mountain - Familiar comfort,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Pride"",
+      ""Relaxation""
+    ],
+    ""influence_of_emotions"": ""Family bonding"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Walking uphill"",
+      ""Downhill descent"",
+      ""Pan Mountain""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Pride and joy"",
+      ""Walking uphill - Nostalgia"",
+      ""Pan Mountain - Familiar comfort""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+40,1天津市蓟州区盘山_M336635,Contentment; Regret; Anticipation,Time management,[],[],Hiking; Cable car; Souvenir shops,Hiking - Relaxed pace; Cable car - Time saving; Souvenir shops - Reasonable prices,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Regret"",
+      ""Anticipation""
+    ],
+    ""influence_of_emotions"": ""Time management"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Cable car"",
+      ""Souvenir shops""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Relaxed pace"",
+      ""Cable car - Time saving"",
+      ""Souvenir shops - Reasonable prices""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+41,1天津市蓟州区盘山_天才小叮当,Satisfaction; Caution; Contentment,Effort and weather,[],[],Hiking; Zigui Peak; Guangyue Peak,Hiking - Efficient; Zigui Peak - Reached quickly; Guangyue Peak - Too far/late,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Satisfaction"",
+      ""Caution"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Effort and weather"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Zigui Peak"",
+      ""Guangyue Peak""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Efficient"",
+      ""Zigui Peak - Reached quickly"",
+      ""Guangyue Peak - Too far/late""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+42,1天津市蓟州区盘山_232ud,Relief; Appreciation; Pride,Avoiding hardship,[],[],Cable car ride; Walking up stairs; Singing,Cable car ride - Relief and ease; Walking up stairs - Exhaustion and regret; Singing - Deep appreciation,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Relief"",
+      ""Appreciation"",
+      ""Pride""
+    ],
+    ""influence_of_emotions"": ""Avoiding hardship"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Cable car ride"",
+      ""Walking up stairs"",
+      ""Singing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car ride - Relief and ease"",
+      ""Walking up stairs - Exhaustion and regret"",
+      ""Singing - Deep appreciation""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+43,1天津市蓟州区盘山_longriveryin,Curiosity; Disappointment; Appreciation,Historical context vs modernization,[],[],climbing; historical records; modern facilities,climbing - visually rewarding; historical records - scarce; modern facilities - excessive,0.55,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Curiosity"",
+      ""Disappointment"",
+      ""Appreciation""
+    ],
+    ""influence_of_emotions"": ""Historical context vs modernization"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""climbing"",
+      ""historical records"",
+      ""modern facilities""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""climbing - visually rewarding"",
+      ""historical records - scarce"",
+      ""modern facilities - excessive""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.55
+    }
+  }
+}",True,
+44,1天津市蓟州区盘山_l99,Contentment; Appreciation; Hope,Scenic beauty,[],[],Cable car; Hiking; Panoramic view,Cable car - Reduced fatigue; Hiking - Quick progress; Panoramic view - Grand perspective,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Appreciation"",
+      ""Hope""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Cable car"",
+      ""Hiking"",
+      ""Panoramic view""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car - Reduced fatigue"",
+      ""Hiking - Quick progress"",
+      ""Panoramic view - Grand perspective""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+45,1天津市蓟州区盘山_古言新语,Admiration; Contentment; Pride,Stunning scenery,[],[],mountain viewing; poetry appreciation; historical site visitation,mountain viewing - Awe; poetry appreciation - Joy; historical site visitation - Reverence,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Contentment"",
+      ""Pride""
+    ],
+    ""influence_of_emotions"": ""Stunning scenery"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""mountain viewing"",
+      ""poetry appreciation"",
+      ""historical site visitation""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""mountain viewing - Awe"",
+      ""poetry appreciation - Joy"",
+      ""historical site visitation - Reverence""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+46,1天津市蓟州区盘山_格格,[],,[],[],inspection by Emperor Qianlong; scenic views,inspection - admiration; scenic views - wonder,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [],
+    ""influence_of_emotions"": """",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""inspection by Emperor Qianlong"",
+      ""scenic views""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""inspection - admiration"",
+      ""scenic views - wonder""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+47,1天津市蓟州区盘山_絲滑拿鐵貓,Awe; Appreciation; Contentment,Natural beauty and history,[],[],mountain climbing; visiting temples; viewing rock formations; walking ancient paths; applying for scenic spots,mountain climbing - awe-inspiring; visiting temples - spiritual; viewing rock formations - impressive; walking ancient paths - serene; applying for scenic spots - enjoyable,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Awe"",
+      ""Appreciation"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Natural beauty and history"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""mountain climbing"",
+      ""visiting temples"",
+      ""viewing rock formations"",
+      ""walking ancient paths"",
+      ""applying for scenic spots""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""mountain climbing - awe-inspiring"",
+      ""visiting temples - spiritual"",
+      ""viewing rock formations - impressive"",
+      ""walking ancient paths - serene"",
+      ""applying for scenic spots - enjoyable""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+48,1天津市蓟州区盘山_非法命名用户1,[],,[],[],[],[],0.5,"{
+  ""text_analysis"": {
+    ""emotions"": [],
+    ""influence_of_emotions"": """",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [],
+    ""feeling_correlated_to_text_activities_or_facilities"": [],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.50
+    }
+  }
+}",True,
+49,1天津市蓟州区盘山_圣吉米尼亚诺伊尹,[],,[],[],tourism and leisure; poetry writing; imperial tours,[],0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [],
+    ""influence_of_emotions"": """",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""tourism and leisure"",
+      ""poetry writing"",
+      ""imperial tours""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+50,1天津市蓟州区盘山_楠以抗拒,Frustration; Amusement; Contentment,Difficulty hiking,[],[],Hiking; Cable car; Waterfall; Tunnel cemetery,Hiking - Exhausting; Cable car - Expensive but necessary; Waterfall - Beautiful; Tunnel cemetery - Scenic,0.45,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Frustration"",
+      ""Amusement"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Difficulty hiking"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Cable car"",
+      ""Waterfall"",
+      ""Tunnel cemetery""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Exhausting"",
+      ""Cable car - Expensive but necessary"",
+      ""Waterfall - Beautiful"",
+      ""Tunnel cemetery - Scenic""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.45
+    }
+  }
+}",True,
+51,1天津市蓟州区盘山_雨中之苇,Contentment; Admiration,Natural beauty,[],[],bus ride; taxi; scenic drive; sightseeing; stargazing; sunrise viewing; sunset viewing; cable car ride; hiking; eating dry food; dining at farm restaurant; staying in farm house,bus ride - convenient; taxi - easy access; scenic drive - relaxing; sightseeing - enjoyable; stargazing - wonderful; sunrise viewing - beautiful; sunset viewing - picturesque; cable car ride - helpful for tired hikers; hiking - strenuous but rewarding; eating dry food - practical; dining at farm restaurant - tasty and local; staying in farm house - cost-effective,0.92,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Admiration""
+    ],
+    ""influence_of_emotions"": ""Natural beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""bus ride"",
+      ""taxi"",
+      ""scenic drive"",
+      ""sightseeing"",
+      ""stargazing"",
+      ""sunrise viewing"",
+      ""sunset viewing"",
+      ""cable car ride"",
+      ""hiking"",
+      ""eating dry food"",
+      ""dining at farm restaurant"",
+      ""staying in farm house""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""bus ride - convenient"",
+      ""taxi - easy access"",
+      ""scenic drive - relaxing"",
+      ""sightseeing - enjoyable"",
+      ""stargazing - wonderful"",
+      ""sunrise viewing - beautiful"",
+      ""sunset viewing - picturesque"",
+      ""cable car ride - helpful for tired hikers"",
+      ""hiking - strenuous but rewarding"",
+      ""eating dry food - practical"",
+      ""dining at farm restaurant - tasty and local"",
+      ""staying in farm house - cost-effective""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.92
+    }
+  }
+}",True,
+52,1天津市蓟州区盘山_带上成出去走走1008,Contentment; Amusement; Appreciation,Scenic beauty and gifts,Prunus armeniaca,Prunus armeniaca - Sour delight,Hiking; Cable car; Museum/Artifacts (Stone carvings); Gifts (Rubik's cubes),Hiking - Exhausted but worth it; Cable car - Convenient escape; Stone carvings - Cultural appreciation; Rubik's cubes - Heartfelt gesture,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Amusement"",
+      ""Appreciation""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty and gifts"",
+    ""text_species_mentions"": [
+      ""Prunus armeniaca""
+    ],
+    ""feeling_correlated_to_text_species"": [
+      ""Prunus armeniaca - Sour delight""
+    ],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Cable car"",
+      ""Museum/Artifacts (Stone carvings)"",
+      ""Gifts (Rubik's cubes)""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Exhausted but worth it"",
+      ""Cable car - Convenient escape"",
+      ""Stone carvings - Cultural appreciation"",
+      ""Rubik's cubes - Heartfelt gesture""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+53,1天津市蓟州区盘山_薇薇华,Gratitude; Contentment; Excitement,Great scenery and convenience,[],[],Self-driving tour; Electronic ticket gate; Cable car; Hiking; Mountain peak; Five-star scenic area; Fresh air,Cable car - Worth the price; Hiking - Enjoyable challenge; Scenic area - Highly recommended; Fresh air - Refreshing,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Gratitude"",
+      ""Contentment"",
+      ""Excitement""
+    ],
+    ""influence_of_emotions"": ""Great scenery and convenience"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Self-driving tour"",
+      ""Electronic ticket gate"",
+      ""Cable car"",
+      ""Hiking"",
+      ""Mountain peak"",
+      ""Five-star scenic area"",
+      ""Fresh air""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car - Worth the price"",
+      ""Hiking - Enjoyable challenge"",
+      ""Scenic area - Highly recommended"",
+      ""Fresh air - Refreshing""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+54,1天津市蓟州区盘山_M41115,Appreciation; Regret; Exhaustion,Scenery and effort,[],[],climbing mountains; walking on stone paths; visiting scenic spots; entering mountain gate,climbing mountains - Exhaustion; walking on stone paths - Appreciation; visiting scenic spots - Mixed feelings; entering mountain gate - Difficulty,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Appreciation"",
+      ""Regret"",
+      ""Exhaustion""
+    ],
+    ""influence_of_emotions"": ""Scenery and effort"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""climbing mountains"",
+      ""walking on stone paths"",
+      ""visiting scenic spots"",
+      ""entering mountain gate""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""climbing mountains - Exhaustion"",
+      ""walking on stone paths - Appreciation"",
+      ""visiting scenic spots - Mixed feelings"",
+      ""entering mountain gate - Difficulty""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+55,1天津市蓟州区盘山_丹丝兰花99,Disappointment; Relief; Amusement,Physical fatigue and cost,[],[],Cable car ride; Hiking; Scenic viewing; Bus ride,Cable car - Thrilling; Hiking - Painful; Scenic viewing - Underwhelming; Bus ride - Convenient,0.35,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Disappointment"",
+      ""Relief"",
+      ""Amusement""
+    ],
+    ""influence_of_emotions"": ""Physical fatigue and cost"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Cable car ride"",
+      ""Hiking"",
+      ""Scenic viewing"",
+      ""Bus ride""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car - Thrilling"",
+      ""Hiking - Painful"",
+      ""Scenic viewing - Underwhelming"",
+      ""Bus ride - Convenient""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.35
+    }
+  }
+}",True,
+56,1天津市蓟州区盘山_牛牛嫂,Contentment; Pride,Scenic beauty,[],[],Hiking; Sightseeing,Hiking - Impressive; Sightseeing - Satisfied,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Pride""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Sightseeing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Impressive"",
+      ""Sightseeing - Satisfied""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+57,1天津市蓟州区盘山_M226120,Contentment; Awe; Relaxation,Natural scenery beauty,[],[],Hiking or walking in autumn forest; Taking photos; Scenic viewing,Hiking - Relaxing; Photography - Poetic; Viewing - Breathtaking,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Awe"",
+      ""Relaxation""
+    ],
+    ""influence_of_emotions"": ""Natural scenery beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking or walking in autumn forest"",
+      ""Taking photos"",
+      ""Scenic viewing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Relaxing"",
+      ""Photography - Poetic"",
+      ""Viewing - Breathtaking""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+58,1天津市蓟州区盘山_狄大人不吃香菜,Amusement; Contentment; Exhaustion,Physical exertion,[],[],Hiking; Walking up and down mountains,Hiking - Tired but satisfied; Walking up and down mountains - Exhausted yet happy,0.75,"{
+  ""text_analysis"": {
+    ""emotions"": [""Amusement"", ""Contentment"", ""Exhaustion""],
+    ""influence_of_emotions"": ""Physical exertion"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Walking up and down mountains""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Tired but satisfied"",
+      ""Walking up and down mountains - Exhausted yet happy""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.75
+    }
+  }
+}",True,
+59,1天津市蓟州区盘山_M4337,Contentment; Recommendation; Appreciation,Beautiful scenery,[],[],Walking; Cable car; Scenic viewing,Walking - Suggested for fitness; Cable car - Convenient option; Scenic viewing - Very beautiful,0.92,"{
+  ""text_analysis"": {
+    ""emotions"": [""Contentment"", ""Recommendation"", ""Appreciation""],
+    ""influence_of_emotions"": ""Beautiful scenery"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Walking"",
+      ""Cable car"",
+      ""Scenic viewing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Walking - Suggested for fitness"",
+      ""Cable car - Convenient option"",
+      ""Scenic viewing - Very beautiful""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.92
+    }
+  }
+}",True,
+60,1天津市蓟州区盘山_依然,Excitement; Contentment; Satisfaction,Scenic beauty,[],[],Cable car; Cloud Pine cableway; Wansong Temple; Hiking; Resting,Cable car - Efficient; Cloud Pine cableway - Convenient; Wansong Temple - Scenic; Hiking - Tiring but rewarding; Resting - Necessitated by effort,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Excitement"",
+      ""Contentment"",
+      ""Satisfaction""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Cable car"",
+      ""Cloud Pine cableway"",
+      ""Wansong Temple"",
+      ""Hiking"",
+      ""Resting""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car - Efficient"",
+      ""Cloud Pine cableway - Convenient"",
+      ""Wansong Temple - Scenic"",
+      ""Hiking - Tiring but rewarding"",
+      ""Resting - Necessitated by effort""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+61,1天津市蓟州区盘山_小YSH,Awe; Contentment; Excitement,Grand scenery,[],[],hiking; cloud temple; sword practice platform,hiking - awe-inspiring; cloud temple - fairyland-like; sword practice platform - immersive,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Awe"",
+      ""Contentment"",
+      ""Excitement""
+    ],
+    ""influence_of_emotions"": ""Grand scenery"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""hiking"",
+      ""cloud temple"",
+      ""sword practice platform""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""hiking - awe-inspiring"",
+      ""cloud temple - fairyland-like"",
+      ""sword practice platform - immersive""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+62,1天津市蓟州区盘山_楠以抗拒,Exhaustion; Disappointment; Caution,Physical fatigue,[],[],Hiking; Cable car; Towers (Pagoda forest),Cable car - Tiring but convenient; Hiking - Exhausting and long; Towers - Scary alone,0.35,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Exhaustion"",
+      ""Disappointment"",
+      ""Caution""
+    ],
+    ""influence_of_emotions"": ""Physical fatigue"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Cable car"",
+      ""Towers (Pagoda forest)""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car - Tiring but convenient"",
+      ""Hiking - Exhausting and long"",
+      ""Towers - Scary alone""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.35
+    }
+  }
+}",True,
+63,1天津市蓟州区盘山_M328786,Contentment; Relief; Admiration,Smart planning,[],[],Tour bus; Cable car; Hiking; Scenic spots,Tour bus - Efficient; Cable car - Convenient; Hiking - Challenging if forced; Scenic spots - Beautiful,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Relief"",
+      ""Admiration""
+    ],
+    ""influence_of_emotions"": ""Smart planning"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Tour bus"",
+      ""Cable car"",
+      ""Hiking"",
+      ""Scenic spots""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Tour bus - Efficient"",
+      ""Cable car - Convenient"",
+      ""Hiking - Challenging if forced"",
+      ""Scenic spots - Beautiful""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+64,1天津市蓟州区盘山_M32461,Frustration; Disappointment,Poor conditions,[],[],Ticket purchase; Shuttle bus ride; Cable car; Walking; Construction site,Ticket - Neutral; Bus - Neutral; Cable car - Efficient; Walking - Difficult; Construction site - Negative,0.35,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Frustration"",
+      ""Disappointment""
+    ],
+    ""influence_of_emotions"": ""Poor conditions"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Ticket purchase"",
+      ""Shuttle bus ride"",
+      ""Cable car"",
+      ""Walking"",
+      ""Construction site""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Ticket - Neutral"",
+      ""Bus - Neutral"",
+      ""Cable car - Efficient"",
+      ""Walking - Difficult"",
+      ""Construction site - Negative""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.35
+    }
+  }
+}",True,
+65,1天津市蓟州区盘山__YX1471,Contentment; Satisfaction; Relaxation,Scenic beauty and ease,[],[],walking; playing; cable car; cableway; electric vehicle shuttle; parking,walking - not too tiring; playing - very happy; cable car - convenient; cableway - convenient; electric vehicle shuttle - cost-effective option; parking - relatively easy,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [""Contentment"", ""Satisfaction"", ""Relaxation""],
+    ""influence_of_emotions"": ""Scenic beauty and ease"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""walking"",
+      ""playing"",
+      ""cable car"",
+      ""cableway"",
+      ""electric vehicle shuttle"",
+      ""parking""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""walking - not too tiring"",
+      ""playing - very happy"",
+      ""cable car - convenient"",
+      ""cableway - convenient"",
+      ""electric vehicle shuttle - cost-effective option"",
+      ""parking - relatively easy""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+66,1天津市蓟州区盘山_开开心心1226,Contentment; Relief; Appreciation,Good service and scenery,[],[],Parking management; Hiking to Guayue Peak; Climbing mountain; Cable car / Gondola; Parking lot,Parking management - Professional; Hiking to Guayue Peak - Tiring but rewarding; Cable car - Recommended for weak stamina; Parking lot - Humanized pricing,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Relief"",
+      ""Appreciation""
+    ],
+    ""influence_of_emotions"": ""Good service and scenery"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Parking management"",
+      ""Hiking to Guayue Peak"",
+      ""Climbing mountain"",
+      ""Cable car / Gondola"",
+      ""Parking lot""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Parking management - Professional"",
+      ""Hiking to Guayue Peak - Tiring but rewarding"",
+      ""Cable car - Recommended for weak stamina"",
+      ""Parking lot - Humanized pricing""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+67,1天津市蓟州区盘山_momo1979,Frustration; Regret; Disappointment,Poor experience,[],[],Parking; Hotel parking; Tickets; Insurance; Sightseeing bus; Cable car; Ropeway; Stairs; Hiking,Parking - Stressful; Hotel parking - Convenient; Tickets - Expensive; Sightseeing bus - Congested; Cable car - Unreliable; Ropeway - Efficient; Stairs - Tiring; Hiking - Exhausting,0.35,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Frustration"",
+      ""Regret"",
+      ""Disappointment""
+    ],
+    ""influence_of_emotions"": ""Poor experience"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Parking"",
+      ""Hotel parking"",
+      ""Tickets"",
+      ""Insurance"",
+      ""Sightseeing bus"",
+      ""Cable car"",
+      ""Ropeway"",
+      ""Stairs"",
+      ""Hiking""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Parking - Stressful"",
+      ""Hotel parking - Convenient"",
+      ""Tickets - Expensive"",
+      ""Sightseeing bus - Congested"",
+      ""Cable car - Unreliable"",
+      ""Ropeway - Efficient"",
+      ""Stairs - Tiring"",
+      ""Hiking - Exhausting""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.35
+    }
+  }
+}",True,
+68,1天津市蓟州区盘山_288709,Contentment; Relief; Amusement,Unexpected detour,[],[],Hiking; Water source; Guangyue Peak; Back mountain village; Parking lot,Water source - Appreciation; Hiking - Enjoyment; Guangyue Peak - Achievement; Back mountain village - Surprise; Parking lot - Frustration,0.55,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Relief"",
+      ""Amusement""
+    ],
+    ""influence_of_emotions"": ""Unexpected detour"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Water source"",
+      ""Guangyue Peak"",
+      ""Back mountain village"",
+      ""Parking lot""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Water source - Appreciation"",
+      ""Hiking - Enjoyment"",
+      ""Guangyue Peak - Achievement"",
+      ""Back mountain village - Surprise"",
+      ""Parking lot - Frustration""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.55
+    }
+  }
+}",True,
+69,1天津市蓟州区盘山_1395377,Contentment; Mild Disappointment,Mixed experience,[],[],Parking lot; South Heaven Gate; Climbing stairs,Parking lot - Convenient; South Heaven Gate - Spacious; Climbing stairs - Tiring,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Mild Disappointment""
+    ],
+    ""influence_of_emotions"": ""Mixed experience"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Parking lot"",
+      ""South Heaven Gate"",
+      ""Climbing stairs""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Parking lot - Convenient"",
+      ""South Heaven Gate - Spacious"",
+      ""Climbing stairs - Tiring""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+70,1天津市蓟州区盘山_自由飞翔的老鹰,Admiration; Surprise,Historical praise,[],[],tourism visit; palace tour,tourism visit - admiration; palace tour - surprise,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [""Admiration"", ""Surprise""],
+    ""influence_of_emotions"": ""Historical praise"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""tourism visit"",
+      ""palace tour""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""tourism visit - admiration"",
+      ""palace tour - surprise""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+71,1天津市蓟州区盘山_轻快的行走脚步,Appreciation; Contentment,Historical beauty,[],[],Hiking; Viewing carvings; Reading inscriptions; Observing architecture,Hiking - Nature appreciation; Viewing carvings - Historical interest; Reading inscriptions - Cultural discovery; Observing architecture - Awe,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Appreciation"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Historical beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Viewing carvings"",
+      ""Reading inscriptions"",
+      ""Observing architecture""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Nature appreciation"",
+      ""Viewing carvings - Historical interest"",
+      ""Reading inscriptions - Cultural discovery"",
+      ""Observing architecture - Awe""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+72,1天津市蓟州区盘山_流光溢彩566,Contentment; Caution,Crowds and convenience,[],[],Mountain climbing; Cable car; Tourist bus; Hiking,Cable car - Convenient; Tourist bus - Time-saving; Hiking - Challenging; Mountain climbing - Recommended,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [""Contentment"", ""Caution""],
+    ""influence_of_emotions"": ""Crowds and convenience"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Mountain climbing"",
+      ""Cable car"",
+      ""Tourist bus"",
+      ""Hiking""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car - Convenient"",
+      ""Tourist bus - Time-saving"",
+      ""Hiking - Challenging"",
+      ""Mountain climbing - Recommended""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+73,1天津市蓟州区盘山_Jany莉,Relaxation; Contentment; Appreciation,Beautiful scenery,[],[],hiking; climbing mountains,hiking - not tired; mountains - beautiful shade,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Relaxation"",
+      ""Contentment"",
+      ""Appreciation""
+    ],
+    ""influence_of_emotions"": ""Beautiful scenery"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""hiking"",
+      ""climbing mountains""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""hiking - not tired"",
+      ""mountains - beautiful shade""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+74,1天津市蓟州区盘山_Jany莉,Appreciation; Contentment; Relaxation,Scenic beauty and atmosphere,[],[],Square dancing; Cable car; Self-service meals; Walking trails; Stairs,Square dancing - Enjoyable activity; Cable car - Flexible option; Self-service meals - Convenient; Walking trails - Scenic choice; Stairs - Well-maintained,0.92,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Appreciation"",
+      ""Contentment"",
+      ""Relaxation""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty and atmosphere"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Square dancing"",
+      ""Cable car"",
+      ""Self-service meals"",
+      ""Walking trails"",
+      ""Stairs""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Square dancing - Enjoyable activity"",
+      ""Cable car - Flexible option"",
+      ""Self-service meals - Convenient"",
+      ""Walking trails - Scenic choice"",
+      ""Stairs - Well-maintained""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.92
+    }
+  }
+}",True,
+75,1天津市蓟州区盘山_人生就是修行止,Contentment; Satisfaction; Neutral,Scenic variety,[],[],Hiking; Peak climbing; Cable car ride; Sightseeing vehicle; Temple visit (Tiancheng Temple); Shrine cave (Shanshe Cave); Mountain ridge walking,Hiking - Efficient; Cable car - Convenient; Temple - Missed; Cave - Not found; Path - Closed,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [""Contentment"", ""Satisfaction"", ""Neutral""],
+    ""influence_of_emotions"": ""Scenic variety"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Peak climbing"",
+      ""Cable car ride"",
+      ""Sightseeing vehicle"",
+      ""Temple visit (Tiancheng Temple)"",
+      ""Shrine cave (Shanshe Cave)"",
+      ""Mountain ridge walking""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Efficient"",
+      ""Cable car - Convenient"",
+      ""Temple - Missed"",
+      ""Cave - Not found"",
+      ""Path - Closed""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+76,1天津市蓟州区盘山_1389005,Contentment; Relief; Satisfaction,Scenic views and ease,[],[],Cable car; Suspension bridge; Bus; Parking lot; Lantern Garden; South Heaven Gate,Cable car - Convenient option; Suspension bridge - Useful for summit access; Bus - Efficient descent; Parking lot - Easy exit point; Lantern Garden - Tiring start point; South Heaven Gate - Tiring end point,0.75,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Relief"",
+      ""Satisfaction""
+    ],
+    ""influence_of_emotions"": ""Scenic views and ease"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Cable car"",
+      ""Suspension bridge"",
+      ""Bus"",
+      ""Parking lot"",
+      ""Lantern Garden"",
+      ""South Heaven Gate""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car - Convenient option"",
+      ""Suspension bridge - Useful for summit access"",
+      ""Bus - Efficient descent"",
+      ""Parking lot - Easy exit point"",
+      ""Lantern Garden - Tiring start point"",
+      ""South Heaven Gate - Tiring end point""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.75
+    }
+  }
+}",True,
+77,1天津市蓟州区盘山_花落香满池,Contentment; Admiration,Serene nature,[],[],Visiting temples; Climbing towers; Strolling in gardens; Historical exploration,Temples - Spiritual peace; Towers - Awe; Gardens - Relaxation; History - Wonder,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Admiration""
+    ],
+    ""influence_of_emotions"": ""Serene nature"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Visiting temples"",
+      ""Climbing towers"",
+      ""Strolling in gardens"",
+      ""Historical exploration""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Temples - Spiritual peace"",
+      ""Towers - Awe"",
+      ""Gardens - Relaxation"",
+      ""History - Wonder""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+78,1天津市蓟州区盘山_走遍中国,Disappointment; Regret,Unmet expectations,[],[],Cable car (split into two segments); Scenic overlooks; Buildings at summit,Cable car - Frustration; Scenic overlooks - Disappointing view; Buildings at summit - Boring,0.25,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Disappointment"",
+      ""Regret""
+    ],
+    ""influence_of_emotions"": ""Unmet expectations"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Cable car (split into two segments)"",
+      ""Scenic overlooks"",
+      ""Buildings at summit""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car - Frustration"",
+      ""Scenic overlooks - Disappointing view"",
+      ""Buildings at summit - Boring""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.25
+    }
+  }
+}",True,
+79,1天津市蓟州区盘山_社会颜色,[],,[],[],scenic area; tourist destination,[],0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [],
+    ""influence_of_emotions"": """",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""scenic area"",
+      ""tourist destination""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+80,1天津市蓟州区盘山_克鲁斯布鲁斯南,Admiration; Awe,Grandeur of history,[],[],visiting scenic spots; practicing Buddhism; meditating; worshipping Buddhas; climbing mountains; watering landscapes; writing poetry; carving inscriptions; royal palaces; gardens; traveling by imperial decree,visiting scenic spots - wonder; practicing Buddhism - devotion; meditating - peace; worshipping Buddhas - reverence; climbing mountains - excitement; watering landscapes - enjoyment; writing poetry - inspiration; carving inscriptions - appreciation; royal palaces - awe; gardens - beauty; traveling by imperial decree - historical interest,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Awe""
+    ],
+    ""influence_of_emotions"": ""Grandeur of history"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""visiting scenic spots"",
+      ""practicing Buddhism"",
+      ""meditating"",
+      ""worshipping Buddhas"",
+      ""climbing mountains"",
+      ""watering landscapes"",
+      ""writing poetry"",
+      ""carving inscriptions"",
+      ""royal palaces"",
+      ""gardens"",
+      ""traveling by imperial decree""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""visiting scenic spots - wonder"",
+      ""practicing Buddhism - devotion"",
+      ""meditating - peace"",
+      ""worshipping Buddhas - reverence"",
+      ""climbing mountains - excitement"",
+      ""watering landscapes - enjoyment"",
+      ""writing poetry - inspiration"",
+      ""carving inscriptions - appreciation"",
+      ""royal palaces - awe"",
+      ""gardens - beauty"",
+      ""traveling by imperial decree - historical interest""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+81,1天津市蓟州区盘山_牛奶海,Contentment; Appreciation,Convenience and Scenery,[],[],scenic area visit; bus ride; cable car (ski lift); walking,scenic area visit - appreciation; bus ride - convenience; cable car - ease of travel; walking - more views but tiring,0.75,"{
+  ""text_analysis"": {
+    ""emotions"": [""Contentment"", ""Appreciation""],
+    ""influence_of_emotions"": ""Convenience and Scenery"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""scenic area visit"",
+      ""bus ride"",
+      ""cable car (ski lift)"",
+      ""walking""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""scenic area visit - appreciation"",
+      ""bus ride - convenience"",
+      ""cable car - ease of travel"",
+      ""walking - more views but tiring""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.75
+    }
+  }
+}",True,
+82,1天津市蓟州区盘山_1861011,Frustration; Appreciation; Relief,Service quality and weather,[],[],Health code check; Shuttle bus; Cable car; Rain poncho distribution; Scenic viewing,Health code check - Annoyance; Shuttle bus - Disappointment; Cable car - Mixed feelings; Rain poncho distribution - Gratitude; Scenic viewing - Admiration,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Frustration"",
+      ""Appreciation"",
+      ""Relief""
+    ],
+    ""influence_of_emotions"": ""Service quality and weather"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Health code check"",
+      ""Shuttle bus"",
+      ""Cable car"",
+      ""Rain poncho distribution"",
+      ""Scenic viewing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Health code check - Annoyance"",
+      ""Shuttle bus - Disappointment"",
+      ""Cable car - Mixed feelings"",
+      ""Rain poncho distribution - Gratitude"",
+      ""Scenic viewing - Admiration""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+83,1天津市蓟州区盘山_轻快的行走脚步,Excitement; Appreciation; Contentment,Scenic beauty and culture,[],[],Hiking; Sightseeing; 5A scenic area visit,Hiking - Enjoyable; Sightseeing - Relaxing; 5A scenic area visit - Impressive,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Excitement"",
+      ""Appreciation"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty and culture"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Sightseeing"",
+      ""5A scenic area visit""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Enjoyable"",
+      ""Sightseeing - Relaxing"",
+      ""5A scenic area visit - Impressive""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+84,1天津市蓟州区盘山_e5089,Admiration; Relaxation,Scenic beauty,[],[],hiking to summit; cloud sea viewing,hiking - challenging duration; cloud sea - lucky surprise,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Admiration"",
+      ""Relaxation""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""hiking to summit"",
+      ""cloud sea viewing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""hiking - challenging duration"",
+      ""cloud sea - lucky surprise""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+85,1天津市蓟州区盘山__Daisy_,Anxiety; Exhaustion; Relief,Dangerous path,[],[],sightseeing bus; cable car; minibus; hiking trail; fountain,sightseeing bus - Regret; cable car - Neutral; minibus - Neutral; hiking trail - Fear; fountain - Not mentioned,0.45,"{
+  ""text_analysis"": {
+    ""emotions"": [""Anxiety"", ""Exhaustion"", ""Relief""],
+    ""influence_of_emotions"": ""Dangerous path"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""sightseeing bus"",
+      ""cable car"",
+      ""minibus"",
+      ""hiking trail"",
+      ""fountain""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""sightseeing bus - Regret"",
+      ""cable car - Neutral"",
+      ""minibus - Neutral"",
+      ""hiking trail - Fear"",
+      ""fountain - Not mentioned""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.45
+    }
+  }
+}",True,
+86,1天津市蓟州区盘山_katrina燕子,Relief; Gratitude; Contentment,Helpful advice,mountain maple,Mountain maple - Enjoyed the scenery,hiking; cable car ride; massage; praying at temple; offering incense; riding electric cart; buying walking stick,hiking - Challenging but rewarding; cable car ride - Convenient option; massage - Highly recommended for sore legs; praying at temple - Cultural experience; offering incense - Avoided extra cost; riding electric cart - Useful for descending; buying walking stick - Practical aid for steep slopes,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Relief"",
+      ""Gratitude"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Helpful advice"",
+    ""text_species_mentions"": [
+      ""mountain maple""
+    ],
+    ""feeling_correlated_to_text_species"": [
+      ""Mountain maple - Enjoyed the scenery""
+    ],
+    ""text_activities_or_facilities"": [
+      ""hiking"",
+      ""cable car ride"",
+      ""massage"",
+      ""praying at temple"",
+      ""offering incense"",
+      ""riding electric cart"",
+      ""buying walking stick""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""hiking - Challenging but rewarding"",
+      ""cable car ride - Convenient option"",
+      ""massage - Highly recommended for sore legs"",
+      ""praying at temple - Cultural experience"",
+      ""offering incense - Avoided extra cost"",
+      ""riding electric cart - Useful for descending"",
+      ""buying walking stick - Practical aid for steep slopes""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+87,1天津市蓟州区盘山_南种子町甘罗,Exhaustion; Relief; Resignation,Physical fatigue,[],[],childcare; hiking; cable car; mountain top,childcare - Joyful; hiking - Exhausted; cable car - Recommended; mountain top - Tiring,0.35,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Exhaustion"",
+      ""Relief"",
+      ""Resignation""
+    ],
+    ""influence_of_emotions"": ""Physical fatigue"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""childcare"",
+      ""hiking"",
+      ""cable car"",
+      ""mountain top""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""childcare - Joyful"",
+      ""hiking - Exhausted"",
+      ""cable car - Recommended"",
+      ""mountain top - Tiring""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.35
+    }
+  }
+}",True,
+88,1天津市蓟州区盘山_心向远方jing,Awe; Relaxation; Appreciation,Scenic beauty,[],[],mountain climbing; scenic area,Mountain climbing - Easy; Scenic area - Breathtaking,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [""Awe"", ""Relaxation"", ""Appreciation""],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""mountain climbing"",
+      ""scenic area""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Mountain climbing - Easy"",
+      ""Scenic area - Breathtaking""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+89,1天津市蓟州区盘山_8689老牛NN,Contentment; Admiration,Scenic beauty,[],[],Tourism; Historical visit,Tourism - Impressive; Historical visit - Respectful,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Admiration""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Tourism"",
+      ""Historical visit""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Tourism - Impressive"",
+      ""Historical visit - Respectful""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+90,1天津市蓟州区盘山_hahayujie,Contentment; Frustration; Regret,Cable car design flaw,[],[],mountain climbing; cable car queueing; mountain cable car,mountain climbing - satisfactory; cable car queueing - frustrating; mountain cable car - poorly designed,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Frustration"",
+      ""Regret""
+    ],
+    ""influence_of_emotions"": ""Cable car design flaw"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""mountain climbing"",
+      ""cable car queueing"",
+      ""mountain cable car""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""mountain climbing - satisfactory"",
+      ""cable car queueing - frustrating"",
+      ""mountain cable car - poorly designed""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+91,1天津市蓟州区盘山_M59382,Contentment; Recommendation,Seasonal advice,[],[],Sightseeing bus; Cable car; Walking; Wansong Temple,Sightseeing bus - Convenient; Cable car - Fun for kids; Walking - Refreshing; Wansong Temple - Scenic spot,0.75,"{
+  ""text_analysis"": {
+    ""emotions"": [""Contentment"", ""Recommendation""],
+    ""influence_of_emotions"": ""Seasonal advice"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Sightseeing bus"",
+      ""Cable car"",
+      ""Walking"",
+      ""Wansong Temple""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Sightseeing bus - Convenient"",
+      ""Cable car - Fun for kids"",
+      ""Walking - Refreshing"",
+      ""Wansong Temple - Scenic spot""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.75
+    }
+  }
+}",True,
+92,1天津市蓟州区盘山_140jin,Dissatisfaction; Relief; Contentment,High cost and distance,[],[],climbing; stream; cable car; tower; mountain pass,climbing - Frustrating due to distance; stream - Pleasant environment; cable car - Expensive and long; tower - Reached but limited view; mountain pass - Challenging terrain,0.45,"{
+  ""text_analysis"": {
+    ""emotions"": [""Dissatisfaction"", ""Relief"", ""Contentment""],
+    ""influence_of_emotions"": ""High cost and distance"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""climbing"",
+      ""stream"",
+      ""cable car"",
+      ""tower"",
+      ""mountain pass""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""climbing - Frustrating due to distance"",
+      ""stream - Pleasant environment"",
+      ""cable car - Expensive and long"",
+      ""tower - Reached but limited view"",
+      ""mountain pass - Challenging terrain""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.45
+    }
+  }
+}",True,
+93,1天津市蓟州区盘山_走遍中国,Appreciation; Relaxation; Pragmatism,Natural beauty and free access,wild peach blossom,wild peach blossom - Spectacular,artificial dam; hiking; driving,artificial dam - Scenic spot; hiking - Cost-effective travel; driving - Convenient exit,0.75,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Appreciation"",
+      ""Relaxation"",
+      ""Pragmatism""
+    ],
+    ""influence_of_emotions"": ""Natural beauty and free access"",
+    ""text_species_mentions"": [
+      ""wild peach blossom""
+    ],
+    ""feeling_correlated_to_text_species"": [
+      ""wild peach blossom - Spectacular""
+    ],
+    ""text_activities_or_facilities"": [
+      ""artificial dam"",
+      ""hiking"",
+      ""driving""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""artificial dam - Scenic spot"",
+      ""hiking - Cost-effective travel"",
+      ""driving - Convenient exit""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.75
+    }
+  }
+}",True,
+94,1天津市蓟州区盘山__WeCh818601,Excitement; Relief; Dissatisfaction,Goal achievement,[],[],Hiking; Climbing; Security check,Hiking - Thrilling; Climbing - Fulfilling; Security check - Questioned,0.65,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Excitement"",
+      ""Relief"",
+      ""Dissatisfaction""
+    ],
+    ""influence_of_emotions"": ""Goal achievement"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Climbing"",
+      ""Security check""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Thrilling"",
+      ""Climbing - Fulfilling"",
+      ""Security check - Questioned""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.65
+    }
+  }
+}",True,
+95,1天津市蓟州区盘山_姑奶奶MT,Contentment; Relaxation; Excitement,Beautiful scenery,[],[],cable car; scenic bus,cable car - not tiring; scenic bus - enjoyable,0.95,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Relaxation"",
+      ""Excitement""
+    ],
+    ""influence_of_emotions"": ""Beautiful scenery"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""cable car"",
+      ""scenic bus""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""cable car - not tiring"",
+      ""scenic bus - enjoyable""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.95
+    }
+  }
+}",True,
+96,1天津市蓟州区盘山_张小O张小O,Joy; Relief; Contentment,Children reached summit,[],[],Cable car; Climbing mountain; Scenic viewing,Cable car - Reassuring; Climbing mountain - Joyful; Scenic viewing - Appreciation,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Joy"",
+      ""Relief"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Children reached summit"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Cable car"",
+      ""Climbing mountain"",
+      ""Scenic viewing""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Cable car - Reassuring"",
+      ""Climbing mountain - Joyful"",
+      ""Scenic viewing - Appreciation""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+97,1天津市蓟州区盘山_1390660,Appreciation; Contentment,Scenic beauty,[],[],Hiking; Photography,Hiking - Demanding; Photography - Beautiful,0.75,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Appreciation"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Photography""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Demanding"",
+      ""Photography - Beautiful""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.75
+    }
+  }
+}",True,
+98,1天津市蓟州区盘山_雪雪超级爱旅行,Contentment; Amusement; Exhaustion,Physical challenge,[],[],Hiking; Cable car; Mercedes-Benz vehicle transfer,Hiking - Exhaustion turning to amusement; Cable car - Satisfaction; Mercedes-Benz vehicle transfer - Satisfaction,0.75,"{
+  ""text_analysis"": {
+    ""emotions"": [""Contentment"", ""Amusement"", ""Exhaustion""],
+    ""influence_of_emotions"": ""Physical challenge"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""Hiking"",
+      ""Cable car"",
+      ""Mercedes-Benz vehicle transfer""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Hiking - Exhaustion turning to amusement"",
+      ""Cable car - Satisfaction"",
+      ""Mercedes-Benz vehicle transfer - Satisfaction""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.75
+    }
+  }
+}",True,
+99,1天津市蓟州区盘山_stacy琪,Appreciation; Relief; Contentment,Scenic beauty,[],[],cable car; walking; climbing; tower forest; stream,cable car - thrilling; walking - relieved; climbing - skipped due to fatigue; tower forest - peaceful; stream - refreshing,0.85,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Appreciation"",
+      ""Relief"",
+      ""Contentment""
+    ],
+    ""influence_of_emotions"": ""Scenic beauty"",
+    ""text_species_mentions"": [],
+    ""feeling_correlated_to_text_species"": [],
+    ""text_activities_or_facilities"": [
+      ""cable car"",
+      ""walking"",
+      ""climbing"",
+      ""tower forest"",
+      ""stream""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""cable car - thrilling"",
+      ""walking - relieved"",
+      ""climbing - skipped due to fatigue"",
+      ""tower forest - peaceful"",
+      ""stream - refreshing""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.85
+    }
+  }
+}",True,
+100,1天津市蓟州区盘山_winnieqs,Contentment; Disappointment; Hope,Seasonal limitations,Ginkgo biloba; Peach blossom,Ginkgo biloba - Beautiful view; Peach blossom - Slight spring vibe,Wansong Temple; Shuxia; Yuanbao Stone; Gunsue; Tiancheng Temple; Year pass,Wansong Temple - Fire restriction period; Shuxia - Dirty stones and snow; Yuanbao Stone - Unaffected scenery; Gunsue - Similar dirty scene; Tiancheng Temple - Pleasant sight of peach blossoms; Year pass - Flexible ticketing,0.45,"{
+  ""text_analysis"": {
+    ""emotions"": [
+      ""Contentment"",
+      ""Disappointment"",
+      ""Hope""
+    ],
+    ""influence_of_emotions"": ""Seasonal limitations"",
+    ""text_species_mentions"": [
+      ""Ginkgo biloba"",
+      ""Peach blossom""
+    ],
+    ""feeling_correlated_to_text_species"": [
+      ""Ginkgo biloba - Beautiful view"",
+      ""Peach blossom - Slight spring vibe""
+    ],
+    ""text_activities_or_facilities"": [
+      ""Wansong Temple"",
+      ""Shuxia"",
+      ""Yuanbao Stone"",
+      ""Gunsue"",
+      ""Tiancheng Temple"",
+      ""Year pass""
+    ],
+    ""feeling_correlated_to_text_activities_or_facilities"": [
+      ""Wansong Temple - Fire restriction period"",
+      ""Shuxia - Dirty stones and snow"",
+      ""Yuanbao Stone - Unaffected scenery"",
+      ""Gunsue - Similar dirty scene"",
+      ""Tiancheng Temple - Pleasant sight of peach blossoms"",
+      ""Year pass - Flexible ticketing""
+    ],
+    ""comment_sentiment"": {
+      ""score_0_to_1"": 0.45
+    }
+  }
+}",True,
