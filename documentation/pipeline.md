@@ -70,10 +70,9 @@ locally (the default) or point at one or more of these containers using the
 ``bio_service_url``, ``sentiment_service_url`` and ``qwen_service_url``
 arguments.
 
-Results are recorded in Postgres but not in the images table itself; species
-labels and activity tags live in separate ``image_species`` and
-``image_activity`` tables respectively so that each image may accumulate
-multiple entries over time.
+Results are recorded in Postgres but not in the images table itself; BioCLIP
+species labels live in ``image_species`` while Qwen-image structured outputs
+are consolidated in ``image_qwen_detail`` (one row per image).
 
 The BioClip container additionally ships a command‑line analyzer (``python -m
 models.BioClip.analyzer``) which can be used directly inside the image to poll

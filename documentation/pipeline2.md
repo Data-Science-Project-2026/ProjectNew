@@ -167,11 +167,9 @@ The database roles in the target design are:
 * `post_qwen_detail`
   * stores structured text analysis, emotional influences, and identified textual entities directly to the post.
 * `image_qwen_detail`
-  * stores raw Qwen image-side structured outputs such as summary, visible species, landscape, and human activities;
+  * stores consolidated Qwen image-side structured outputs such as summary, visible species, landscape, human activities, and structured detections (`plants_detected`, `animals_detected`, `human_activities_detected`);
 * `image_species`
-  * stores the **final fused species result**, not Qwen-only raw output;
-* `image_activity`
-  * stores Qwen-only human activity labels;
+  * stores BioCLIP/fused species result, not Qwen-only raw output;
 * `posts.bert_sentiment_score`
   * stores BERT baseline;
 * `posts.qwen_sentiment_score`

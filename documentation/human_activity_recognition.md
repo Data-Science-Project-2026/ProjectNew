@@ -39,8 +39,8 @@ These additional fields help interpret the activity in context.
    * `cycling`
    * `birdwatching`
 5. Deduplicate labels per image.
-6. Persist the labels to `image_activity`.
-7. Persist the raw structured Qwen response to `image_qwen_detail` for debugging and later dashboard use.
+6. Persist `human_activities_detected` to `image_qwen_detail.human_activities_detected`.
+7. Persist the full structured Qwen response to `image_qwen_detail.raw_response` for debugging and later dashboard use.
 
 ## Confidence policy
 

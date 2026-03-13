@@ -126,9 +126,36 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
                 visible_species TEXT,
                 landscape_elements TEXT,
                 human_activities TEXT,
+                plants_detected TEXT,
+                animals_detected TEXT,
+                human_activities_detected TEXT,
                 raw_response TEXT,
                 created_at TIMESTAMP DEFAULT NOW()
             );
+            """
+        )
+        cur.execute(
+            """
+            ALTER TABLE image_qwen_detail
+            ADD COLUMN IF NOT EXISTS plants_detected TEXT
+            """
+        )
+        cur.execute(
+            """
+            ALTER TABLE image_qwen_detail
+            ADD COLUMN IF NOT EXISTS animals_detected TEXT
+            """
+        )
+        cur.execute(
+            """
+            ALTER TABLE image_qwen_detail
+            ADD COLUMN IF NOT EXISTS human_activities_detected TEXT
+            """
+        )
+        cur.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_image_qwen_detail_image_id
+            ON image_qwen_detail(image_id)
             """
         )
     conn.commit()
@@ -461,15 +488,41 @@ def insert_image_qwen_detail(
     visible_species: list | None = None,
     landscape_elements: list | None = None,
     human_activities: list | None = None,
+    plants_detected: list | None = None,
+    animals_detected: list | None = None,
+    human_activities_detected: list | None = None,
     raw_response: str | None = None,
 ) -> int:
-    """Insert a per-image Qwen detail row."""
+    """Insert or update one per-image Qwen detail row.
+
+    All Qwen-image outputs are consolidated in ``image_qwen_detail`` and keyed
+    by ``image_id`` so Qwen metadata stays isolated from BioCLIP result tables.
+    """
     with conn.cursor() as cur:
         cur.execute(
             """
             INSERT INTO image_qwen_detail (
-                image_id, image_summary, visible_species, landscape_elements, human_activities, raw_response
-            ) VALUES (%s, %s, %s, %s, %s, %s)
+                image_id,
+                image_summary,
+                visible_species,
+                landscape_elements,
+                human_activities,
+                plants_detected,
+                animals_detected,
+                human_activities_detected,
+                raw_response
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (image_id)
+            DO UPDATE SET
+                image_summary = EXCLUDED.image_summary,
+                visible_species = EXCLUDED.visible_species,
+                landscape_elements = EXCLUDED.landscape_elements,
+                human_activities = EXCLUDED.human_activities,
+                plants_detected = EXCLUDED.plants_detected,
+                animals_detected = EXCLUDED.animals_detected,
+                human_activities_detected = EXCLUDED.human_activities_detected,
+                raw_response = EXCLUDED.raw_response,
+                created_at = NOW()
             RETURNING id
             """,
             (
@@ -478,6 +531,9 @@ def insert_image_qwen_detail(
                 json.dumps(visible_species) if isinstance(visible_species, list) else None,
                 json.dumps(landscape_elements) if isinstance(landscape_elements, list) else None,
                 json.dumps(human_activities) if isinstance(human_activities, list) else None,
+                json.dumps(plants_detected) if isinstance(plants_detected, list) else None,
+                json.dumps(animals_detected) if isinstance(animals_detected, list) else None,
+                json.dumps(human_activities_detected) if isinstance(human_activities_detected, list) else None,
                 raw_response,
             ),
         )

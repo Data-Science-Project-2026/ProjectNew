@@ -467,6 +467,16 @@ class Pipeline:
         
         # Here we perform inference via the service only.
         if self.qwen_service_url:
+            def _normalize_qwen_image_payload(parsed: dict) -> dict:
+                if not isinstance(parsed, dict):
+                    return {}
+                nested = parsed.get("image_analysis_per_image")
+                if isinstance(nested, list) and nested:
+                    first = nested[0]
+                    if isinstance(first, dict):
+                        return first
+                return parsed
+
             for img_id, img_path in rows:
                 if not img_path:
                     continue
@@ -491,14 +501,17 @@ class Pipeline:
                     r.raise_for_status()
                     results = r.json().get("results", [])
                     if results:
-                        parsed = results[0]
-                        if "error" in parsed:
-                            logger.warning("qwen image %d returned error: %s", img_id, parsed["error"])
+                        parsed_raw = results[0]
+                        if isinstance(parsed_raw, dict) and "error" in parsed_raw:
+                            logger.warning("qwen image %d returned error: %s", img_id, parsed_raw["error"])
                         else:
-                            # 1. Update image_qwen_detail
+                            parsed = _normalize_qwen_image_payload(parsed_raw)
                             vis_species = parsed.get("visible_species_in_image")
                             landscape = parsed.get("landscape_elements")
                             human_acts = parsed.get("human_activities_in_image")
+                            plants_detected = parsed.get("plants_detected")
+                            animals_detected = parsed.get("animals_detected")
+                            human_acts_detected = parsed.get("human_activities_detected")
                             
                             with db.connect(self.dsn) as conn:
                                 db.insert_image_qwen_detail(
@@ -508,47 +521,18 @@ class Pipeline:
                                     visible_species=vis_species if isinstance(vis_species, list) else None,
                                     landscape_elements=landscape if isinstance(landscape, list) else None,
                                     human_activities=human_acts if isinstance(human_acts, list) else None,
-                                    raw_response=json.dumps(parsed, ensure_ascii=False)
+                                    plants_detected=plants_detected if isinstance(plants_detected, list) else None,
+                                    animals_detected=animals_detected if isinstance(animals_detected, list) else None,
+                                    human_activities_detected=human_acts_detected if isinstance(human_acts_detected, list) else None,
+                                    raw_response=json.dumps(parsed_raw, ensure_ascii=False)
                                 )
-                                
-                                # 2. Update image_species
-                                animal_plants = []
-                                animal_plants.extend(parsed.get("plants_detected", []))
-                                animal_plants.extend(parsed.get("animals_detected", []))
-                                
-                                species_names = []
-                                confidences = []
-                                for entry in animal_plants:
-                                    if isinstance(entry, dict):
-                                        species_names.append(entry.get("scientific_name", "unknown"))
-                                        confidences.append(entry.get("confidence", 0.0))
-                                
-                                # Do not replace BioCLIP (species tags from image_species), but append? 
-                                # Actually `update_image_analysis` clears prior tags, so we'll append directly.
-                                if species_names:
-                                    with conn.cursor() as cur:
-                                        for sp, conf in zip(species_names, confidences):
-                                            cur.execute(
-                                                "INSERT INTO image_species (image_id, species, confidence) VALUES (%s, %s, %s)",
-                                                (img_id, sp, conf),
-                                            )
-                                        conn.commit()
-
-                                # 3. Update image_activity
-                                all_acts = []
-                                all_acts.extend(parsed.get("human_activities_detected", []))
-                                for act_entry in all_acts:
-                                    if isinstance(act_entry, dict):
-                                        act_name = act_entry.get("activity")
-                                        if act_name:
-                                            db.update_image_activity(conn, image_id=img_id, activity=str(act_name))
 
                             success += 1
                 except Exception as exc:
                     logger.error("qwen image %d failed: %s", img_id, exc)
 
             logger.info("qwen image service: %d/%d images succeeded", success, len(rows))
-            return len(rows)
+            return success
         else:
              logger.warning("No qwen_service_url provided for run_qwen_image_analysis")
              return 0

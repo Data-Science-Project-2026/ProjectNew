@@ -74,8 +74,8 @@ PostgreSQL stores post/image/Qwen metadata in normalized tables. Image binaries 
 | ------------ | ------- | ------------------------------ | ----------- |
 | `id`         | SERIAL  | PRIMARY KEY                    | Row identifier |
 | `image_id`   | INTEGER | NOT NULL, FK → `images(id)`    | Associated image |
-| `species`    | TEXT    | NOT NULL                       | Detected species label |
-| `confidence` | REAL    |                                | Confidence score |
+| `species`    | TEXT    | NOT NULL                       | BioCLIP species label |
+| `confidence` | REAL    |                                | BioCLIP confidence score |
 
 #### `image_activity`
 
@@ -83,7 +83,7 @@ PostgreSQL stores post/image/Qwen metadata in normalized tables. Image binaries 
 | ---------- | ------- | ------------------------------ | ----------- |
 | `id`       | SERIAL  | PRIMARY KEY                    | Row identifier |
 | `image_id` | INTEGER | NOT NULL, FK → `images(id)`    | Associated image |
-| `activity` | TEXT    | NOT NULL                       | Detected human activity |
+| `activity` | TEXT    | NOT NULL                       | Detected human activity (legacy/manual table) |
 
 #### `post_qwen_detail`
 
@@ -105,13 +105,18 @@ PostgreSQL stores post/image/Qwen metadata in normalized tables. Image binaries 
 | Column               | Type    | Constraints                                      | Description |
 | -------------------- | ------- | ------------------------------------------------ | ----------- |
 | `id`                 | SERIAL  | PRIMARY KEY                                      | Detail row identifier |
-| `image_id`           | INTEGER | NOT NULL, FK → `images(id)`                      | Linked image |
+| `image_id`           | INTEGER | NOT NULL, FK → `images(id)`, UNIQUE              | Linked image (one Qwen row per image) |
 | `image_summary`      | TEXT    |                                                  | Image-level summary |
 | `visible_species`    | TEXT    |                                                  | JSON-encoded visible species |
 | `landscape_elements` | TEXT    |                                                  | JSON-encoded landscape elements |
 | `human_activities`   | TEXT    |                                                  | JSON-encoded activities |
+| `plants_detected`    | TEXT    |                                                  | JSON-encoded structured plant detections |
+| `animals_detected`   | TEXT    |                                                  | JSON-encoded structured animal detections |
+| `human_activities_detected` | TEXT |                                             | JSON-encoded structured human-activity detections |
 | `raw_response`       | TEXT    |                                                  | Raw JSON model response |
 | `created_at`         | TIMESTAMP | DEFAULT NOW()                                  | Creation timestamp |
+
+> Qwen-image outputs are consolidated in `image_qwen_detail` and do **not** write into `image_species` / `image_activity`.
 
 #### `ingestion_status`
 
@@ -173,6 +178,12 @@ classDiagram
         int id
         int image_id
         text image_summary
+        text visible_species
+        text landscape_elements
+        text human_activities
+        text plants_detected
+        text animals_detected
+        text human_activities_detected
         text raw_response
         timestamp created_at
     }
@@ -189,7 +200,7 @@ classDiagram
     images "1" <-- "0..*" image_species : has
     images "1" <-- "0..*" image_activity : has
     posts "1" <-- "0..*" post_qwen_detail : details
-    images "1" <-- "0..*" image_qwen_detail : details
+    images "1" <-- "0..1" image_qwen_detail : details
 ```
 
 To connect to the PostgreSQL database directly:
@@ -205,7 +216,7 @@ SELECT COUNT(*) FROM posts;
 SELECT COUNT(*) FROM images;
 SELECT * FROM image_species WHERE image_id = 42;
 SELECT id, post_id, created_at FROM post_qwen_detail ORDER BY created_at DESC LIMIT 10;
-SELECT image_id, image_summary FROM image_qwen_detail LIMIT 10;
+SELECT image_id, image_summary, plants_detected, animals_detected, human_activities_detected FROM image_qwen_detail LIMIT 10;
 SELECT filename, status, last_processed_row FROM ingestion_status ORDER BY updated_at DESC NULLS LAST;
 ```
 
