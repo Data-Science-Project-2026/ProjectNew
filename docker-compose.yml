@@ -41,14 +41,14 @@ services:
     ports:
       - "5002:5000"
     volumes:
-      - ./src/models/Qwen-Container/prompt.md:/app/prompt.md:ro
+      - ./src/models/Qwen-Container/images.md:/app/images.md:ro
+      - ./src/models/Qwen-Container/comment.md:/app/comment.md:ro
     environment:
-      # For local Qwen inference server (vLLM/similar)
-      # Update BASE_URL to point to your Qwen server (e.g., http://host.docker.internal:8000/v1)
-      OPENAI_API_KEY: "EMPTY"   # can use "EMPTY" for local inference servers
-      OPENAI_BASE_URL: "http://host.docker.internal:8000/v1"  # adjust port if needed
-      MODEL: "Qwen/Qwen3-VL-8B-Instruct-FP8"  # or your model name
-      QWEN_INSTRUCTION_FILE: "/app/prompt.md"  # reads system prompt from this file
+      OPENAI_API_KEY: "EMPTY"
+      OPENAI_BASE_URL: "http://host.docker.internal:8000/v1"
+      MODEL: "Qwen/Qwen3.5-4B"
+      QWEN_IMAGE_INSTRUCTION: "/app/images.md"
+      QWEN_COMMENT_INSTRUCTION: "/app/comment.md"
 
   orchestrator:
     build:
@@ -62,16 +62,19 @@ services:
       - qwen
     volumes:
       - ./data:/data
-      - ./src/models/Qwen-Container/prompt.md:/app/prompt.md:ro
+      - ./src/models/Qwen-Container/images.md:/app/images.md:ro
+      - ./src/models/Qwen-Container/comment.md:/app/comment.md:ro
     command: >
       --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432"
       --bio-service-url http://bioclip:5000
       --bert-service-url http://bert:5000
       --qwen-service-url http://qwen:5000
-      --qwen-instruction-file /app/prompt.md
-      --qwen-model "Qwen/Qwen3-VL-8B-Instruct-FP8"
+      --qwen-image-instruction-file /app/images.md
+      --qwen-comment-instruction-file /app/comment.md
+      --qwen-image-model "Qwen/Qwen3.5-4B"
+      --qwen-text-model "Qwen/Qwen3.5-4B"
       --qwen-max-tokens 4096
-      --qwen-temperature 0.2
+      --qwen-temperature 0.7
       upload-posts
       --csv-dir /data/csvs
       --image-root /data/images

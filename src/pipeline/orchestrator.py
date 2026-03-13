@@ -593,13 +593,18 @@ class Pipeline:
                             logger.warning("qwen post %d returned error: %s", post_id, parsed["error"])
                         else:
                             with db.connect(self.dsn) as conn:
-                                emotions = parsed.get("emotions")
-                                influence = parsed.get("influence_of_emotions")
-                                ts = parsed.get("text_species_mentions")
-                                fs = parsed.get("feeling_correlated_to_text_species")
-                                ta = parsed.get("text_activities_or_facilities")
-                                fa = parsed.get("feeling_correlated_to_text_activities_or_facilities")
-                                
+                                # New Qwen comment schema wraps fields under text_analysis.
+                                text_analysis = parsed.get("text_analysis") if isinstance(parsed, dict) else None
+                                if not isinstance(text_analysis, dict):
+                                    text_analysis = parsed if isinstance(parsed, dict) else {}
+
+                                emotions = text_analysis.get("emotions")
+                                influence = text_analysis.get("influence_of_emotions")
+                                ts = text_analysis.get("text_species_mentions")
+                                fs = text_analysis.get("feeling_correlated_to_text_species")
+                                ta = text_analysis.get("text_activities_or_facilities")
+                                fa = text_analysis.get("feeling_correlated_to_text_activities_or_facilities")
+
                                 db.insert_post_qwen_detail(
                                     conn,
                                     post_id=post_id,
@@ -611,12 +616,12 @@ class Pipeline:
                                     feeling_correlated_to_text_activities_or_facilities=fa if isinstance(fa, list) else None,
                                     raw_response=json.dumps(parsed, ensure_ascii=False)
                                 )
-                                
-                                sentiment = parsed.get("comment_sentiment", {})
+
+                                sentiment = text_analysis.get("comment_sentiment", {})
                                 sentiment_score = sentiment.get("score_0_to_1") if isinstance(sentiment, dict) else None
                                 if sentiment_score is not None:
                                     db.update_qwen_sentiment(conn, post_id=post_id, score=float(sentiment_score))
-                                
+
                             success += 1
                 except Exception as exc:
                     logger.error("qwen post %d failed: %s", post_id, exc)
