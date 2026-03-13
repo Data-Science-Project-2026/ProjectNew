@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Sequence
 
 import psycopg2
+import psycopg2.extensions
 
 
 # NOTE: this module mirrors the sqlite/sql.py API but targets a
@@ -98,25 +99,19 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
             );
             """
         )
-        # ── Qwen batch-level results ────────────────────────────────────
+        # ── Per-post detail from Qwen ──────────────────────────────────
         cur.execute(
             """
-            CREATE TABLE IF NOT EXISTS qwen_batch_results (
+            CREATE TABLE IF NOT EXISTS post_qwen_detail (
                 id SERIAL PRIMARY KEY,
-                city TEXT,
-                park TEXT,
-                username_hash TEXT,
-                post_ids TEXT,
-                raw_response TEXT,
+                post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
                 emotions TEXT,
                 influence_of_emotions TEXT,
                 text_species_mentions TEXT,
                 feeling_correlated_to_text_species TEXT,
                 text_activities_or_facilities TEXT,
                 feeling_correlated_to_text_activities_or_facilities TEXT,
-                comment_sentiment_score REAL,
-                association_likelihood REAL,
-                association_summary TEXT,
+                raw_response TEXT,
                 created_at TIMESTAMP DEFAULT NOW()
             );
             """
@@ -127,11 +122,12 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
             CREATE TABLE IF NOT EXISTS image_qwen_detail (
                 id SERIAL PRIMARY KEY,
                 image_id INTEGER NOT NULL REFERENCES images(id) ON DELETE CASCADE,
-                batch_result_id INTEGER REFERENCES qwen_batch_results(id) ON DELETE SET NULL,
                 image_summary TEXT,
                 visible_species TEXT,
                 landscape_elements TEXT,
-                human_activities TEXT
+                human_activities TEXT,
+                raw_response TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
             );
             """
         )
@@ -414,92 +410,42 @@ def update_qwen_sentiment(
     conn.commit()
 
 
-# ── Qwen batch result helpers ────────────────────────────────────────────
+# ── Qwen result helpers ────────────────────────────────────────────
 
-def insert_qwen_batch_result(
+def insert_post_qwen_detail(
     conn: psycopg2.extensions.connection,
     *,
-    city: str,
-    park: str,
-    username_hash: str,
-    post_ids: list[int],
-    raw_response: str,
+    post_id: int,
     emotions: list[str] | None = None,
     influence_of_emotions: str | None = None,
     text_species_mentions: list | str | None = None,
     feeling_correlated_to_text_species: list | str | None = None,
     text_activities_or_facilities: list | str | None = None,
     feeling_correlated_to_text_activities_or_facilities: list | str | None = None,
-    comment_sentiment_score: float | None = None,
-    association_likelihood: float | None = None,
-    association_summary: str | None = None,
+    raw_response: str | None = None,
 ) -> int:
-    """Insert one Qwen batch result row and return its id."""
+    """Insert one Qwen post comment detail row."""
     with conn.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO qwen_batch_results (
-                city, park, username_hash, post_ids, raw_response,
-                emotions, influence_of_emotions,
+            INSERT INTO post_qwen_detail (
+                post_id, emotions, influence_of_emotions,
                 text_species_mentions, feeling_correlated_to_text_species,
-                text_activities_or_facilities,
-                feeling_correlated_to_text_activities_or_facilities,
-                comment_sentiment_score,
-                association_likelihood, association_summary
+                text_activities_or_facilities, feeling_correlated_to_text_activities_or_facilities,
+                raw_response
             ) VALUES (
-                %s, %s, %s, %s, %s,
-                %s, %s,
-                %s, %s,
-                %s, %s,
-                %s,
-                %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s
             ) RETURNING id
             """,
             (
-                city, park, username_hash,
-                json.dumps(post_ids),
-                raw_response,
-                json.dumps(emotions) if emotions else None,
+                post_id,
+                json.dumps(emotions) if isinstance(emotions, list) else emotions,
                 influence_of_emotions,
                 json.dumps(text_species_mentions) if isinstance(text_species_mentions, list) else text_species_mentions,
                 json.dumps(feeling_correlated_to_text_species) if isinstance(feeling_correlated_to_text_species, list) else feeling_correlated_to_text_species,
                 json.dumps(text_activities_or_facilities) if isinstance(text_activities_or_facilities, list) else text_activities_or_facilities,
                 json.dumps(feeling_correlated_to_text_activities_or_facilities) if isinstance(feeling_correlated_to_text_activities_or_facilities, list) else feeling_correlated_to_text_activities_or_facilities,
-                comment_sentiment_score,
-                association_likelihood, association_summary,
-            ),
-        )
-        batch_id = cur.fetchone()[0]
-    conn.commit()
-    return batch_id
-
-
-def insert_image_qwen_detail(
-    conn: psycopg2.extensions.connection,
-    *,
-    image_id: int,
-    batch_result_id: int | None = None,
-    image_summary: str | None = None,
-    visible_species: list | None = None,
-    landscape_elements: list | None = None,
-    human_activities: list | None = None,
-) -> int:
-    """Insert a per-image Qwen detail row."""
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            INSERT INTO image_qwen_detail (
-                image_id, batch_result_id,
-                image_summary, visible_species, landscape_elements, human_activities
-            ) VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id
-            """,
-            (
-                image_id, batch_result_id,
-                image_summary,
-                json.dumps(visible_species) if isinstance(visible_species, list) else None,
-                json.dumps(landscape_elements) if isinstance(landscape_elements, list) else None,
-                json.dumps(human_activities) if isinstance(human_activities, list) else None,
+                raw_response,
             ),
         )
         detail_id = cur.fetchone()[0]
@@ -507,36 +453,34 @@ def insert_image_qwen_detail(
     return detail_id
 
 
-def fetch_qwen_batch_results(
+def insert_image_qwen_detail(
     conn: psycopg2.extensions.connection,
     *,
-    city: str | None = None,
-    park: str | None = None,
-    limit: int = 100,
-) -> list[dict]:
-    """Return recent Qwen batch results as dicts for dashboard queries."""
-    clauses = ["1=1"]
-    params: list = []
-    if city:
-        clauses.append("city = %s")
-        params.append(city)
-    if park:
-        clauses.append("park = %s")
-        params.append(park)
-    params.append(limit)
-    where = " AND ".join(clauses)
+    image_id: int,
+    image_summary: str | None = None,
+    visible_species: list | None = None,
+    landscape_elements: list | None = None,
+    human_activities: list | None = None,
+    raw_response: str | None = None,
+) -> int:
+    """Insert a per-image Qwen detail row."""
     with conn.cursor() as cur:
         cur.execute(
-            f"""
-            SELECT id, city, park, username_hash, post_ids, raw_response,
-                   emotions, influence_of_emotions, comment_sentiment_score,
-                   association_likelihood, association_summary, created_at
-            FROM qwen_batch_results
-            WHERE {where}
-            ORDER BY created_at DESC
-            LIMIT %s
+            """
+            INSERT INTO image_qwen_detail (
+                image_id, image_summary, visible_species, landscape_elements, human_activities, raw_response
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id
             """,
-            params,
+            (
+                image_id,
+                image_summary,
+                json.dumps(visible_species) if isinstance(visible_species, list) else None,
+                json.dumps(landscape_elements) if isinstance(landscape_elements, list) else None,
+                json.dumps(human_activities) if isinstance(human_activities, list) else None,
+                raw_response,
+            ),
         )
-        cols = [d[0] for d in cur.description]
-        return [dict(zip(cols, row)) for row in cur.fetchall()]
+        detail_id = cur.fetchone()[0]
+    conn.commit()
+    return detail_id

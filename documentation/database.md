@@ -85,38 +85,33 @@ PostgreSQL stores post/image/Qwen metadata in normalized tables. Image binaries 
 | `image_id` | INTEGER | NOT NULL, FK → `images(id)`    | Associated image |
 | `activity` | TEXT    | NOT NULL                       | Detected human activity |
 
-#### `qwen_batch_results`
+#### `post_qwen_detail`
 
 | Column                                              | Type      | Constraints | Description |
 | --------------------------------------------------- | --------- | ----------- | ----------- |
-| `id`                                                | SERIAL    | PRIMARY KEY | Batch result identifier |
-| `city`                                              | TEXT      |             | Batch city |
-| `park`                                              | TEXT      |             | Batch park |
-| `username_hash`                                     | TEXT      |             | User hash for grouped batch |
-| `post_ids`                                          | TEXT      |             | JSON-encoded list of post IDs in this batch |
-| `raw_response`                                      | TEXT      |             | Raw model output |
+| `id`                                                | SERIAL    | PRIMARY KEY | Detail identifier |
+| `post_id`                                           | INTEGER   | NOT NULL, FK → `posts(id)` | Linked post |
 | `emotions`                                          | TEXT      |             | JSON/text emotions list |
 | `influence_of_emotions`                             | TEXT      |             | Narrative explanation |
 | `text_species_mentions`                             | TEXT      |             | Species entities from text |
 | `feeling_correlated_to_text_species`                | TEXT      |             | Feeling correlation for species mentions |
 | `text_activities_or_facilities`                     | TEXT      |             | Activity/facility mentions from text |
 | `feeling_correlated_to_text_activities_or_facilities` | TEXT   |             | Feeling correlation for activities/facilities |
-| `comment_sentiment_score`                           | REAL      |             | Batch comment sentiment score |
-| `association_likelihood`                            | REAL      |             | Estimated likelihood metric |
-| `association_summary`                               | TEXT      |             | Summary text |
+| `raw_response`                                      | TEXT      |             | Raw model output |
 | `created_at`                                        | TIMESTAMP | DEFAULT NOW() | Creation timestamp |
 
 #### `image_qwen_detail`
 
-| Column            | Type    | Constraints                                      | Description |
-| ----------------- | ------- | ------------------------------------------------ | ----------- |
-| `id`              | SERIAL  | PRIMARY KEY                                      | Detail row identifier |
-| `image_id`        | INTEGER | NOT NULL, FK → `images(id)`                      | Linked image |
-| `batch_result_id` | INTEGER | FK → `qwen_batch_results(id)`, ON DELETE SET NULL | Optional parent batch |
-| `image_summary`   | TEXT    |                                                  | Image-level summary |
-| `visible_species` | TEXT    |                                                  | JSON-encoded visible species |
-| `landscape_elements` | TEXT |                                                  | JSON-encoded landscape elements |
-| `human_activities` | TEXT   |                                                  | JSON-encoded activities |
+| Column               | Type    | Constraints                                      | Description |
+| -------------------- | ------- | ------------------------------------------------ | ----------- |
+| `id`                 | SERIAL  | PRIMARY KEY                                      | Detail row identifier |
+| `image_id`           | INTEGER | NOT NULL, FK → `images(id)`                      | Linked image |
+| `image_summary`      | TEXT    |                                                  | Image-level summary |
+| `visible_species`    | TEXT    |                                                  | JSON-encoded visible species |
+| `landscape_elements` | TEXT    |                                                  | JSON-encoded landscape elements |
+| `human_activities`   | TEXT    |                                                  | JSON-encoded activities |
+| `raw_response`       | TEXT    |                                                  | Raw JSON model response |
+| `created_at`         | TIMESTAMP | DEFAULT NOW()                                  | Creation timestamp |
 
 #### `ingestion_status`
 
@@ -162,20 +157,24 @@ classDiagram
         int image_id
         text activity
     }
-    class qwen_batch_results {
+    class post_qwen_detail {
         int id
-        text city
-        text park
-        text username_hash
-        text post_ids
+        int post_id
+        text emotions
+        text influence_of_emotions
+        text text_species_mentions
+        text feeling_correlated_to_text_species
+        text text_activities_or_facilities
+        text feeling_correlated_to_text_activities_or_facilities
         text raw_response
         timestamp created_at
     }
     class image_qwen_detail {
         int id
         int image_id
-        int batch_result_id
         text image_summary
+        text raw_response
+        timestamp created_at
     }
     class ingestion_status {
         int id
@@ -189,7 +188,7 @@ classDiagram
     posts "1" <-- "0..*" images : has
     images "1" <-- "0..*" image_species : has
     images "1" <-- "0..*" image_activity : has
-    qwen_batch_results "1" <-- "0..*" image_qwen_detail : groups
+    posts "1" <-- "0..*" post_qwen_detail : details
     images "1" <-- "0..*" image_qwen_detail : details
 ```
 
@@ -205,8 +204,8 @@ Then run queries like:
 SELECT COUNT(*) FROM posts;
 SELECT COUNT(*) FROM images;
 SELECT * FROM image_species WHERE image_id = 42;
-SELECT id, city, park, created_at FROM qwen_batch_results ORDER BY created_at DESC LIMIT 10;
-SELECT image_id, image_summary FROM image_qwen_detail WHERE batch_result_id = 1;
+SELECT id, post_id, created_at FROM post_qwen_detail ORDER BY created_at DESC LIMIT 10;
+SELECT image_id, image_summary FROM image_qwen_detail LIMIT 10;
 SELECT filename, status, last_processed_row FROM ingestion_status ORDER BY updated_at DESC NULLS LAST;
 ```
 

@@ -46,9 +46,9 @@ is capable of:
 * invoking the sentiment analyzer on text and writing a `sentiment_score` into
   `posts`; posts also record a `username_hash` for privacy along with city,
   park, rating, timestamp, and original text;
-* grouping rows by `(city, park, username)` and executing Qwen batches; the
-  resulting human activities are persisted back to the `activity` column of
-  the corresponding image rows.
+* invoking the Qwen service on individual images and comments independently; the
+  resulting outputs (including structured properties and human activities) are persisted back to
+  the corresponding `post_qwen_detail` and `image_qwen_detail` tables.
 
 The database schema now reflects both hashed usernames and the ingestion status
 mechanism described earlier.
@@ -61,7 +61,7 @@ live in sibling subdirectories of the model code:
 
 * `src/models/BioClip-Container` – exposes `/analyze_images`
 * `src/models/Bert-Container` (sentiment/BERT) – exposes `/analyze_posts`
-* `src/models/Qwen-Container` – exposes `/analyze_users`
+* `src/models/Qwen-Container` – exposes `/analyze_images` and `/analyze_comments`
 
 Each service wraps the existing Python classes, accepts a JSON payload, and
 returns results in the same format used by the orchestrator's ``service_url``

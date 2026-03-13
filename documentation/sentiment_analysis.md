@@ -96,4 +96,3 @@ The current database schema already supports the core sentiment fields:
 * `posts.qwen_sentiment_score`
 * `posts.sentiment_score`
 
-For the extra structured Qwen comment outputs, a dedicated post-level Qwen result table would be the cleanest long-term design. During transition, one-post Qwen batches can still reuse the existing Qwen persistence path if necessary.

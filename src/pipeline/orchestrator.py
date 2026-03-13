@@ -14,12 +14,6 @@ from pathlib import Path
 from typing import Iterable, List, Optional, Dict
 
 from src.database import postgres as db
-from models.Qwen.user_sql_reader import (
-    build_qwen_user_batches,
-    build_qwen_user_batches_pg,
-    build_qwen_messages,
-)
-from openai import OpenAI
 
 
 logger = logging.getLogger(__name__)
@@ -67,6 +61,12 @@ class Pipeline:
         self.bio = None
         self.bert = None
         self.qwen_args = qwen_args or {}
+        
+        # New Qwen configuration mapping
+        self.qwen_image_model = self.qwen_args.get("image_model", "Qwen/Qwen3.5-4B")
+        self.qwen_text_model = self.qwen_args.get("text_model", "Qwen/Qwen3.5-4B")
+        self.qwen_image_instruction_file = self.qwen_args.get("image_instruction_file")
+        self.qwen_comment_instruction_file = self.qwen_args.get("comment_instruction_file")
 
     def _get_bio_model(self):
         if self.skip_bio or self.bio_service_url:
@@ -427,55 +427,64 @@ class Pipeline:
                     total += fut.result()
         return total
 
-    def run_qwen(self, max_users: Optional[int] = None) -> int:
-        """Aggregate posts/images into user batches and run Qwen over them.
-
-        Parses the structured JSON response (matching prompt.md schema) and
-        persists results into ``qwen_batch_results``, ``image_qwen_detail``,
-        ``image_species``, ``image_activity``, and updates ``posts.sentiment_score``.
-        """
-        instruction = self.qwen_args.get("instruction", "")
-        # support reading instruction from a file path
-        instruction_file = self.qwen_args.get("instruction_file")
-        if instruction_file:
-            p = Path(instruction_file)
+    def run_qwen_image_analysis(self, max_images: Optional[int] = None) -> int:
+        """Run Qwen over unanalyzed images individually."""
+        instruction = ""
+        if self.qwen_image_instruction_file:
+            p = Path(self.qwen_image_instruction_file)
             if p.is_file():
                 instruction = p.read_text(encoding="utf-8").strip()
-                logger.info("loaded qwen instruction from %s (%d chars)", p, len(instruction))
-            else:
-                logger.warning("instruction file %s not found, falling back to inline", p)
+                logger.info("loaded qwen image instruction from %s (%d chars)", p, len(instruction))
 
-        # fetch batches locally (same whether service or local)
+        config = {
+            "instruction": instruction,
+            "model": self.qwen_image_model,
+        }
+        
+        # Gather images to process
         with db.connect(self.dsn) as conn:
-            batches = build_qwen_user_batches_pg(
-                conn,
-                city=self.qwen_args.get("city"),
-                park=self.qwen_args.get("park"),
-                username=self.qwen_args.get("username"),
-                min_images=self.qwen_args.get("min_images", 1),
-                max_images=self.qwen_args.get("max_images", 5),
-            )
-        if max_users is not None:
-            batches = batches[:max_users]
+            # Reusing unanalyzed fetch, or better just fetch all without image_qwen_detail
+            limit = max_images if max_images else 1000000
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT i.id, i.path
+                    FROM images i
+                    LEFT JOIN image_qwen_detail d ON i.id = d.image_id
+                    WHERE d.id IS NULL
+                    ORDER BY i.id
+                    LIMIT %s
+                    """,
+                    (limit,)
+                )
+                rows = cur.fetchall()
 
+        if not rows:
+            logger.info("no unanalyzed images found for Qwen")
+            return 0
+
+        success = 0
+        
+        # Here we perform inference via the service only.
         if self.qwen_service_url:
-            config = {
-                "instruction": instruction,
-                "model": self.qwen_args.get("model", "qwen-vl-max"),
-                "max_tokens": self.qwen_args.get("max_tokens", 4096),
-                "temperature": self.qwen_args.get("temperature", 0.2),
-            }
-            success = 0
-            for i, batch in enumerate(batches, start=1):
-                logger.info("qwen service batch %d/%d  city=%s park=%s user=%s  imgs=%d",
-                            i, len(batches), batch.city, batch.park, batch.username, len(batch.images))
-                payload = {
-                    "batches": [batch.to_dict()],
-                    "config": config,
-                }
+            for img_id, img_path in rows:
+                if not img_path:
+                    continue
+                p = Path(img_path)
+                if not p.is_file():
+                    continue
+
                 try:
+                    with open(p, "rb") as f:
+                        b64 = base64.b64encode(f.read()).decode("ascii")
+                        
+                    payload = {
+                        "images": [b64],
+                        "config": config,
+                    }
+                    
                     r = requests.post(
-                        f"{self.qwen_service_url.rstrip('/')}/analyze_users",
+                        f"{self.qwen_service_url.rstrip('/')}/analyze_images",
                         json=payload,
                         timeout=300,
                     )
@@ -484,152 +493,155 @@ class Pipeline:
                     if results:
                         parsed = results[0]
                         if "error" in parsed:
-                            logger.warning("qwen batch %d returned error: %s", i, parsed["error"])
+                            logger.warning("qwen image %d returned error: %s", img_id, parsed["error"])
                         else:
-                            self._persist_qwen_result(batch, parsed, json.dumps(parsed, ensure_ascii=False))
+                            # 1. Update image_qwen_detail
+                            vis_species = parsed.get("visible_species_in_image")
+                            landscape = parsed.get("landscape_elements")
+                            human_acts = parsed.get("human_activities_in_image")
+                            
+                            with db.connect(self.dsn) as conn:
+                                db.insert_image_qwen_detail(
+                                    conn,
+                                    image_id=img_id,
+                                    image_summary=parsed.get("image_summary"),
+                                    visible_species=vis_species if isinstance(vis_species, list) else None,
+                                    landscape_elements=landscape if isinstance(landscape, list) else None,
+                                    human_activities=human_acts if isinstance(human_acts, list) else None,
+                                    raw_response=json.dumps(parsed, ensure_ascii=False)
+                                )
+                                
+                                # 2. Update image_species
+                                animal_plants = []
+                                animal_plants.extend(parsed.get("plants_detected", []))
+                                animal_plants.extend(parsed.get("animals_detected", []))
+                                
+                                species_names = []
+                                confidences = []
+                                for entry in animal_plants:
+                                    if isinstance(entry, dict):
+                                        species_names.append(entry.get("scientific_name", "unknown"))
+                                        confidences.append(entry.get("confidence", 0.0))
+                                
+                                # Do not replace BioCLIP (species tags from image_species), but append? 
+                                # Actually `update_image_analysis` clears prior tags, so we'll append directly.
+                                if species_names:
+                                    with conn.cursor() as cur:
+                                        for sp, conf in zip(species_names, confidences):
+                                            cur.execute(
+                                                "INSERT INTO image_species (image_id, species, confidence) VALUES (%s, %s, %s)",
+                                                (img_id, sp, conf),
+                                            )
+                                        conn.commit()
+
+                                # 3. Update image_activity
+                                all_acts = []
+                                all_acts.extend(parsed.get("human_activities_detected", []))
+                                for act_entry in all_acts:
+                                    if isinstance(act_entry, dict):
+                                        act_name = act_entry.get("activity")
+                                        if act_name:
+                                            db.update_image_activity(conn, image_id=img_id, activity=str(act_name))
+
                             success += 1
                 except Exception as exc:
-                    logger.error("qwen batch %d failed: %s", i, exc)
-            logger.info("qwen service: %d/%d batches succeeded", success, len(batches))
-            return len(batches)
+                    logger.error("qwen image %d failed: %s", img_id, exc)
 
-        # otherwise use local OpenAI client
-        client = OpenAI(api_key=self.qwen_args.get("api_key"), base_url=self.qwen_args.get("base_url"))
-        for i, batch in enumerate(batches, start=1):
-            messages = build_qwen_messages(batch, instruction)
-            resp = client.chat.completions.create(
-                model=self.qwen_args.get("model"),
-                messages=messages,
-                max_tokens=self.qwen_args.get("max_tokens", 4096),
-                temperature=self.qwen_args.get("temperature", 0.2),
-            )
-            raw = resp.choices[0].message.content
-            try:
-                parsed = json.loads(raw)
-                logger.info("qwen batch %d result: %s", i, json.dumps(parsed, ensure_ascii=False))
-                self._persist_qwen_result(batch, parsed, raw)
-            except Exception:
-                logger.warning("qwen returned non-json: %s", raw)
-        return len(batches)
+            logger.info("qwen image service: %d/%d images succeeded", success, len(rows))
+            return len(rows)
+        else:
+             logger.warning("No qwen_service_url provided for run_qwen_image_analysis")
+             return 0
 
-    # ── persist helper for new prompt.md JSON schema ────────────────────
+    def run_qwen_comment_analysis(self, max_posts: Optional[int] = None) -> int:
+        """Run Qwen over unanalyzed comments individually."""
+        instruction = ""
+        if self.qwen_comment_instruction_file:
+            p = Path(self.qwen_comment_instruction_file)
+            if p.is_file():
+                instruction = p.read_text(encoding="utf-8").strip()
+                logger.info("loaded qwen comment instruction from %s (%d chars)", p, len(instruction))
 
-    def _persist_qwen_result(self, batch, parsed: dict, raw: str) -> None:
-        """Write structured Qwen results into Postgres tables."""
-        text_a = parsed.get("text_analysis", {})
-        set_level = parsed.get("set_level_extraction", {})
-        assoc = parsed.get("image_text_association", {})
-        per_image_list = parsed.get("image_analysis_per_image", [])
-
-        # extract text-analysis fields
-        emotions = text_a.get("emotions") if isinstance(text_a.get("emotions"), list) else None
-        influence = text_a.get("influence_of_emotions")
-        tsm = text_a.get("text_species_mentions")
-        text_species = tsm if isinstance(tsm, list) else None
-        fcts = text_a.get("feeling_correlated_to_text_species")
-        feel_species = fcts if isinstance(fcts, list) else None
-        taf = text_a.get("text_activities_or_facilities")
-        text_activities = taf if isinstance(taf, list) else None
-        fctaf = text_a.get("feeling_correlated_to_text_activities_or_facilities")
-        feel_activities = fctaf if isinstance(fctaf, list) else None
-
-        sentiment_obj = text_a.get("comment_sentiment", {})
-        sentiment_score = sentiment_obj.get("score_0_to_1") if isinstance(sentiment_obj, dict) else None
-
-        assoc_likelihood = assoc.get("association_likelihood_0_to_1")
-        assoc_summary = assoc.get("association_summary")
-
+        config = {
+            "instruction": instruction,
+            "model": self.qwen_text_model,
+        }
+        
         with db.connect(self.dsn) as conn:
-            # 1) Insert batch-level result
-            batch_id = db.insert_qwen_batch_result(
-                conn,
-                city=batch.city,
-                park=batch.park,
-                username_hash=batch.username,
-                post_ids=batch.post_ids,
-                raw_response=raw,
-                emotions=emotions,
-                influence_of_emotions=str(influence) if influence else None,
-                text_species_mentions=text_species,
-                feeling_correlated_to_text_species=feel_species,
-                text_activities_or_facilities=text_activities,
-                feeling_correlated_to_text_activities_or_facilities=feel_activities,
-                comment_sentiment_score=float(sentiment_score) if sentiment_score is not None else None,
-                association_likelihood=float(assoc_likelihood) if assoc_likelihood is not None else None,
-                association_summary=assoc_summary,
-            )
-
-            # 2) Update qwen_sentiment_score on related posts (independent from Bert)
-            if sentiment_score is not None:
-                for pid in batch.post_ids:
-                    db.update_qwen_sentiment(conn, post_id=pid, score=float(sentiment_score))
-
-            # 3) Per-image detail
-            for img_data in per_image_list:
-                if not isinstance(img_data, dict):
-                    continue
-                idx = img_data.get("image_index", 0) - 1  # prompt uses 1-based
-                if 0 <= idx < len(batch.images):
-                    image_id = batch.images[idx].image_id
-                else:
-                    continue
-
-                vis_sp = img_data.get("visible_species_in_image")
-                vis_species = vis_sp if isinstance(vis_sp, list) else None
-                land = img_data.get("landscape_elements")
-                landscape = land if isinstance(land, list) else None
-                ha = img_data.get("human_activities_in_image")
-                acts = ha if isinstance(ha, list) else None
-
-                db.insert_image_qwen_detail(
-                    conn,
-                    image_id=image_id,
-                    batch_result_id=batch_id,
-                    image_summary=img_data.get("image_summary"),
-                    visible_species=vis_species,
-                    landscape_elements=landscape,
-                    human_activities=acts,
+            limit = max_posts if max_posts else 1000000
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT p.id, p.comment
+                    FROM posts p
+                    LEFT JOIN post_qwen_detail d ON p.id = d.post_id
+                    WHERE d.id IS NULL AND p.comment IS NOT NULL AND TRIM(p.comment) != ''
+                    ORDER BY p.id
+                    LIMIT %s
+                    """,
+                    (limit,)
                 )
+                rows = cur.fetchall()
 
-                # also write per-image activities to image_activity table
-                if acts:
-                    for act_name in acts:
-                        db.update_image_activity(conn, image_id=image_id, activity=str(act_name))
+        if not rows:
+            logger.info("no unanalyzed posts found for Qwen")
+            return 0
 
-            # 4) Set-level species → image_species (attach to all images in batch)
-            plants = set_level.get("plants_detected")
-            animals = set_level.get("animals_detected")
-            all_species_entries = []
-            if isinstance(plants, list):
-                all_species_entries.extend(plants)
-            if isinstance(animals, list):
-                all_species_entries.extend(animals)
-
-            if all_species_entries and batch.images:
-                first_image_id = batch.images[0].image_id
-                species_names = []
-                confidences = []
-                for entry in all_species_entries:
-                    if isinstance(entry, dict):
-                        species_names.append(entry.get("scientific_name", "unknown"))
-                        confidences.append(entry.get("confidence", 0.0))
-                if species_names:
-                    db.update_image_analysis(
-                        conn,
-                        image_id=first_image_id,
-                        species=species_names,
-                        confidence=confidences,
+        success = 0
+        if self.qwen_service_url:
+            for post_id, comment in rows:
+                try:
+                    payload = {
+                        "comments": [comment],
+                        "config": config,
+                    }
+                    
+                    r = requests.post(
+                        f"{self.qwen_service_url.rstrip('/')}/analyze_comments",
+                        json=payload,
+                        timeout=120,
                     )
+                    r.raise_for_status()
+                    results = r.json().get("results", [])
+                    if results:
+                        parsed = results[0]
+                        if "error" in parsed:
+                            logger.warning("qwen post %d returned error: %s", post_id, parsed["error"])
+                        else:
+                            with db.connect(self.dsn) as conn:
+                                emotions = parsed.get("emotions")
+                                influence = parsed.get("influence_of_emotions")
+                                ts = parsed.get("text_species_mentions")
+                                fs = parsed.get("feeling_correlated_to_text_species")
+                                ta = parsed.get("text_activities_or_facilities")
+                                fa = parsed.get("feeling_correlated_to_text_activities_or_facilities")
+                                
+                                db.insert_post_qwen_detail(
+                                    conn,
+                                    post_id=post_id,
+                                    emotions=emotions if isinstance(emotions, list) else None,
+                                    influence_of_emotions=str(influence) if influence else None,
+                                    text_species_mentions=ts if isinstance(ts, list) else None,
+                                    feeling_correlated_to_text_species=fs if isinstance(fs, list) else None,
+                                    text_activities_or_facilities=ta if isinstance(ta, list) else None,
+                                    feeling_correlated_to_text_activities_or_facilities=fa if isinstance(fa, list) else None,
+                                    raw_response=json.dumps(parsed, ensure_ascii=False)
+                                )
+                                
+                                sentiment = parsed.get("comment_sentiment", {})
+                                sentiment_score = sentiment.get("score_0_to_1") if isinstance(sentiment, dict) else None
+                                if sentiment_score is not None:
+                                    db.update_qwen_sentiment(conn, post_id=post_id, score=float(sentiment_score))
+                                
+                            success += 1
+                except Exception as exc:
+                    logger.error("qwen post %d failed: %s", post_id, exc)
 
-            # 5) Set-level human_activities_detected → image_activity
-            set_activities = set_level.get("human_activities_detected")
-            if isinstance(set_activities, list) and batch.images:
-                first_image_id = batch.images[0].image_id
-                for act_entry in set_activities:
-                    if isinstance(act_entry, dict):
-                        act_name = act_entry.get("activity")
-                        if act_name:
-                            db.update_image_activity(conn, image_id=first_image_id, activity=str(act_name))
+            logger.info("qwen comment service: %d/%d posts succeeded", success, len(rows))
+            return len(rows)
+        else:
+             logger.warning("No qwen_service_url provided for run_qwen_comment_analysis")
+             return 0
 
     def ingest_images(
         self,
@@ -712,16 +724,10 @@ def main() -> None:
     analyze.add_argument("--workers", type=int, default=1)
 
     qwen_arg = parser.add_argument_group("qwen configuration")
-    qwen_arg.add_argument("--qwen-instruction", default="", help="System instruction for Qwen VL model (inline text)")
-    qwen_arg.add_argument("--qwen-instruction-file", default=None, help="Path to a file containing the Qwen system prompt (overrides --qwen-instruction)")
-    qwen_arg.add_argument("--qwen-model", default="qwen-vl-max", help="Qwen model name")
-    qwen_arg.add_argument("--qwen-max-tokens", type=int, default=4096, help="Max tokens for Qwen responses")
-    qwen_arg.add_argument("--qwen-temperature", type=float, default=0.2, help="Temperature for Qwen inference")
-    qwen_arg.add_argument("--qwen-city", default=None, help="Filter for specific city")
-    qwen_arg.add_argument("--qwen-park", default=None, help="Filter for specific park")
-    qwen_arg.add_argument("--qwen-username", default=None, help="Filter for specific username")
-    qwen_arg.add_argument("--qwen-min-images", type=int, default=1, help="Minimum images per user batch")
-    qwen_arg.add_argument("--qwen-max-images", type=int, default=5, help="Max images per user batch (0=unlimited)")
+    qwen_arg.add_argument("--qwen-image-model", default="Qwen/Qwen3.5-4B", help="Qwen model name for images")
+    qwen_arg.add_argument("--qwen-text-model", default="Qwen/Qwen3.5-4B", help="Qwen model name for comments")
+    qwen_arg.add_argument("--qwen-image-instruction-file", default=None)
+    qwen_arg.add_argument("--qwen-comment-instruction-file", default=None)
 
     db_arg = parser.add_argument_group("database")
     db_arg.add_argument("--db-dsn", default=None, help="Postgres DSN or use PIPELINE_DATABASE_DSN env var")
@@ -749,16 +755,10 @@ def main() -> None:
             "text_batch_size": 4048,
         },
         qwen_args={
-            "instruction": args.qwen_instruction,
-            "instruction_file": args.qwen_instruction_file,
-            "model": args.qwen_model,
-            "max_tokens": args.qwen_max_tokens,
-            "temperature": args.qwen_temperature,
-            "city": args.qwen_city,
-            "park": args.qwen_park,
-            "username": args.qwen_username,
-            "min_images": args.qwen_min_images,
-            "max_images": args.qwen_max_images,
+            "image_model": args.qwen_image_model,
+            "text_model": args.qwen_text_model,
+            "image_instruction_file": args.qwen_image_instruction_file,
+            "comment_instruction_file": args.qwen_comment_instruction_file,
         },
         bio_service_url=args.bio_service_url,
         bert_service_url=args.bert_service_url,
@@ -774,10 +774,7 @@ def main() -> None:
         city_folder = Path(args.city_folder)
         n = pipeline.ingest_posts(city_folder, max_posts=args.max_posts, debug=args.debug)
         logger.info("ingested %d posts from %s", n, city_folder)
-        # analyze with Qwen
-        if not args.skip_qwen:
-            nusers = pipeline.run_qwen()
-            logger.info("analyzed %d user batches with Qwen", nusers)
+        # analyze with Qwen is split now, calling it via `analyze` step ensures separation.
     elif args.command == "upload-images":
         folders = [Path(p) for p in args.folders]
         storage = Path(image_root_arg) if image_root_arg else None
@@ -785,9 +782,15 @@ def main() -> None:
         logger.info("ingested %d images", n)
     elif args.command == "analyze":
         nimg = pipeline.analyze_images(batch_size=args.batch_size, max_batches=args.max_batches, workers=args.workers)
-        logger.info("processed %d images", nimg)
+        logger.info("processed %d images with BioClip", nimg)
         npost = pipeline.analyze_posts(batch_size=args.batch_size, workers=args.workers)
-        logger.info("scored %d posts", npost)
+        logger.info("scored %d posts with Bert", npost)
+        
+        if not args.skip_qwen:
+            nqwen_img = pipeline.run_qwen_image_analysis()
+            logger.info("analyzed %d images with Qwen", nqwen_img)
+            nqwen_post = pipeline.run_qwen_comment_analysis()
+            logger.info("analyzed %d posts with Qwen", nqwen_post)
     else:
         parser.print_help()
 

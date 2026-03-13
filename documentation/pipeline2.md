@@ -1,6 +1,5 @@
 # Pipeline
 
-> Planning note: the current implementation still keeps an older user-batch `run_qwen()` path. The design below is the target orchestrator plan that moves Qwen3.5 into almost the full visual/text analysis workflow.
 
 ## Data Flow Diagram
 
@@ -51,9 +50,9 @@ is capable of:
 * invoking the sentiment analyzer on text and writing a `sentiment_score` into
   `posts`; posts also record a `username_hash` for privacy along with city,
   park, rating, timestamp, and original text;
-* grouping rows by `(city, park, username)` and executing Qwen batches; the
-  resulting human activities are persisted back to the `activity` column of
-  the corresponding image rows.
+* invoking the Qwen service on individual images and comments independently; the
+  resulting outputs (including structured properties and human activities) are persisted back to
+  the corresponding `post_qwen_detail` and `image_qwen_detail` tables.
 
 The database schema now reflects both hashed usernames and the ingestion status
 mechanism described earlier.
@@ -112,13 +111,13 @@ Inside the orchestrator, the planned `analyze` flow is:
    * The final post-level sentiment score is a fused value.
    * Agreement between the two models is used as confidence / consistency signal.
 
-## Planned orchestrator refactor
+## Orchestrator architecture
 
-To support the notebook-style logic in production, the orchestrator should be extended from the current shape to roughly the following responsibilities:
+To support the notebook-style logic in production, the orchestrator has the following responsibilities:
 
 ### Image-side methods
 
-* `analyze_images_bioclip()` or the existing `analyze_images()`
+* `analyze_images()`
   * produce BioCLIP species candidates;
 * `run_qwen_image_analysis()`
   * run the `images.md` prompt per image;
@@ -129,25 +128,16 @@ To support the notebook-style logic in production, the orchestrator should be ex
 
 ### Text-side methods
 
-* `analyze_posts_bert()` or the existing `analyze_posts()`
+* `analyze_posts()`
   * produce BERT sentiment baseline;
 * `run_qwen_comment_analysis()`
   * run the `comment.md` prompt per post/comment;
 * `fuse_sentiment_results()`
   * merge BERT + Qwen sentiment into final post sentiment.
 
-### Optional higher-level batch reasoning
+## Service/API split
 
-The current grouped `run_qwen()` implementation can still be retained for optional:
-
-* image-text association,
-* visit-level summaries,
-* grouped user-level reasoning.
-
-
-## Planned service/API split
-
-The current Qwen container exposes a user-batch endpoint. Under the planned architecture, the Qwen service should expose three logical inference modes:
+Under the target architecture, the Qwen service exposes two logical inference modes:
 
 * `/analyze_images`
   * input: one or more images;
@@ -159,26 +149,23 @@ The current Qwen container exposes a user-batch endpoint. Under the planned arch
   * prompt contract: `examples/comment.md`;
   * used for text analysis and Qwen sentiment.
 
-* `/analyze_users` (optional)
-  * input: grouped image + comment batches;
-  * used only when visit-level association reasoning is needed.
+## CLI Configuration
 
-## Planned CLI / configuration changes
-
-The existing single Qwen prompt argument is not enough for the target workflow. The orchestrator should support separate configuration for image and text prompts, for example:
+The orchestrator supports separate configuration for image and text prompts, for example:
 
 * `--qwen-image-instruction-file`
 * `--qwen-comment-instruction-file`
-* `--qwen-association-instruction-file` (optional)
 * `--qwen-image-model`
 * `--qwen-text-model`
 
 If the deployment uses one OpenAI-compatible endpoint for both tasks, the model names may still point to the same backend, but the prompt contracts remain separate.
 
-## Planned persistence strategy
+## Persistence strategy
 
 The database roles in the target design are:
 
+* `post_qwen_detail`
+  * stores structured text analysis, emotional influences, and identified textual entities directly to the post.
 * `image_qwen_detail`
   * stores raw Qwen image-side structured outputs such as summary, visible species, landscape, and human activities;
 * `image_species`
@@ -191,8 +178,6 @@ The database roles in the target design are:
   * stores Qwen sentiment;
 * `posts.sentiment_score`
   * stores the fused final sentiment score.
-
-For text-side structured Qwen fields, a dedicated post-level Qwen table would be the cleanest long-term schema. During transition, one-post batches can still reuse the existing Qwen result persistence path if needed.
 
 ## Dockerized model services
 
@@ -214,7 +199,18 @@ cd ../Bert-Container && docker build -t bert-service .
 
 # run Qwen3.5  background serve(need to customize)
 
-sudo docker run --runtime nvidia --gpus all     -e HF_TOKEN     -e LD_LIBRARY_PATH="/usr/local/nvidia/lib64:/usr/lib/x86_64-linux-gnu:/usr/local/cuda/lib64"     -v ~/.cache/huggingface:/root/.cache/huggingface     --ipc=host     -p 8000:8000     vllm/vllm-openai:cu130-nightly     Qwen/Qwen3.5-4B     --max-model-len 8192    --gpu-memory-utilization 0.7     --kv-cache-dtype fp8     --max-num-batched-tokens 2048
+sudo docker run --runtime nvidia --gpus all \
+    -e HF_TOKEN \
+    -e LD_LIBRARY_PATH="/usr/local/nvidia/lib64:/usr/lib/x86_64-linux-gnu:/usr/local/cuda/lib64" \
+    -v ~/.cache/huggingface:/root/.cache/huggingface \
+    --ipc=host \
+    -p 8000:8000 \
+    vllm/vllm-openai:latest \
+    Qwen/Qwen3-VL-8B-Instruct-FP8 \
+    --max-model-len 8192 \
+    --gpu-memory-utilization 0.85 \
+    --kv-cache-dtype fp8 \
+    --limit-mm-per-prompt.video 0
 
 # run them on the default ports
 docker run -p 5000:5000 bioclip-service
