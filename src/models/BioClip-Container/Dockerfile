@@ -3,9 +3,9 @@ FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
 
 # Install Python 3.12
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.12 python3.12-venv python3-pip curl && \
+    python3 python3-venv python3-pip curl && \
     rm -rf /var/lib/apt/lists/* && \
-    ln -sf /usr/bin/python3.12 /usr/bin/python
+    ln -sf /usr/bin/python3 /usr/bin/python
 
 WORKDIR /app
 

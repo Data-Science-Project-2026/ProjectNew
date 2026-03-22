@@ -26,6 +26,9 @@ services:
       - "5000:5000"
     volumes:
       - ./src/models/BioClip:/app/src/models/BioClip
+    environment:
+      USE_HALF: "true"
+      TEXT_BATCH_SIZE: "512"
     deploy:
       resources:
         reservations:

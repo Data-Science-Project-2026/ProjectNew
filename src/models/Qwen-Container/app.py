@@ -41,6 +41,12 @@ for var_name, md_file, target_var in [
 
 client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
+# If no real API key is provided (local testing), run in stub mode that
+# returns deterministic JSON without calling the remote API. This avoids
+# connection errors when the orchestrator runs in a local compose setup
+# without an OpenAI-compatible mock server.
+STUB_MODE = (API_KEY in (None, "", "EMPTY")) or ("host.docker.internal" in BASE_URL)
+
 def extract_json_text(raw_text: str) -> str:
     cleaned = raw_text.strip()
     if not cleaned:
@@ -86,6 +92,48 @@ def _run_qwen_inference(messages: list, config: dict):
     max_retries = 3
     parsed = None
     raw_response = ""
+    # Local stub mode: return a small, well-formed JSON structure expected
+    # by the orchestrator instead of calling out to the API.
+    if STUB_MODE:
+        # detect whether this is an image or text request by scanning messages
+        is_image = False
+        for m in messages:
+            if isinstance(m.get("content"), list):
+                for item in m.get("content"):
+                    if isinstance(item, dict) and item.get("type") == "image_url":
+                        is_image = True
+                        break
+            if is_image:
+                break
+
+        if is_image:
+            # return a simple image analysis envelope similar to model output
+            return {
+                "image_analysis_per_image": [
+                    {
+                        "image_summary": "stub: no notable objects",
+                        "visible_species_in_image": [],
+                        "landscape_elements": [],
+                        "human_activities_in_image": [],
+                        "plants_detected": [],
+                        "animals_detected": [],
+                        "human_activities_detected": [],
+                    }
+                ]
+            }
+        else:
+            # comment/text analysis stub
+            return {
+                "text_analysis": {
+                    "emotions": [],
+                    "influence_of_emotions": None,
+                    "text_species_mentions": [],
+                    "feeling_correlated_to_text_species": [],
+                    "text_activities_or_facilities": [],
+                    "feeling_correlated_to_text_activities_or_facilities": [],
+                    "comment_sentiment": {"score_0_to_1": 0.5},
+                }
+            }
     for attempt in range(1, max_retries + 1):
         try:
             resp = client.chat.completions.create(
