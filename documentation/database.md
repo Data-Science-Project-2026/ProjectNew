@@ -203,6 +203,41 @@ classDiagram
     images "1" <-- "0..1" image_qwen_detail : details
 ```
 
+### Postgres setup (local and Docker)
+
+This project uses PostgreSQL for its primary datastore. Use one of the approaches below to create the database and user before running ingestion:
+
+- Start PostgreSQL via Docker Compose (recommended for local development):
+
+```bash
+docker-compose up -d postgres
+```
+
+- Create the database and user inside the running container (example):
+
+```bash
+docker-compose exec postgres psql -U postgres -c "CREATE USER myuser WITH PASSWORD 'mypass'; CREATE DATABASE mydb; GRANT ALL PRIVILEGES ON DATABASE mydb TO myuser;"
+```
+
+- Or use the host `psql` client against the container:
+
+```bash
+# from host, after postgres container is up
+psql -h localhost -U postgres -c "CREATE USER myuser WITH PASSWORD 'mypass'; CREATE DATABASE mydb; GRANT ALL PRIVILEGES ON DATABASE mydb TO myuser;"
+```
+
+Sample environment variables used by `docker-compose.yml` (already present in the repo):
+
+```
+POSTGRES_USER=myuser
+POSTGRES_PASSWORD=mypass
+POSTGRES_DB=mydb
+```
+
+Once the DB and user exist you can use the DSN shown below when running the orchestrator or other tools.
+
+To connect to the PostgreSQL database directly:
+
 To connect to the PostgreSQL database directly:
 
 ```bash
