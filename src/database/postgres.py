@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import os
 import json
+import time
+import logging
 from pathlib import Path
 from typing import Sequence
 
 import psycopg2
 import psycopg2.extensions
+
+logger = logging.getLogger(__name__)
 
 
 # NOTE: this module mirrors the sqlite/sql.py API but targets a
@@ -15,8 +19,11 @@ import psycopg2.extensions
 # logic elsewhere.
 
 
-def connect(dsn: str | None = None) -> psycopg2.extensions.connection:
+def connect(dsn: str | None = None, retries: int = 5, delay: float = 2.0) -> psycopg2.extensions.connection:
     """Return a new psycopg2 connection using DSN or environment variable.
+
+    Retries the connection ``retries`` times with exponential back-off so
+    parallel orchestrators survive brief Postgres startup delays.
 
     ``dsn`` may be any string accepted by :func:`psycopg2.connect` (e.g.
     ``"dbname=... user=... password=... host=..."``) or, when omitted, the
@@ -27,7 +34,15 @@ def connect(dsn: str | None = None) -> psycopg2.extensions.connection:
         dsn = os.environ.get("PIPELINE_DATABASE_DSN")
     if not dsn:
         raise ValueError("no database DSN configured")
-    return psycopg2.connect(dsn)
+    for attempt in range(1, retries + 1):
+        try:
+            return psycopg2.connect(dsn)
+        except psycopg2.OperationalError:
+            if attempt == retries:
+                raise
+            wait = delay * attempt
+            logger.warning("Postgres connect attempt %d/%d failed, retrying in %.1fs", attempt, retries, wait)
+            time.sleep(wait)
 
 
 def _serialize_optional(values: Sequence[object] | None) -> str | None:

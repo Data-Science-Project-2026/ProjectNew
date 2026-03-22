@@ -1,0 +1,13 @@
+.git
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+data/
+documentation/
+examples/
+*.md
+!src/models/Qwen-Container/images.md
+!src/models/Qwen-Container/comment.md
+!src/models/Qwen/images.md
+!src/models/Qwen/comment.md

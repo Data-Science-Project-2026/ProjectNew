@@ -5,6 +5,11 @@ from models.Bert.llm_analyzer import PsychologicalStateAnalyzer
 
 app = Flask(__name__)
 
+@app.route("/", methods=["GET"])
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"})
+
 # allow model name to be configured via environment
 MODEL_NAME = os.environ.get("SENTIMENT_MODEL", "nlptown/bert-base-multilingual-uncased-sentiment")
 analyzer = PsychologicalStateAnalyzer(sentiment_model=MODEL_NAME)

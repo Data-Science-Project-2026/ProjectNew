@@ -11,6 +11,11 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
+@app.route("/", methods=["GET"])
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"})
+
 # configuration
 API_KEY = os.environ.get("OPENAI_API_KEY", "EMPTY")
 BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:8000/v1")
@@ -170,6 +175,7 @@ def analyze_images():
     return jsonify({"results": results})
 
 @app.route("/analyze_comments", methods=["POST"])
+@app.route("/analyze_users", methods=["POST"])
 def analyze_comments():
     payload = request.get_json(force=True)
     comments = payload.get("comments", []) # List of text comments

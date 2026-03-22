@@ -1,4 +1,6 @@
+--extra-index-url https://download.pytorch.org/whl/cu124
 flask
+gunicorn
 requests
 open_clip_torch
 torch

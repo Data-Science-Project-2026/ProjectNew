@@ -12,6 +12,11 @@ from models.BioClip.model import BioClipModel
 
 app = Flask(__name__)
 
+@app.route("/", methods=["GET"])
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"})
+
 # configuration from environment variables
 SPECIES_TOKENS = os.environ.get("SPECIES_TOKENS_PATH", "src/models/BioClip/species_tokens_latin.pt")
 SPECIES_NAMES = os.environ.get("SPECIES_NAMES_PATH", "src/models/BioClip/species_names_latin.txt")

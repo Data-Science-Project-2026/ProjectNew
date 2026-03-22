@@ -1,4 +1,6 @@
+--extra-index-url https://download.pytorch.org/whl/cu124
 flask
+gunicorn
 transformers>=4.37.0
 torch
 sentencepiece

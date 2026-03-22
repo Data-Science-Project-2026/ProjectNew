@@ -16,7 +16,7 @@ from database import postgres as db
 TEST_DSN = "dbname=mydb user=myuser password=mypass host=localhost port=5432"
 
 
-def _wait_for_postgres(dsn: str, timeout: int = 15) -> None:
+def _wait_for_postgres(dsn: str, timeout: int = 30) -> None:
     import psycopg2
 
     deadline = time.time() + timeout
@@ -28,17 +28,16 @@ def _wait_for_postgres(dsn: str, timeout: int = 15) -> None:
         except Exception:
             if time.time() > deadline:
                 raise
-            time.sleep(0.5)
+            time.sleep(1)
 
 
 @pytest.fixture(scope="module")
 def services():
-    # bring up the minimal set of containers needed for both tests
-    subprocess.check_call(["docker-compose", "up", "-d", "postgres", "bioclip", "qwen"])
+    # bring up shared infrastructure + model services
+    subprocess.check_call(["docker", "compose", "up", "-d", "postgres", "bioclip", "bert", "qwen"])
     _wait_for_postgres(TEST_DSN)
     yield
-    # tear everything down at the end
-    subprocess.check_call(["docker-compose", "down"])
+    subprocess.check_call(["docker", "compose", "down"])
 
 
 @pytest.fixture
@@ -88,23 +87,6 @@ def test_qwen_container(services, sample_images):
 
     pipeline.ingest_images([sample_images], image_storage=sample_images)
 
-    # create a dummy post and assign the ingested images to it
-    with db.connect(TEST_DSN) as conn:
-        db.insert_post(
-            conn,
-            city="test",
-            park="test",
-            username="",
-            username_hash="",
-            comment=None,
-            time=None,
-            rating=None,
-        )
-        # mark all existing images as belonging to post_id=1
-        with conn.cursor() as cur:
-            cur.execute("UPDATE images SET post_id = 1")
-        conn.commit()
-
-    # run Qwen on the single user
-    result = pipeline.run_qwen(max_users=1)
+    # run Qwen image analysis on the ingested images
+    result = pipeline.run_qwen_image_analysis(max_images=3)
     assert result >= 0

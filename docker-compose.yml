@@ -11,6 +11,11 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   bioclip:
     build:
@@ -19,9 +24,21 @@ services:
     image: bioclip-service
     ports:
       - "5000:5000"
-    # mount a directory containing token files if available
     volumes:
       - ./src/models/BioClip:/app/src/models/BioClip
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   bert:
     build:
@@ -30,6 +47,19 @@ services:
     image: bert-service
     ports:
       - "5001:5000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   qwen:
     build:
@@ -49,21 +79,39 @@ services:
       MODEL: "Qwen/Qwen3.5-4B"
       QWEN_IMAGE_INSTRUCTION: "/app/images.md"
       QWEN_COMMENT_INSTRUCTION: "/app/comment.md"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
-  orchestrator:
+  # ── Orchestrator instances ─────────────────────────────────────────
+  # Each orchestrator processes its own data split (no file overlap).
+  # Scale by adding more services (orchestrator-3, orchestrator-4, …)
+  # or by using: docker compose up --scale orchestrator-1=N
+  # Each instance mounts a different host data directory.
+
+  orchestrator-1:
     build:
       context: .
       dockerfile: src/pipeline/Orchestrator-Container/Dockerfile
     image: pipeline-orchestrator
     depends_on:
-      - postgres
-      - bioclip
-      - bert
-      - qwen
+      postgres:
+        condition: service_healthy
+      bioclip:
+        condition: service_healthy
+      bert:
+        condition: service_healthy
+      qwen:
+        condition: service_healthy
     volumes:
-      - ./data:/data
+      - ./data/split_1:/data
       - ./src/models/Qwen-Container/images.md:/app/images.md:ro
       - ./src/models/Qwen-Container/comment.md:/app/comment.md:ro
+    environment:
+      PIPELINE_DATABASE_DSN: "dbname=mydb user=myuser password=mypass host=postgres port=5432"
     command: >
       --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432"
       --bio-service-url http://bioclip:5000
@@ -73,11 +121,40 @@ services:
       --qwen-comment-instruction-file /app/comment.md
       --qwen-image-model "Qwen/Qwen3.5-4B"
       --qwen-text-model "Qwen/Qwen3.5-4B"
-      --qwen-max-tokens 4096
-      --qwen-temperature 0.7
       upload-posts
-      --csv-dir /data/csvs
-      --image-root /data/images
+      --city-folder /data
+
+  orchestrator-2:
+    build:
+      context: .
+      dockerfile: src/pipeline/Orchestrator-Container/Dockerfile
+    image: pipeline-orchestrator
+    depends_on:
+      postgres:
+        condition: service_healthy
+      bioclip:
+        condition: service_healthy
+      bert:
+        condition: service_healthy
+      qwen:
+        condition: service_healthy
+    volumes:
+      - ./data/split_2:/data
+      - ./src/models/Qwen-Container/images.md:/app/images.md:ro
+      - ./src/models/Qwen-Container/comment.md:/app/comment.md:ro
+    environment:
+      PIPELINE_DATABASE_DSN: "dbname=mydb user=myuser password=mypass host=postgres port=5432"
+    command: >
+      --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432"
+      --bio-service-url http://bioclip:5000
+      --bert-service-url http://bert:5000
+      --qwen-service-url http://qwen:5000
+      --qwen-image-instruction-file /app/images.md
+      --qwen-comment-instruction-file /app/comment.md
+      --qwen-image-model "Qwen/Qwen3.5-4B"
+      --qwen-text-model "Qwen/Qwen3.5-4B"
+      upload-posts
+      --city-folder /data
 
 volumes:
   pgdata:
