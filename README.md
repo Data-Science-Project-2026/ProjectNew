@@ -1,18 +1,18 @@
 # Data Science Project
 
-Multimodal analysis of human-nature interactions based on large social media dataset. The purpose of the project is to visualize information about urban nature in social media posts. Posts can contain images or text. Sentiment analysis is performed on text-based posts. Images are analyzed to determine whether they are people, plants, or animals. If there are humans in the pictures, then human activity recognition is performed. In case of animals or plants fine-grained species identification is performed.
+Multimodal analysis of human–nature interactions built around a PostgreSQL-backed
+pipeline. The orchestrator ingests CSVs and/or image folders, stores metadata
+in Postgres and dispatches image/text batches to model services (BioClip,
+Bert, Qwen). The repository includes container definitions so you can run the
+entire pipeline locally with Docker Compose.
 
 ## Dataset
 
-**Source**: Crowdsourced data from Ctrip.com (similar to TripAdvisor)
-
-**Scope**: 720 representative urban parks in 36 cities in China
-
-**Volume**: Around 853,977 pieces of social media texts and 985,025 social media images in total
-
-**Metadata**: Geotags and timestamps
-
-[Database documentation](./documentation/database.md)
+Source and example dataset information are described in the `documentation/`
+folder. This repository ships tools and models to process CSVs and image
+collections; the pipeline writes analytical results into a Postgres database —
+see [documentation/database.md](./documentation/database.md) for the schema and
+recommended Postgres settings.
 
 ## Dashboard
 
@@ -22,156 +22,123 @@ Free open source dashboard tool [Metabase](https://www.metabase.com/) is used fo
 
 ## Pipeline & Deployment
 
-The core workflow is orchestrated by `src/pipeline/orchestrator.py`.  It
+The core workflow is orchestrated by `src/pipeline/orchestrator.py`. It
 imports CSVs, ingests raw image files (copying them into a managed
-``image_root`` directory) and then runs three kinds of models
-(BioClip, sentiment/BERT and Qwen) and writes results to a PostgreSQL
-database.  The database never stores the original file paths or blobs –
-only numeric ids and hashes – keeping the PG instance lightweight.  For
-production you should provide a Postgres DSN via `--db-dsn` or the
-`PIPELINE_DATABASE_DSN` environment variable; SQLite is supported only in
-tests and import utilities.
+`image_root` directory) and then runs three kinds of models (BioClip, sentiment/BERT and Qwen) and writes results to a PostgreSQL database. For production provide a Postgres DSN via `--db-dsn` or the `PIPELINE_DATABASE_DSN` environment variable; SQLite is supported only in tests and import utilities.
 
 [Pipeline documentation](./documentation/pipeline.md)
 
-### Running with Docker Compose
+### Running with Docker Compose (Postgres first)
 
-A `docker-compose.yml` file is provided at the repo root that can build and
-orchestrate the orchestrator and model containers together (Postgres +
-services).  By default the orchestrator service is configured to run a
-single ingestion command and then exit, so it is _not_ a long‑running
-process.  You can still upload data by starting a fresh container (see
-below) or by overriding the command to keep it alive.  Typical commands:
+This project is Postgres‑first. The recommended flow for local testing is
+to use `docker compose` to build and start services. Example commands used
+in local development:
 
-```sh
+```powershell
 # build images and start everything in the background
-docker-compose up -d --build
+docker compose up -d --build
 
-# view logs for all services
-docker-compose logs -f
+# watch logs (follow)
+docker compose logs -f
 
-# stop the running containers without removing them
-docker-compose stop
+# stop containers
+docker compose stop
 
-# remove stopped containers, networks, and volumes defined in the file
-docker-compose down
+# remove containers, networks and keep volumes:
+docker compose down
+
+# remove everything (images + volumes) when you want a fully clean rebuild
+docker compose down --volumes --rmi all
 ```
 
-If you only want to remove containers but keep the volumes, omit `--volumes`;
-use `docker-compose down --volumes --rmi all` to tidy up completely.  
+To rebuild a single image use `docker compose build <service>` and then
+restart that service. Example:
 
-**Tip:** when you’ve updated the code and need a fresh image, run the
-`down --volumes --rmi all` command to purge the existing containers and then
-start again with `up --build`; this ensures you’re not running stale code.
-
-You can also rebuild a single service without touching the others. For
-example, if you've modified `src/pipeline/orchestrator.py` or any other
-code and need those changes in the container, rebuild the orchestrator
-image:
-
-```sh
-# rebuild only orchestrator with updated code
-docker-compose build orchestrator
+```powershell
+docker compose build bioclip
+docker compose up -d bioclip
 ```
 
-and then run it again (see the ingest/upload examples below).  The
-same pattern works for `bioclip`, `bert`, or `qwen`.
+Note: the compose file shipped with the repo exposes model services on
+ports 5000–5002 and Postgres on 5432. The orchestrator service instances
+mount `./data/split_*` so each orchestrator can work on a separate data
+shard.
 
-For example, to recreate only the BioClip container:
+### Uploading CSVs or Images into the Orchestrator
 
-```sh
-# stop the single container
-docker-compose stop bioclip
-# remove its image so the next `up` builds from scratch
-docker-compose rm -f bioclip
-# rebuild and start it
-docker-compose up -d --build bioclip
-```
+The orchestrator expects input under `/data` inside the container. The
+compose file mounts host `./data/split_1` (and `split_2`) into the
+`orchestrator-1` service so a convenient test is to place files in
+`data/split_1` on the host and run the one‑off orchestrator container.
 
-Replace `bioclip` with `bert`, `qwen`, or `orchestrator` as needed.
+Example (this repository used `data/split_1` during testing):
 
-### Uploading CSVs or Images into the Orchestrator (while containers are running)
+```powershell
+# ingest images from the mounted folder into Postgres
+docker compose run --rm orchestrator-1 \
+  --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
+  upload-images --folders /data --image-root /data/images
 
-When using `docker-compose` the repository `data/` directory is mounted into the
-`orchestrator` container at `/data`. Place your input files under that tree so the
-running container can access them. Example layout on the host:
-
-```sh
-mkdir -p data/csvs data/images
-# copy CSV files into data/csvs and any loose images into data/images or another folder
-```
-
-Two common ways to trigger ingestion while the containers are running (or even when the orchestrator has already stopped, since a new container will be launched):
-
-- **If the orchestrator is still running** you can exec into it as shown below:
-
-```sh
-docker-compose exec orchestrator \
-	upload-posts --csv-dir /data/csvs --image-root /data/images
-
-# or to ingest image folders directly
-docker-compose exec orchestrator \
-	upload-images --folders /data/new_photos --image-root /data/images
-```
-
-- More commonly you will use a one‑off container (works even when the service has exited):
-
-```sh
-docker-compose run --rm orchestrator \
-	upload-posts --csv-dir /data/csvs --image-root /data/images
+# run full analysis (BioClip, Bert, Qwen via services)
+docker compose run --rm orchestrator-1 \
+  --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
+  --bio-service-url http://bioclip:5000 \
+  --bert-service-url http://bert:5000 \
+  --qwen-service-url http://qwen:5000 \
+  analyze --batch-size 10 --workers 1
 ```
 
 Notes:
-- The `--image-root` path should point to a directory writable by the orchestrator (the default used by this repo is `/data/images`).
-- CSV rows may include relative image paths; when using `upload-posts` provide `--image-root` so the ingestor can resolve those paths. If you use `upload-images` the ingestor will copy each file into `/data/images` and name it by numeric image id.
-- If you only care about a particular model (e.g. Qwen) you can skip others by using the `--skip-bio`/`--skip-bert` flags or by pointing them at a running service instead of loading locally. Example of a Qwen-only upload:
-
-  ```sh
-  docker-compose run --rm orchestrator \
-      --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
-      --qwen-service-url http://qwen:5000 \
-      --skip-bio --skip-bert \
-      upload-images --folders /data/images --image-root /data/images
-  ```
-
-  This prevents the orchestrator from downloading the large BioClip weights when you're just testing the Qwen endpoint.
-
-- On Windows PowerShell use the equivalent `New-Item -ItemType Directory -Path data\csvs,data\images` to create folders.
-
+- If you have CSVs, use `upload-posts --city-folder /data` (the command
+  looks for CSVs and associated park image folders inside the provided
+  folder). The orchestrator will write records to `posts` and `images`.
+- `upload-images` copies each image into `image_root` named by the DB id
+  and persists the original path into the DB so analyzers can access the
+  original file (mounted path) or the copied storage path.
+- To avoid loading large local models during quick tests, use
+  `--skip-bio` and/or `--skip-bert` and point at running service URLs.
 
 ### Running the integration tests
 
-A pair of pytest tests exercise the orchestrator against the Bioclip and
-Qwen containers. They copy three sample images from
-`data/images/53深圳市宝安区西乡公园` into a temporary directory, start the
-necessary services with `docker-compose`, and then invoke the pipeline
-programmatically.
+Tests are located under `src/pipeline/tests`. They are designed to run
+against the Docker services (the tests will assume the Postgres DSN and
+service ports used by the compose file). Example:
 
-To run them locally (requires Docker & docker-compose):
-
-```sh
-# start just the infra; tests will bring the containers up/down themselves
-docker-compose up -d postgres bioclip qwen
-pytest src/pipeline/tests/test_container_integration.py
+```powershell
+docker compose up -d postgres bioclip qwen
+pytest src/pipeline/tests/test_container_integration.py -q
 ```
 
-The tests use the same DSN as the compose file and assume the containers are
-reachable on `localhost` ports 5432, 5000 and 5002.
+The tests may rely on `OPENAI_API_KEY="EMPTY"` (Qwen stub) for local
+CI-friendly runs; the compose file sets that by default so the tests don't
+call external LLMs during local development.
 
 ### Containers for models
 
-Each model is available as a standalone Docker service under `src/models`:
+Model containers live under `src/models`:
 
-* `BioClip-Container` – species identification
-* `Bert-Container` – sentiment analysis
-* `Qwen-Container` – human activity recognition
+- `BioClip-Container` – species identification (OpenCLIP + token assets)
+- `Bert-Container` – sentiment analysis
+- `Qwen-Container` – comment + image text analysis (LLM wrapper)
 
-Instructions for building and running them are available in each subfolder.
-The orchestrator can be pointed at any combination of running services using
-the `--bio-service-url`, `--sentiment-service-url` and
-`--qwen-service-url` CLI flags, in which case batches are POSTed to the
-container and the JSON response is used just as if the local model had been
-running.
+The orchestrator can dispatch work to any combination of the above via
+`--bio-service-url`, `--bert-service-url` and `--qwen-service-url`.
+
+Important runtime notes:
+
+- Qwen local stub: the compose file sets `OPENAI_API_KEY="EMPTY"` and
+  `OPENAI_BASE_URL` to a host gateway. When `OPENAI_API_KEY` is empty the
+  Qwen service runs in a deterministic *stub* mode that returns well-formed
+  JSON for image/comment analysis. This is useful for local, offline tests
+  and CI. To use a real LLM backend, set `OPENAI_API_KEY` and point
+  `OPENAI_BASE_URL` to a compatible service.
+
+- BioClip GPU memory: on modest GPUs (12GB) the full token set + model can
+  cause CUDA OOMs. The compose file supports `USE_HALF=true` and a
+  reduced `TEXT_BATCH_SIZE` environment override to run in mixed/half
+  precision; this significantly reduces VRAM usage and was used during
+  local testing (see `docker-compose.yml`). If you have larger GPUs you
+  can omit `USE_HALF` for best accuracy.
 
 [Species indentification documentation](./documentation/species_identification.md)
 
@@ -181,7 +148,8 @@ running.
 
 ## License
 
-This project is for a Data Science course at the University of Helsinki (2026).
+This project was developed for a Data Science course (University of
+Helsinki, 2026).
 
 ## Authors
 
