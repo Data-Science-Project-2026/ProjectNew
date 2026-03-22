@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Iterable, List, Optional, Dict
 
-from src.database import postgres as db
+from database import postgres as db
 
 
 logger = logging.getLogger(__name__)
@@ -138,11 +138,17 @@ class Pipeline:
 
         count = 0
         image_count = 0
+        csv_count = 0
         with db.connect(self.dsn) as conn:
             db.ensure_schema(conn)
 
-            for csv_path in sorted(city_path.glob("*.csv")):
-                logger.info("ingesting CSV %s", csv_path)
+            csv_paths = sorted(city_path.glob("*.csv"))
+            total_csv = len(csv_paths)
+            logger.info("Found %d CSV files to process in %s", total_csv, city_path)
+
+            for file_idx, csv_path in enumerate(csv_paths, start=1):
+                csv_count = file_idx
+                logger.info("ingesting CSV %s (%d/%d)", csv_path, csv_count, total_csv)
                 db.upsert_ingestion_status(conn, filename=str(csv_path), status="processing", last_processed_row=0)
 
                 csv_stem = csv_path.stem
@@ -176,6 +182,7 @@ class Pipeline:
                     for idx, row in enumerate(reader, start=1):
                         if max_posts and count >= max_posts:
                             db.upsert_ingestion_status(conn, filename=str(csv_path), status="done", last_processed_row=count)
+                            logger.info("processed %d/%d CSV files before reaching max_posts; ingested %d posts and %d images from %s", csv_count, total_csv, count, image_count, city_path)
                             return count
 
                         username = _get(row, "用户名", "原始用户名", "username", "user", "user_name", "name", "昵称")
@@ -241,7 +248,9 @@ class Pipeline:
                         db.upsert_ingestion_status(conn, filename=str(csv_path), status="processing", last_processed_row=idx)
 
                 db.upsert_ingestion_status(conn, filename=str(csv_path), status="done", last_processed_row=count)
-        logger.info("ingested %d posts and %d images from %s", count, image_count, city_path)
+                if csv_count % 100 == 0:
+                    logger.info("progress: processed %d/%d CSV files", csv_count, total_csv)
+            logger.info("All CSV files processed: %d/%d; ingested %d posts and %d images from %s", csv_count, total_csv, count, image_count, city_path)
 
         if debug:
             self.print_sample_posts(limit=5)
@@ -445,19 +454,53 @@ class Pipeline:
         with db.connect(self.dsn) as conn:
             # Reusing unanalyzed fetch, or better just fetch all without image_qwen_detail
             limit = max_images if max_images else 1000000
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT i.id, i.path
-                    FROM images i
-                    LEFT JOIN image_qwen_detail d ON i.id = d.image_id
-                    WHERE d.id IS NULL
-                    ORDER BY i.id
-                    LIMIT %s
-                    """,
-                    (limit,)
-                )
-                rows = cur.fetchall()
+            try:
+                import sqlite3  # type: ignore
+            except Exception:
+                sqlite3 = None  # type: ignore
+
+            if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
+                cur = conn.cursor()
+                try:
+                    # if image_qwen_detail doesn't exist (sqlite tests), select all images
+                    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='image_qwen_detail'")
+                    if cur.fetchone() is None:
+                        cur.execute(
+                            "SELECT id, path FROM images ORDER BY id LIMIT ?",
+                            (limit,),
+                        )
+                    else:
+                        cur.execute(
+                            """
+                            SELECT i.id, i.path
+                            FROM images i
+                            LEFT JOIN image_qwen_detail d ON i.id = d.image_id
+                            WHERE d.id IS NULL
+                            ORDER BY i.id
+                            LIMIT ?
+                            """,
+                            (limit,)
+                        )
+                    rows = cur.fetchall()
+                finally:
+                    try:
+                        cur.close()
+                    except Exception:
+                        pass
+            else:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT i.id, i.path
+                        FROM images i
+                        LEFT JOIN image_qwen_detail d ON i.id = d.image_id
+                        WHERE d.id IS NULL
+                        ORDER BY i.id
+                        LIMIT %s
+                        """,
+                        (limit,)
+                    )
+                    rows = cur.fetchall()
 
         if not rows:
             logger.info("no unanalyzed images found for Qwen")
@@ -553,19 +596,53 @@ class Pipeline:
         
         with db.connect(self.dsn) as conn:
             limit = max_posts if max_posts else 1000000
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT p.id, p.comment
-                    FROM posts p
-                    LEFT JOIN post_qwen_detail d ON p.id = d.post_id
-                    WHERE d.id IS NULL AND p.comment IS NOT NULL AND TRIM(p.comment) != ''
-                    ORDER BY p.id
-                    LIMIT %s
-                    """,
-                    (limit,)
-                )
-                rows = cur.fetchall()
+            try:
+                import sqlite3  # type: ignore
+            except Exception:
+                sqlite3 = None  # type: ignore
+
+            if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
+                cur = conn.cursor()
+                try:
+                    # if post_qwen_detail doesn't exist, select all posts with non-empty comments
+                    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='post_qwen_detail'")
+                    if cur.fetchone() is None:
+                        cur.execute(
+                            "SELECT id, comment FROM posts WHERE comment IS NOT NULL AND TRIM(comment) != '' ORDER BY id LIMIT ?",
+                            (limit,),
+                        )
+                    else:
+                        cur.execute(
+                            """
+                            SELECT p.id, p.comment
+                            FROM posts p
+                            LEFT JOIN post_qwen_detail d ON p.id = d.post_id
+                            WHERE d.id IS NULL AND p.comment IS NOT NULL AND TRIM(p.comment) != ''
+                            ORDER BY p.id
+                            LIMIT ?
+                            """,
+                            (limit,)
+                        )
+                    rows = cur.fetchall()
+                finally:
+                    try:
+                        cur.close()
+                    except Exception:
+                        pass
+            else:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT p.id, p.comment
+                        FROM posts p
+                        LEFT JOIN post_qwen_detail d ON p.id = d.post_id
+                        WHERE d.id IS NULL AND p.comment IS NOT NULL AND TRIM(p.comment) != ''
+                        ORDER BY p.id
+                        LIMIT %s
+                        """,
+                        (limit,)
+                    )
+                    rows = cur.fetchall()
 
         if not rows:
             logger.info("no unanalyzed posts found for Qwen")
@@ -581,7 +658,7 @@ class Pipeline:
                     }
                     
                     r = requests.post(
-                        f"{self.qwen_service_url.rstrip('/')}/analyze_comments",
+                        f"{self.qwen_service_url.rstrip('/')}/analyze_users",
                         json=payload,
                         timeout=120,
                     )
@@ -654,18 +731,30 @@ class Pipeline:
         image_storage.mkdir(parents=True, exist_ok=True)
 
         inserted = 0
+        processed = 0
         with db.connect(self.dsn) as conn:
             db.ensure_schema(conn)
+
+            # Count images per folder to report totals
+            folder_paths_list: list[tuple[Path, list[Path]]] = []
+            total_images = 0
             for folder in folders:
-                logger.info("scanning images in %s", folder)
+                if not folder.exists():
+                    logger.warning("image folder does not exist: %s", folder)
+                    folder_paths_list.append((folder, []))
+                    continue
+                # collect eligible files
+                paths = [p for p in folder.rglob("*") if p.is_file() and not p.name.startswith('.') and p.suffix.lower() not in {'.csv', '.txt'}]
+                folder_paths_list.append((folder, paths))
+                total_images += len(paths)
+
+            logger.info("Found %d images to process across %d folders", total_images, len(folder_paths_list))
+
+            for folder, paths in folder_paths_list:
+                logger.info("scanning images in %s (found %d)", folder, len(paths))
                 db.upsert_ingestion_status(conn, filename=str(folder), status="processing")
-                # walk through all files beneath this folder
-                for path in folder.rglob("*"):
-                    if not path.is_file():
-                        continue
-                    # skip hidden/metadata files and CSVs
-                    if path.name.startswith('.') or path.suffix.lower() in {'.csv', '.txt'}:
-                        continue
+
+                for path in paths:
                     stem = path.stem
                     username_hash = stem.split("_")[0] if "_" in stem else None
                     try:
@@ -685,7 +774,13 @@ class Pipeline:
                     except Exception:
                         logger.exception("failed to copy image %s to %s", path, dest)
                     inserted += 1
+                    processed += 1
+                    if processed % 100 == 0:
+                        logger.info("progress: processed %d/%d images", processed, total_images)
+
                 db.upsert_ingestion_status(conn, filename=str(folder), status="done")
+
+        logger.info("All images processed: %d/%d; inserted %d images into DB", processed, total_images, inserted)
         return inserted
 
 

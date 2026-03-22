@@ -273,7 +273,19 @@ def fetch_unanalyzed_images(
     The returned ``path`` field may be ``NULL`` in the database, in which case
     callers should decide how to locate the corresponding file.
     """
-    with conn.cursor() as cur:
+    # Delegate to sqlite helper when running against sqlite connections (tests)
+    try:
+        import sqlite3  # type: ignore
+    except Exception:
+        sqlite3 = None  # type: ignore
+
+    if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
+        from database import sql as sqlmod
+
+        return sqlmod.fetch_unanalyzed_images(conn, limit)
+
+    cur = conn.cursor()
+    try:
         cur.execute(
             """
             SELECT i.id, i.path
@@ -285,6 +297,11 @@ def fetch_unanalyzed_images(
             (limit,),
         )
         rows = cur.fetchall()
+    finally:
+        try:
+            cur.close()
+        except Exception:
+            pass
     return [(int(r[0]), r[1]) for r in rows]
 
 
@@ -302,11 +319,24 @@ def update_image_analysis(
     The image is always marked as analyzed, even when species/confidence are
     empty.
     """
+    try:
+        import sqlite3  # type: ignore
+    except Exception:
+        sqlite3 = None  # type: ignore
+
+    # Delegate to sqlite implementation when tests patch the connection
+    if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
+        from database import sql as sqlmod
+
+        # sqlite helper stores species/confidence in the images table as JSON
+        return sqlmod.update_image_analysis(conn, image_id=image_id, species=species, confidence=confidence)
+
     if species is None:
         species = []
     if confidence is None:
         confidence = []
-    with conn.cursor() as cur:
+    cur = conn.cursor()
+    try:
         # remove any prior tags
         cur.execute("DELETE FROM image_species WHERE image_id = %s", (image_id,))
         # insert new rows
@@ -319,6 +349,11 @@ def update_image_analysis(
             "UPDATE images SET analyzed_bio = TRUE WHERE id = %s",
             (image_id,),
         )
+    finally:
+        try:
+            cur.close()
+        except Exception:
+            pass
     conn.commit()
 
 
@@ -398,11 +433,27 @@ def update_post_sentiment(
     sentiment_score: float,
 ) -> None:
     """Set the legacy sentiment_score column for a post (kept for compatibility)."""
-    with conn.cursor() as cur:
+    try:
+        import sqlite3  # type: ignore
+    except Exception:
+        sqlite3 = None  # type: ignore
+
+    if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
+        from database import sql as sqlmod
+
+        return sqlmod.update_post_sentiment(conn, post_id=post_id, sentiment_score=sentiment_score)
+
+    cur = conn.cursor()
+    try:
         cur.execute(
             "UPDATE posts SET sentiment_score = %s WHERE id = %s",
             (sentiment_score, post_id),
         )
+    finally:
+        try:
+            cur.close()
+        except Exception:
+            pass
     conn.commit()
 
 
@@ -414,11 +465,27 @@ def update_bert_sentiment(
     label: str,
 ) -> None:
     """Write Bert sentiment analysis result independently."""
-    with conn.cursor() as cur:
+    try:
+        import sqlite3  # type: ignore
+    except Exception:
+        sqlite3 = None  # type: ignore
+
+    if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
+        from database import sql as sqlmod
+
+        return sqlmod.update_bert_sentiment(conn, post_id=post_id, score=score, label=label)
+
+    cur = conn.cursor()
+    try:
         cur.execute(
             "UPDATE posts SET bert_sentiment_score = %s, bert_sentiment_label = %s WHERE id = %s",
             (score, label, post_id),
         )
+    finally:
+        try:
+            cur.close()
+        except Exception:
+            pass
     conn.commit()
 
 
@@ -429,11 +496,27 @@ def update_qwen_sentiment(
     score: float,
 ) -> None:
     """Write Qwen sentiment analysis result independently."""
-    with conn.cursor() as cur:
+    try:
+        import sqlite3  # type: ignore
+    except Exception:
+        sqlite3 = None  # type: ignore
+
+    if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
+        from database import sql as sqlmod
+
+        return sqlmod.update_qwen_sentiment(conn, post_id=post_id, score=score)
+
+    cur = conn.cursor()
+    try:
         cur.execute(
             "UPDATE posts SET qwen_sentiment_score = %s WHERE id = %s",
             (score, post_id),
         )
+    finally:
+        try:
+            cur.close()
+        except Exception:
+            pass
     conn.commit()
 
 

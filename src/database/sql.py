@@ -175,10 +175,10 @@ def insert_post(
     _ensure_posts_table(conn)
     cursor = conn.execute(
         """
-        INSERT INTO posts (city, park, username, comment, time, rating, sentiment_score)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO posts (city, park, username, username_hash, comment, time, rating, sentiment_score)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (city, park, username, comment, time, rating, sentiment_score),
+        (city, park, username, username_hash, comment, time, rating, sentiment_score),
     )
     return int(cursor.lastrowid)
 

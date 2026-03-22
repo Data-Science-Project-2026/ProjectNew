@@ -16,9 +16,14 @@ def _make_dummy_csv(tmpdir: Path) -> Path:
 
 
 def test_ingest_and_analysis(tmp_path: Path):
-    # create some dummy csv and image file
-    csv_path = _make_dummy_csv(tmp_path)
-    img_dir = tmp_path / "imgs"
+    # create a city folder with a park CSV and images
+    city_dir = tmp_path / "1TestCity"
+    city_dir.mkdir()
+    csv_path = city_dir / "1_ParkA.csv"
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        f.write("park,username,rating,text,timestamp,image\n")
+        f.write("ParkA,user1,5,hello world,2020-01-01,image1.jpg\n")
+    img_dir = city_dir / "1_ParkA"
     img_dir.mkdir()
     (img_dir / "image1.jpg").write_bytes(b"\xff\xd8\xff")
 
@@ -72,14 +77,14 @@ def test_ingest_and_analysis(tmp_path: Path):
             "use_half": False,
             "text_batch_size": 1,
         },
-        sentiment_args={
+        bert_args={
             "sentiment_model": "nlptown/bert-base-multilingual-uncased-sentiment",
         },
     )
 
     # ingestion should at least attempt to run without raising an exception
     try:
-        n = pipeline.ingest_posts([csv_path], image_root=img_dir)
+        n = pipeline.ingest_posts(city_dir, max_posts=None, debug=False)
     except Exception:
         pytest.skip("database backend not available")
     else:
@@ -172,7 +177,7 @@ def test_ingest_images_folder(tmp_path: Path):
             "use_half": False,
             "text_batch_size": 1,
         },
-        sentiment_args={
+        bert_args={
             "sentiment_model": "nlptown/bert-base-multilingual-uncased-sentiment",
         },
     )
@@ -203,7 +208,7 @@ def test_ingest_images_folder(tmp_path: Path):
     pipeline2.analyze_images(batch_size=10)
     # should have seen exactly two image blobs matching the originals
     assert len(seen) == 2
-    with open(root / "abc123_imageA.jpg", "rb") as f1, open(root / "nohash.jpg", "rb") as f2:
+    with open(root / "abc123_imageA.jpg", "rb") as f1, open(sub / "nohash.jpg", "rb") as f2:
         assert seen[0] == f1.read()
         assert seen[1] == f2.read()
     # restore
@@ -266,18 +271,19 @@ def test_service_urls(tmp_path: Path):
             "use_half": False,
             "text_batch_size": 1,
         },
-        sentiment_args={
+        bert_args={
             "sentiment_model": "nlptown/bert-base-multilingual-uncased-sentiment",
         },
         bio_service_url="http://bio",
-        sentiment_service_url="http://sent",
+        bert_service_url="http://sent",
         qwen_service_url="http://qwen",
     )
 
     # run analytics; we don't care about return values, just that requests were made
     pipeline.analyze_images(batch_size=1, max_batches=1)
     pipeline.analyze_posts(batch_size=1)
-    pipeline.run_qwen()
+    pipeline.run_qwen_image_analysis()
+    pipeline.run_qwen_comment_analysis()
 
     # expect all three endpoints were called
     assert any("/analyze_images" in url for url, _ in calls)
