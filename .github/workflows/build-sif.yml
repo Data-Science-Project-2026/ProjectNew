@@ -1,0 +1,41 @@
+name: Build SIF images
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ main ]
+
+jobs:
+  build-sif:
+    # This workflow expects a self-hosted runner with Apptainer/Apptainer installed.
+    runs-on: [self-hosted, linux, apptainer]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build BioClip SIF (remote)
+        run: |
+          apptainer build --remote src/models/BioClip-Container/BioClip.sif src/models/BioClip-Container/Singularity.def
+
+      - name: Build Bert SIF (remote)
+        run: |
+          apptainer build --remote src/models/Bert-Container/Bert.sif src/models/Bert-Container/Singularity.def
+
+      - name: Build Qwen SIF (remote)
+        run: |
+          apptainer build --remote src/models/Qwen-Container/Qwen.sif src/models/Qwen-Container/Singularity.def
+
+      - name: Build Orchestrator SIF (remote)
+        run: |
+          apptainer build --remote src/pipeline/Orchestrator-Container/Orchestrator.sif src/pipeline/Orchestrator-Container/Singularity.def
+
+      - name: Upload SIF artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sif-images
+          path: |
+            src/models/BioClip-Container/BioClip.sif
+            src/models/Bert-Container/Bert.sif
+            src/models/Qwen-Container/Qwen.sif
+            src/pipeline/Orchestrator-Container/Orchestrator.sif

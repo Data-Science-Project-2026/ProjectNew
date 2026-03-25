@@ -146,6 +146,16 @@ Important runtime notes:
 
 [Human activity recognition documentation](./documentation/human_activity_recognition.md)
 
+## HPC / Apptainer
+
+If you run this project on an HPC cluster where Docker is unavailable, we provide Singularity/Apptainer support and example job scripts. See [documentation/apptainer.md](./documentation/apptainer.md) for build and run instructions and the `examples/scripts/run_pipeline_on_node.sh` helper to start model service instances on a single allocated node.
+
+Key notes:
+
+- Build SIF images locally or with the remote builder: `apptainer build --remote <image>.sif <Singularity.def>`
+- Use `apptainer instance start|exec` to run services and reach them via `http://127.0.0.1:<port>` from the orchestrator.
+- Ensure `NO_PROXY`/`no_proxy` includes `127.0.0.1,localhost` so intra-node requests bypass cluster proxies.
+
 ## License
 
 This project was developed for a Data Science course (University of

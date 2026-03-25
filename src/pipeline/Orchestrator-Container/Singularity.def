@@ -1,0 +1,20 @@
+Bootstrap: docker
+From: docker://python:3.12-slim
+
+%labels
+    Author ProjectNew
+    Description Orchestrator container converted from Dockerfile
+
+%environment
+    export PYTHONPATH=/app/src
+
+%post
+    set -ex
+    # lightweight runtime: no apt packages required in the Dockerfile
+    python -m pip install --no-cache-dir psycopg2-binary requests openai || true
+
+%files
+    . /app
+
+%runscript
+    exec python -m pipeline.orchestrator "$@"

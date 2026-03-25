@@ -1,0 +1,27 @@
+Bootstrap: docker
+From: docker://python:3.12-slim
+
+%labels
+    Author ProjectNew
+    Description Qwen service container converted from Dockerfile
+
+%environment
+    export PYTHONPATH=/app/src
+
+%post
+    set -ex
+    apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-venv python3-pip curl \
+        && rm -rf /var/lib/apt/lists/* \
+        && ln -sf /usr/bin/python3 /usr/bin/python
+
+    # Install Python requirements
+    if [ -f /app/src/models/Qwen-Container/requirements.txt ]; then
+        python -m pip install --no-cache-dir -r /app/src/models/Qwen-Container/requirements.txt
+    fi
+
+%files
+    . /app
+
+%runscript
+    exec python /app/src/models/Qwen-Container/app.py "$@"

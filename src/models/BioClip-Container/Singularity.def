@@ -1,0 +1,30 @@
+Bootstrap: docker
+From: docker://nvidia/cuda:12.4.1-runtime-ubuntu22.04
+
+%labels
+    Author ProjectNew
+    Description BioClip service container converted from Dockerfile
+
+%environment
+    export PYTHONPATH=/app/src
+
+%post
+    set -ex
+    apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-venv python3-pip curl \
+        && rm -rf /var/lib/apt/lists/* \
+        && ln -sf /usr/bin/python3 /usr/bin/python
+
+    # Install Python requirements (assumes files were copied to /app)
+    if [ -f /app/src/models/BioClip-Container/requirements.txt ]; then
+        python -m pip install --no-cache-dir -r /app/src/models/BioClip-Container/requirements.txt
+    fi
+
+%files
+    . /app
+
+%runscript
+    exec python /app/src/models/BioClip-Container/app.py "$@"
+
+%startscript
+    exec python /app/src/models/BioClip-Container/app.py
