@@ -113,3 +113,27 @@ Further help
 If you'd like, I can:
 - generate a `run_pipeline_on_node.sh` file in the repo (ready-to-run), or
 - create CI examples that use `apptainer build --remote` and upload SIF artifacts.
+
+Helper scripts
+
+We provide several helper scripts under `examples/scripts/` to simplify SIF builds and runner setup:
+
+- `build_sifs_local.sh` — Build all images locally (root required). Usage:
+
+```bash
+sudo bash examples/scripts/build_sifs_local.sh
+```
+
+- `build_sifs_remote.sh` — Use `apptainer build --remote` to build SIFs without root.
+
+```bash
+bash examples/scripts/build_sifs_remote.sh
+```
+
+- `install_apptainer_runner.sh` — (Optional) Install Apptainer on a self-hosted Ubuntu runner. Run as root on the runner machine.
+
+```bash
+sudo bash examples/scripts/install_apptainer_runner.sh
+```
+
+These scripts are small wrappers around the commands shown above and check for missing files or prerequisites; inspect them before running in your environment.
