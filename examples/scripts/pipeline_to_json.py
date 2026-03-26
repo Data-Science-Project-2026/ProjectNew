@@ -23,12 +23,13 @@ import base64
 import json
 import os
 from pathlib import Path
+import csv
 from typing import List
 
 import requests
 
 
-def find_images(folder: Path, limit: int = 10) -> List[Path]:
+def find_images(folder: Path, limit: int = 100) -> List[Path]:
     imgs = []
     if not folder or not folder.exists():
         return imgs
@@ -38,6 +39,70 @@ def find_images(folder: Path, limit: int = 10) -> List[Path]:
             if len(imgs) >= limit:
                 break
     return imgs
+
+
+def gather_images_from_data_dir(data_dir: Path, city: str | None, limit: int = 100) -> List[Path]:
+    """Collect images under data/<city>/ including nested subfolders and filenames referenced in CSVs.
+
+    Returns up to `limit` image paths.
+    """
+    results: List[Path] = []
+    base = Path(data_dir)
+    if city:
+        base = base / city
+    if not base.exists():
+        return results
+
+    # collect images recursively from subfolders
+    for p in base.rglob("**/*"):
+        if p.is_file() and p.suffix.lower() in (".jpg", ".jpeg", ".png", ".bmp", ".webp", ".gif"):
+            results.append(p)
+            if len(results) >= limit:
+                return results
+
+    # if not enough, scan CSVs in the city folder for image filenames and try to resolve them
+    csv_files = [p for p in base.iterdir() if p.is_file() and p.suffix.lower() == ".csv"]
+    for csvf in csv_files:
+        try:
+            with csvf.open(newline="", encoding="utf-8-sig") as fh:
+                reader = csv.DictReader(fh)
+                for row in reader:
+                    if len(results) >= limit:
+                        return results
+                    # heuristic: look for common image column names
+                    for key in ("image", "images", "image_filenames", "filenames", "图像文件名列表", "图像", "image_filename"):
+                        val = row.get(key)
+                        if val:
+                            # may be multiple names separated by | , ;
+                            parts = [s.strip() for s in str(val).replace("|", ";").replace(",", ";").split(";") if s.strip()]
+                            for name in parts:
+                                found = resolve_image_by_name(base, name)
+                                if found:
+                                    if found not in results:
+                                        results.append(found)
+                                    if len(results) >= limit:
+                                        return results
+        except Exception:
+            continue
+
+    return results
+
+
+def resolve_image_by_name(base: Path, name: str) -> Path | None:
+    """Search for a file matching `name` under `base` recursively and return Path or None."""
+    # exact filename first
+    candidate = base / name
+    if candidate.exists():
+        return candidate
+    # search by name only
+    for p in base.rglob("**/*"):
+        if p.is_file() and p.name == Path(name).name:
+            return p
+    # fallback: substring match (first match)
+    for p in base.rglob("**/*"):
+        if p.is_file() and Path(name).stem in p.name:
+            return p
+    return None
 
 
 def read_comments(file: Path, limit: int = 100) -> List[str]:
@@ -131,18 +196,23 @@ def analyze_comments(comments: List[str], bert_url: str = None, qwen_url: str = 
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--image-folder", type=Path, default=None, help="Folder with images to analyze")
+    p.add_argument("--data-dir", type=Path, default=None, help="Root data directory (e.g. data/) containing city subfolders")
+    p.add_argument("--city", type=str, default=None, help="City folder name under data-dir to scan (e.g. city1)")
     p.add_argument("--comments-file", type=Path, default=None, help="File with one comment per line")
     p.add_argument("--bio-service-url", default=None, help="BioClip service URL (http://host:port)")
     p.add_argument("--bert-service-url", default=None, help="Bert service URL (http://host:port)")
     p.add_argument("--qwen-service-url", default=None, help="Qwen service URL (http://host:port)")
     p.add_argument("--out-dir", type=Path, required=True, help="Output directory for JSON results")
-    p.add_argument("--image-limit", type=int, default=10)
+    p.add_argument("--image-limit", type=int, default=100)
     p.add_argument("--comment-limit", type=int, default=100)
     args = p.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
-    images = find_images(args.image_folder, limit=args.image_limit) if args.image_folder else []
+    if args.data_dir:
+        images = gather_images_from_data_dir(args.data_dir, args.city, limit=args.image_limit)
+    else:
+        images = find_images(args.image_folder, limit=args.image_limit) if args.image_folder else []
     comments = read_comments(args.comments_file, limit=args.comment_limit) if args.comments_file else []
 
     print(f"Found {len(images)} images and {len(comments)} comments")
