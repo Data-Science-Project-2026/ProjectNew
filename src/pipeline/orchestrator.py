@@ -9,6 +9,7 @@ import re
 import base64
 import shutil
 import requests
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Iterable, List, Optional, Dict
@@ -112,29 +113,22 @@ class Pipeline:
     # ingestion
     def ingest_posts(
         self,
-        city_folder: Path,
+        csv_folder: Path,
+        images_root: Optional[Path] = None,
         max_posts: Optional[int] = None,
         debug: bool = False,
     ) -> int:
-        """Ingest posts for all park CSVs inside a city folder.
+        """Ingest posts from CSV files in `csv_folder`.
 
-        Expects `city_folder` to contain CSV files like
-        ``1_21_Heiqiao_Park_Chaoyang_District_Beijing.csv`` and corresponding
-        park folders with the same stem holding images (either in `class_*`
-        subdirs or directly in the folder). Handles CSVs with or without the
-        image filename column by using filename heuristics when needed.
+        `csv_folder` should contain CSV files like
+        ``1_21_Heiqiao_Park_Chaoyang_District_Beijing.csv``. If `images_root`
+        is provided, park image folders are looked up under that root using the
+        CSV stem (or park label). If `images_root` is None, the function falls
+        back to looking for park folders adjacent to each CSV (legacy behavior).
         """
-        city_path = Path(city_folder)
-        if not city_path.is_dir():
-            raise FileNotFoundError(f"City folder not found: {city_path}")
-
-        # parse city name like '1Beijing' -> 'Beijing' or '6深圳_...' -> '深圳'
-        m = re.match(r"^\d+([^_]+)_", city_path.name)
-        if m:
-            city_name = m.group(1)
-        else:
-            m2 = re.match(r"^\d+(.+)", city_path.name)
-            city_name = m2.group(1) if m2 else city_path.name
+        csv_path_dir = Path(csv_folder)
+        if not csv_path_dir.is_dir():
+            raise FileNotFoundError(f"CSV folder not found: {csv_path_dir}")
 
         count = 0
         image_count = 0
@@ -142,9 +136,9 @@ class Pipeline:
         with db.connect(self.dsn) as conn:
             db.ensure_schema(conn)
 
-            csv_paths = sorted(city_path.glob("*.csv"))
+            csv_paths = sorted(csv_path_dir.glob("*.csv"))
             total_csv = len(csv_paths)
-            logger.info("Found %d CSV files to process in %s", total_csv, city_path)
+            logger.info("Found %d CSV files to process in %s", total_csv, csv_path_dir)
 
             for file_idx, csv_path in enumerate(csv_paths, start=1):
                 csv_count = file_idx
@@ -157,10 +151,15 @@ class Pipeline:
                 park_label = mpark.group(1) if mpark else csv_stem
 
                 # park folder typically has the same stem as the csv file
-                park_dir = city_path / csv_stem
-                if not park_dir.is_dir():
-                    # fallback to using label-only folder
-                    park_dir = city_path / park_label
+                if images_root:
+                    park_dir = Path(images_root) / csv_stem
+                    if not park_dir.is_dir():
+                        park_dir = Path(images_root) / park_label
+                else:
+                    # legacy: look for a park folder adjacent to the CSVs
+                    park_dir = csv_path_dir / csv_stem
+                    if not park_dir.is_dir():
+                        park_dir = csv_path_dir / park_label
 
                 image_lookup: Dict[str, Path] = {}
                 if park_dir.is_dir():
@@ -182,7 +181,8 @@ class Pipeline:
                     for idx, row in enumerate(reader, start=1):
                         if max_posts and count >= max_posts:
                             db.upsert_ingestion_status(conn, filename=str(csv_path), status="done", last_processed_row=count)
-                            logger.info("processed %d/%d CSV files before reaching max_posts; ingested %d posts and %d images from %s", csv_count, total_csv, count, image_count, city_path)
+                            logger.info("processed %d/%d CSV files before reaching max_posts; ingested %d posts and %d images from %s", csv_count, total_csv, count, image_count, csv_path_dir)
+                            return count
                             return count
 
                         username = _get(row, "用户名", "原始用户名", "username", "user", "user_name", "name", "昵称")
@@ -250,7 +250,7 @@ class Pipeline:
                 db.upsert_ingestion_status(conn, filename=str(csv_path), status="done", last_processed_row=count)
                 if csv_count % 100 == 0:
                     logger.info("progress: processed %d/%d CSV files", csv_count, total_csv)
-            logger.info("All CSV files processed: %d/%d; ingested %d posts and %d images from %s", csv_count, total_csv, count, image_count, city_path)
+            logger.info("All CSV files processed: %d/%d; ingested %d posts and %d images from %s", csv_count, total_csv, count, image_count, csv_path_dir)
 
         if debug:
             self.print_sample_posts(limit=5)
@@ -792,9 +792,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Manage pipeline ingestion and analysis")
     sub = parser.add_subparsers(dest="command")
 
-    up_csv = sub.add_parser("upload-posts", help="Ingest posts from a city folder containing park CSVs")
-    up_csv.add_argument("--city-folder", required=True, help="city folder containing CSV files and park image folders")
-    up_csv.add_argument("--image-root", required=False, help="root folder for image paths (optional, unused for city-folder ingestion)")
+    up_csv = sub.add_parser("upload-posts", help="Ingest posts from a folder containing CSV files")
+    up_csv.add_argument("--csv-folder", required=True, help="folder containing CSV files")
+    up_csv.add_argument("--image-folder", required=False, help="root folder where park image folders live")
     up_csv.add_argument("--max-posts", type=int, default=None)
     up_csv.add_argument("--debug", action="store_true", help="log sample posts and images for debugging")
 
@@ -855,15 +855,22 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
 
     if args.command == "upload-posts":
-        city_folder = Path(args.city_folder)
-        n = pipeline.ingest_posts(city_folder, max_posts=args.max_posts, debug=args.debug)
-        logger.info("ingested %d posts from %s", n, city_folder)
+        csv_folder = Path(args.csv_folder)
+        images_root = Path(args.image_folder) if getattr(args, "image_folder", None) else None
+        t0 = time.perf_counter()
+        n = pipeline.ingest_posts(csv_folder, images_root=images_root, max_posts=args.max_posts, debug=args.debug)
+        dt = time.perf_counter() - t0
+        logger.info("ingested %d posts from %s", n, csv_folder)
+        logger.info("ingest_posts duration: %.3f seconds", dt)
         # analyze with Qwen is split now, calling it via `analyze` step ensures separation.
     elif args.command == "upload-images":
         folders = [Path(p) for p in args.folders]
         storage = Path(image_root_arg) if image_root_arg else None
+        t0 = time.perf_counter()
         n = pipeline.ingest_images(folders, image_storage=storage)
+        dt = time.perf_counter() - t0
         logger.info("ingested %d images", n)
+        logger.info("ingest_images duration: %.3f seconds", dt)
     elif args.command == "analyze":
         nimg = pipeline.analyze_images(batch_size=args.batch_size, max_batches=args.max_batches, workers=args.workers)
         logger.info("processed %d images with BioClip", nimg)
