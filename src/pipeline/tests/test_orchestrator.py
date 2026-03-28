@@ -54,6 +54,20 @@ def test_ingest_and_analysis(tmp_path: Path):
         )
     pgmod.upsert_ingestion_status = _sqlite_upsert
 
+    def _sqlite_get_status(conn, filename):
+        row = conn.execute(
+            "SELECT id, filename, status, last_processed_row, created_at, updated_at"
+            " FROM ingestion_status WHERE filename = ?",
+            (filename,),
+        ).fetchone()
+        return None if row is None else (row[0], row[1], row[2], row[3], row[4], row[5])
+    pgmod.get_ingestion_status = _sqlite_get_status
+
+    def _sqlite_image_path_exists(conn, path):
+        row = conn.execute("SELECT 1 FROM images WHERE path = ? LIMIT 1", (path,)).fetchone()
+        return row is not None
+    pgmod.image_path_exists = _sqlite_image_path_exists
+
     # also patch BioClipModel.__init__ to avoid loading heavy resources
     import models.BioClip.model as bcmod
     real_bioclip_init = bcmod.BioClipModel.__init__
@@ -139,6 +153,20 @@ def test_ingest_images_folder(tmp_path: Path):
             (filename, status, last_processed_row),
         )
     pgmod2.upsert_ingestion_status = _sqlite_upsert2
+
+    def _sqlite_get_status2(conn, filename):
+        row = conn.execute(
+            "SELECT id, filename, status, last_processed_row, created_at, updated_at"
+            " FROM ingestion_status WHERE filename = ?",
+            (filename,),
+        ).fetchone()
+        return None if row is None else (row[0], row[1], row[2], row[3], row[4], row[5])
+    pgmod2.get_ingestion_status = _sqlite_get_status2
+
+    def _sqlite_image_path_exists2(conn, path):
+        row = conn.execute("SELECT 1 FROM images WHERE path = ? LIMIT 1", (path,)).fetchone()
+        return row is not None
+    pgmod2.image_path_exists = _sqlite_image_path_exists2
     def _fake_connect2(dsn: str | None = None):
         return sqlite3.connect(str(dbfile))
     pgmod2.connect = _fake_connect2

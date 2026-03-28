@@ -130,6 +130,14 @@ class Pipeline:
         if not csv_path_dir.is_dir():
             raise FileNotFoundError(f"CSV folder not found: {csv_path_dir}")
 
+        # parse city name like '1Beijing' -> 'Beijing' or '6深圳_...' -> '深圳'
+        m = re.match(r"^\d+([^_]+)_", csv_path_dir.name)
+        if m:
+            city_name = m.group(1)
+        else:
+            m2 = re.match(r"^\d+(.+)", csv_path_dir.name)
+            city_name = m2.group(1) if m2 else csv_path_dir.name
+
         count = 0
         image_count = 0
         csv_count = 0
@@ -142,6 +150,13 @@ class Pipeline:
 
             for file_idx, csv_path in enumerate(csv_paths, start=1):
                 csv_count = file_idx
+
+                # Skip CSVs already fully processed (HPC resume support)
+                prev = db.get_ingestion_status(conn, str(csv_path))
+                if prev is not None and prev[2] == "done":
+                    logger.info("skipping already-done CSV %s (%d/%d)", csv_path, csv_count, total_csv)
+                    continue
+
                 logger.info("ingesting CSV %s (%d/%d)", csv_path, csv_count, total_csv)
                 db.upsert_ingestion_status(conn, filename=str(csv_path), status="processing", last_processed_row=0)
 
@@ -751,10 +766,22 @@ class Pipeline:
             logger.info("Found %d images to process across %d folders", total_images, len(folder_paths_list))
 
             for folder, paths in folder_paths_list:
+                # Skip folders already fully processed (HPC resume support)
+                prev = db.get_ingestion_status(conn, str(folder))
+                if prev is not None and prev[2] == "done":
+                    logger.info("skipping already-done image folder %s", folder)
+                    continue
+
                 logger.info("scanning images in %s (found %d)", folder, len(paths))
                 db.upsert_ingestion_status(conn, filename=str(folder), status="processing")
 
                 for path in paths:
+                    # Skip individual images already ingested (HPC resume support)
+                    if db.image_path_exists(conn, str(path)):
+                        logger.debug("skipping already-ingested image %s", path)
+                        processed += 1
+                        continue
+
                     stem = path.stem
                     username_hash = stem.split("_")[0] if "_" in stem else None
                     try:

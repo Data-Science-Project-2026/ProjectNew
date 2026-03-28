@@ -422,21 +422,59 @@ def upsert_ingestion_status(
 
 
 def get_ingestion_status(
-    conn: psycopg2.extensions.connection, filename: str
-) -> tuple[int, str, int | None, str | None, str | None] | None:
+    conn, filename: str
+) -> tuple[int, str, str | None, int | None, str | None, str | None] | None:
     """Return the ingestion_status row for ``filename`` or ``None``.
 
-    The tuple returned is `(id, filename, last_processed_row, created_at,
-    updated_at)`.
+    The tuple returned is `(id, filename, status, last_processed_row,
+    created_at, updated_at)`.
     """
+    try:
+        import sqlite3  # type: ignore
+    except Exception:
+        sqlite3 = None  # type: ignore
+
+    if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
+        row = conn.execute(
+            "SELECT id, filename, status, last_processed_row, created_at, updated_at"
+            " FROM ingestion_status WHERE filename = ?",
+            (filename,),
+        ).fetchone()
+        return None if row is None else (row[0], row[1], row[2], row[3], row[4], row[5])
+
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT id, filename, last_processed_row, created_at, updated_at"
+            "SELECT id, filename, status, last_processed_row, created_at, updated_at"
             " FROM ingestion_status WHERE filename = %s",
             (filename,),
         )
         row = cur.fetchone()
-    return None if row is None else (row[0], row[1], row[2], row[3], row[4])
+    return None if row is None else (row[0], row[1], row[2], row[3], row[4], row[5])
+
+
+def image_path_exists(
+    conn, path: str
+) -> bool:
+    """Return True if an image with the given ``path`` already exists."""
+    try:
+        import sqlite3  # type: ignore
+    except Exception:
+        sqlite3 = None  # type: ignore
+
+    if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
+        row = conn.execute(
+            "SELECT 1 FROM images WHERE path = ? LIMIT 1",
+            (path,),
+        ).fetchone()
+        return row is not None
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT 1 FROM images WHERE path = %s LIMIT 1",
+            (path,),
+        )
+        row = cur.fetchone()
+    return row is not None
 
 
 # ── sentiment helpers ─────────────────────────────────────────────────────
