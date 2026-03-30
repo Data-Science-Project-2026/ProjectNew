@@ -1,15 +1,15 @@
 # Bert/Sentiment service container
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
+FROM python:3.12-slim
 
 # Install Python 3.12
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-venv python3-pip curl && \
-    rm -rf /var/lib/apt/lists/* && \
-    ln -sf /usr/bin/python3 /usr/bin/python
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY . /app
+COPY src /app/src
 
 RUN pip install --no-cache-dir -r src/models/Bert-Container/requirements.txt
 

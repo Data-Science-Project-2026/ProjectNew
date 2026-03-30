@@ -3,7 +3,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # copy entire workspace so imports resolve
-COPY . /app
+COPY src /app/src
 
 # install only the lightweight dependencies needed for orchestration
 # (BioClip/Bert models run in their own containers, no torch needed here)

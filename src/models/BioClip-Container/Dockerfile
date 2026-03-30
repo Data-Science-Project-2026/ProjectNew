@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # copy entire workspace so imports still work
-COPY . /app
+COPY src /app/src
 
 # install requirements (torch with CUDA support)
 RUN pip install --no-cache-dir -r src/models/BioClip-Container/requirements.txt
