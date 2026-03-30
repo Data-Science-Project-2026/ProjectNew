@@ -24,7 +24,18 @@ Free open source dashboard tool [Metabase](https://www.metabase.com/) is used fo
 
 The core workflow is orchestrated by `src/pipeline/orchestrator.py`. It
 imports CSVs, ingests raw image files (copying them into a managed
-`image_root` directory) and then runs three kinds of models (BioClip, sentiment/BERT and Qwen) and writes results to a PostgreSQL database. For production provide a Postgres DSN via `--db-dsn` or the `PIPELINE_DATABASE_DSN` environment variable; SQLite is supported only in tests and import utilities.
+`image_root` directory) and then runs three kinds of models (BioClip,
+sentiment/BERT and Qwen). By default results are written to a PostgreSQL
+database. For production provide a Postgres DSN via `--db-dsn` or the
+`PIPELINE_DATABASE_DSN` environment variable; SQLite is supported only in
+tests and import utilities.
+
+Note: the orchestrator also supports a DB-less JSON output mode via
+`--output-json <path>`. When provided the orchestrator will bypass the
+database entirely and collect `posts`, `images` and analysis results in an
+in-memory store which is written to the given JSON file at the end of the
+run. This is useful for quick local inspections or CI runs where Postgres is
+not available.
 
 [Pipeline documentation](./documentation/pipeline.md)
 

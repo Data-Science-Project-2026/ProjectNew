@@ -146,6 +146,32 @@ python -m pipeline.orchestrator analyze \
 Each command updates `ingestion_status` automatically so you can safely
 re-run failed imports or continue a long job.
 
+### DB-less JSON mode
+
+For quick experiments or CI-friendly runs the orchestrator can run without a
+database and instead write a single JSON file containing the collected
+`posts`, `images` and analysis outputs. To enable this mode pass
+`--output-json /path/to/results.json` on the orchestrator command line. When
+`--output-json` is present the orchestrator will not open database
+connections; instead it accumulates results in-memory and writes the JSON at
+the end of the run.
+
+Example:
+
+```sh
+# ingest posts into results.json (no DB used)
+python -m pipeline.orchestrator upload-posts --csv-folder /data/6Shenzhen --output-json /tmp/results.json
+
+# run analysis and store model outputs in the same (or a new) JSON file
+python -m pipeline.orchestrator analyze --output-json /tmp/results.json \
+  --bio-service-url http://localhost:5000 --bert-service-url http://localhost:5001 --qwen-service-url http://localhost:5002
+```
+
+The JSON schema is intentionally simple and includes top-level keys such as
+`posts`, `images`, `image_analysis`, `post_sentiment`, `image_qwen_detail`
+and `post_qwen_detail` to mirror the data the pipeline would normally
+persist to Postgres.
+
 The same module may also be imported and driven programmatically, allowing for
 more advanced concurrency strategies (e.g. multiple workers each fetching the
 next unprocessed batch).

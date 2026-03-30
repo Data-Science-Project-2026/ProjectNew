@@ -37,6 +37,7 @@ class Pipeline:
         bert_args: dict | None = None,
         qwen_args: dict | None = None,
         *,
+        output_json: Optional[str] = None,
         bio_service_url: Optional[str] = None,
         bert_service_url: Optional[str] = None,
         qwen_service_url: Optional[str] = None,
@@ -45,6 +46,21 @@ class Pipeline:
         skip_qwen: bool = False,
     ) -> None:
         self.dsn = dsn
+        self.output_json = output_json
+        # if output_json is provided we operate in no-db mode and gather results
+        # in an in-memory store which will be written to disk at the end.
+        if self.output_json:
+            self._json_store: Dict[str, list] = {
+                "posts": [],
+                "images": [],
+                "image_analysis": [],
+                "post_sentiment": [],
+                "image_qwen_detail": [],
+                "post_qwen_detail": [],
+                "ingestion_status": [],
+            }
+            self._next_post_id = 1
+            self._next_image_id = 1
         # if service urls provided we avoid loading local models until
         # the caller explicitly needs them.  skip_* flags allow tests where a
         # model should be omitted entirely (e.g. qwen-only runs).
@@ -141,24 +157,143 @@ class Pipeline:
         count = 0
         image_count = 0
         csv_count = 0
-        with db.connect(self.dsn) as conn:
-            db.ensure_schema(conn)
+        use_json = bool(self.output_json)
 
-            csv_paths = sorted(csv_path_dir.glob("*.csv"))
-            total_csv = len(csv_paths)
-            logger.info("Found %d CSV files to process in %s", total_csv, csv_path_dir)
+        csv_paths = sorted(csv_path_dir.glob("*.csv"))
+        total_csv = len(csv_paths)
+        logger.info("Found %d CSV files to process in %s", total_csv, csv_path_dir)
 
+        if not use_json:
+            with db.connect(self.dsn) as conn:
+                db.ensure_schema(conn)
+                iterator = enumerate(csv_paths, start=1)
+                for file_idx, csv_path in enumerate(csv_paths, start=1):
+                    csv_count = file_idx
+
+                    # Skip CSVs already fully processed (HPC resume support)
+                    prev = db.get_ingestion_status(conn, str(csv_path))
+                    if prev is not None and prev[2] == "done":
+                        logger.info("skipping already-done CSV %s (%d/%d)", csv_path, csv_count, total_csv)
+                        continue
+
+                    logger.info("ingesting CSV %s (%d/%d)", csv_path, csv_count, total_csv)
+                    db.upsert_ingestion_status(conn, filename=str(csv_path), status="processing", last_processed_row=0)
+
+                    csv_stem = csv_path.stem
+                    # park label like 'Heiqiao_Park_Chaoyang_District_Beijing'
+                    mpark = re.match(r'^(?:\d+_)*(.+)', csv_stem)
+                    park_label = mpark.group(1) if mpark else csv_stem
+
+                    # park folder typically has the same stem as the csv file
+                    if images_root:
+                        park_dir = Path(images_root) / csv_stem
+                        if not park_dir.is_dir():
+                            park_dir = Path(images_root) / park_label
+                    else:
+                        # legacy: look for a park folder adjacent to the CSVs
+                        park_dir = csv_path_dir / csv_stem
+                        if not park_dir.is_dir():
+                            park_dir = csv_path_dir / park_label
+
+                    image_lookup: Dict[str, Path] = {}
+                    if park_dir.is_dir():
+                        image_lookup = type(self)._build_image_lookup(park_dir)
+
+                    with open(csv_path, newline="", encoding="utf-8-sig") as fh:
+                        reader = csv.DictReader(fh)
+                        fieldnames = reader.fieldnames or []
+                        normalized_fields = {f.strip().lower() for f in fieldnames}
+                        has_image_column = any(n in normalized_fields for n in ("图像文件名列表", "image", "images", "图像", "image_filenames", "filenames"))
+
+                        def _get(r: dict, *keys: str) -> str:
+                            for k in keys:
+                                v = r.get(k)
+                                if v is not None and str(v).strip() != "":
+                                    return str(v).strip()
+                            return ""
+
+                        for idx, row in enumerate(reader, start=1):
+                            if max_posts and count >= max_posts:
+                                db.upsert_ingestion_status(conn, filename=str(csv_path), status="done", last_processed_row=count)
+                                logger.info("processed %d/%d CSV files before reaching max_posts; ingested %d posts and %d images from %s", csv_count, total_csv, count, image_count, csv_path_dir)
+                                return count
+
+                            username = _get(row, "用户名", "原始用户名", "username", "user", "user_name", "name", "昵称")
+                            if not username:
+                                continue
+                            h = hashlib.sha256(username.encode("utf-8")).hexdigest()
+
+                            comment = _get(row, "评论", "text", "comment", "内容") or None
+                            # cleanse timestamp: extract an ISO-like date/time or fallback to YYYY-MM-DD
+                            raw_time = _get(row, "时间", "timestamp", "time", "date", "日期")
+                            timestamp = None
+                            if raw_time:
+                                m = re.search(r"\d{4}-\d{1,2}-\d{1,2}(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?", raw_time)
+                                if m:
+                                    timestamp = m.group(0)
+                                else:
+                                    # try Chinese date like 2020年06月05日 or similar
+                                    m2 = re.search(r"(\d{4})\D+(\d{1,2})\D+(\d{1,2})", raw_time)
+                                    if m2:
+                                        y, mo, da = m2.group(1), int(m2.group(2)), int(m2.group(3))
+                                        timestamp = f"{y}-{mo:02d}-{da:02d}"
+                            rating = _get(row, "评分", "rating", "score") or None
+
+                            park_val = park_label
+
+                            post_id = db.insert_post(
+                                conn,
+                                city=city_name,
+                                park=park_val,
+                                username=username,
+                                username_hash=h,
+                                comment=comment,
+                                time=timestamp,
+                                rating=rating,
+                            )
+                            count += 1
+
+                            if has_image_column and image_lookup:
+                                raw_images = row.get("图像文件名列表") or row.get("image") or ""
+                                # try a few header names when present
+                                if not raw_images:
+                                    raw_images = _get(row, "图像文件名列表", "image", "images", "image_filenames", "filenames")
+                                filenames = [s.strip() for s in raw_images.replace("|", ";").replace(",", ";").split(";") if s.strip()]
+                                for fname in filenames:
+                                    resolved = image_lookup.get(Path(fname).name)
+                                    if resolved is None:
+                                        logger.debug("image %s not found in %s", fname, park_dir)
+                                        continue
+                                    db.insert_image(conn, post_id=post_id, path=str(resolved), username_hash=h)
+                                    image_count += 1
+                            else:
+                                # attach all images whose filename starts with or contains the username
+                                if image_lookup:
+                                    matched = []
+                                    for name, p in image_lookup.items():
+                                        # normalize separators and compare
+                                        if name.startswith(username) or name.startswith(username + "_") or name.startswith(username + "-") or username in name:
+                                            matched.append(p)
+                                    for p in matched:
+                                        db.insert_image(conn, post_id=post_id, path=str(p), username_hash=h)
+                                        image_count += 1
+
+                            db.upsert_ingestion_status(conn, filename=str(csv_path), status="processing", last_processed_row=idx)
+
+                db.upsert_ingestion_status(conn, filename=str(csv_path), status="done", last_processed_row=count)
+                if csv_count % 100 == 0:
+                    logger.info("progress: processed %d/%d CSV files", csv_count, total_csv)
+        else:
             for file_idx, csv_path in enumerate(csv_paths, start=1):
                 csv_count = file_idx
 
                 # Skip CSVs already fully processed (HPC resume support)
-                prev = db.get_ingestion_status(conn, str(csv_path))
-                if prev is not None and prev[2] == "done":
+                prev = next((s for s in self._json_store["ingestion_status"] if s.get("filename") == str(csv_path)), None)
+                if prev is not None and prev.get("status") == "done":
                     logger.info("skipping already-done CSV %s (%d/%d)", csv_path, csv_count, total_csv)
                     continue
-
                 logger.info("ingesting CSV %s (%d/%d)", csv_path, csv_count, total_csv)
-                db.upsert_ingestion_status(conn, filename=str(csv_path), status="processing", last_processed_row=0)
+                self._json_store["ingestion_status"].append({"filename": str(csv_path), "status": "processing", "last_processed_row": 0})
 
                 csv_stem = csv_path.stem
                 # park label like 'Heiqiao_Park_Chaoyang_District_Beijing'
@@ -195,9 +330,12 @@ class Pipeline:
 
                     for idx, row in enumerate(reader, start=1):
                         if max_posts and count >= max_posts:
-                            db.upsert_ingestion_status(conn, filename=str(csv_path), status="done", last_processed_row=count)
+                            for s in self._json_store["ingestion_status"]:
+                                if s.get("filename") == str(csv_path):
+                                    s["status"] = "done"
+                                    s["last_processed_row"] = count
+                                    break
                             logger.info("processed %d/%d CSV files before reaching max_posts; ingested %d posts and %d images from %s", csv_count, total_csv, count, image_count, csv_path_dir)
-                            return count
                             return count
 
                         username = _get(row, "用户名", "原始用户名", "username", "user", "user_name", "name", "昵称")
@@ -223,16 +361,18 @@ class Pipeline:
 
                         park_val = park_label
 
-                        post_id = db.insert_post(
-                            conn,
-                            city=city_name,
-                            park=park_val,
-                            username=username,
-                            username_hash=h,
-                            comment=comment,
-                            time=timestamp,
-                            rating=rating,
-                        )
+                        post_id = self._next_post_id
+                        self._next_post_id += 1
+                        self._json_store["posts"].append({
+                            "id": post_id,
+                            "city": city_name,
+                            "park": park_val,
+                            "username": username,
+                            "username_hash": h,
+                            "comment": comment,
+                            "time": timestamp,
+                            "rating": rating,
+                        })
                         count += 1
 
                         if has_image_column and image_lookup:
@@ -246,7 +386,9 @@ class Pipeline:
                                 if resolved is None:
                                     logger.debug("image %s not found in %s", fname, park_dir)
                                     continue
-                                db.insert_image(conn, post_id=post_id, path=str(resolved), username_hash=h)
+                                image_id = self._next_image_id
+                                self._next_image_id += 1
+                                self._json_store["images"].append({"id": image_id, "post_id": post_id, "path": str(resolved), "username_hash": h})
                                 image_count += 1
                         else:
                             # attach all images whose filename starts with or contains the username
@@ -257,15 +399,24 @@ class Pipeline:
                                     if name.startswith(username) or name.startswith(username + "_") or name.startswith(username + "-") or username in name:
                                         matched.append(p)
                                 for p in matched:
-                                    db.insert_image(conn, post_id=post_id, path=str(p), username_hash=h)
+                                    image_id = self._next_image_id
+                                    self._next_image_id += 1
+                                    self._json_store["images"].append({"id": image_id, "post_id": post_id, "path": str(p), "username_hash": h})
                                     image_count += 1
 
-                        db.upsert_ingestion_status(conn, filename=str(csv_path), status="processing", last_processed_row=idx)
+                        for s in self._json_store.get("ingestion_status", []):
+                            if s.get("filename") == str(csv_path):
+                                s["last_processed_row"] = idx
+                                break
 
-                db.upsert_ingestion_status(conn, filename=str(csv_path), status="done", last_processed_row=count)
+                for s in self._json_store.get("ingestion_status", []):
+                    if s.get("filename") == str(csv_path):
+                        s["status"] = "done"
+                        s["last_processed_row"] = count
+                        break
                 if csv_count % 100 == 0:
                     logger.info("progress: processed %d/%d CSV files", csv_count, total_csv)
-            logger.info("All CSV files processed: %d/%d; ingested %d posts and %d images from %s", csv_count, total_csv, count, image_count, csv_path_dir)
+        logger.info("All CSV files processed: %d/%d; ingested %d posts and %d images from %s", csv_count, total_csv, count, image_count, csv_path_dir)
 
         if debug:
             self.print_sample_posts(limit=5)
@@ -280,44 +431,62 @@ class Pipeline:
         images were ingested without `post_id` linkage.
         """
         try:
-            with db.connect(self.dsn) as conn2:
-                with conn2.cursor() as cur:
-                    cur.execute(
-                        "SELECT id, city, park, username_hash, comment, time, rating FROM posts ORDER BY RANDOM() LIMIT %s",
-                        (limit,),
-                    )
-                    posts = cur.fetchall()
-                    post_ids = [p[0] for p in posts]
-                    if not post_ids:
-                        logger.info("no posts available to sample")
-                        return
+            if self.output_json:
+                posts = list(self._json_store.get("posts", []))
+                if not posts:
+                    logger.info("no posts available to sample")
+                    return
+                import random
 
-                    # fetch all images linked to these post ids in one query (use IN with placeholders)
-                    placeholders = ",".join(["%s"] * len(post_ids))
-                    cur.execute(
-                        f"SELECT id, post_id, username_hash, path FROM images WHERE post_id IN ({placeholders})",
-                        tuple(post_ids),
-                    )
-                    imgs = cur.fetchall()
-                    images_by_post: Dict[int, List[dict]] = {}
-                    for i in imgs:
-                        iid, pid, uh, path = i[0], i[1], i[2], i[3]
-                        images_by_post.setdefault(pid, []).append({"id": iid, "username_hash": uh, "path": path})
+                sample = random.sample(posts, min(limit, len(posts)))
+                images = list(self._json_store.get("images", []))
+                images_by_post: Dict[int, List[dict]] = {}
+                for i in images:
+                    images_by_post.setdefault(i.get("post_id"), []).append({"id": i.get("id"), "username_hash": i.get("username_hash"), "path": i.get("path")})
+                for p in sample:
+                    pid = p.get("id")
+                    post_obj = p.copy()
+                    logger.info("SAMPLE POST: %s", json.dumps(post_obj, ensure_ascii=False))
+                    logger.info("ASSOCIATED IMAGES: %s", json.dumps(images_by_post.get(pid, []), ensure_ascii=False))
+            else:
+                with db.connect(self.dsn) as conn2:
+                    with conn2.cursor() as cur:
+                        cur.execute(
+                            "SELECT id, city, park, username_hash, comment, time, rating FROM posts ORDER BY RANDOM() LIMIT %s",
+                            (limit,),
+                        )
+                        posts = cur.fetchall()
+                        post_ids = [p[0] for p in posts]
+                        if not post_ids:
+                            logger.info("no posts available to sample")
+                            return
 
-                    for p in posts:
-                        pid = p[0]
-                        post_obj = {
-                            "id": p[0],
-                            "city": p[1],
-                            "park": p[2],
-                            "username_hash": p[3],
-                            "comment": p[4],
-                            "time": str(p[5]) if p[5] is not None else None,
-                            "rating": p[6],
-                        }
-                        images = images_by_post.get(pid, [])
-                        logger.info("SAMPLE POST: %s", json.dumps(post_obj, ensure_ascii=False))
-                        logger.info("ASSOCIATED IMAGES: %s", json.dumps(images, ensure_ascii=False))
+                        # fetch all images linked to these post ids in one query (use IN with placeholders)
+                        placeholders = ",".join(["%s"] * len(post_ids))
+                        cur.execute(
+                            f"SELECT id, post_id, username_hash, path FROM images WHERE post_id IN ({placeholders})",
+                            tuple(post_ids),
+                        )
+                        imgs = cur.fetchall()
+                        images_by_post: Dict[int, List[dict]] = {}
+                        for i in imgs:
+                            iid, pid, uh, path = i[0], i[1], i[2], i[3]
+                            images_by_post.setdefault(pid, []).append({"id": iid, "username_hash": uh, "path": path})
+
+                        for p in posts:
+                            pid = p[0]
+                            post_obj = {
+                                "id": p[0],
+                                "city": p[1],
+                                "park": p[2],
+                                "username_hash": p[3],
+                                "comment": p[4],
+                                "time": str(p[5]) if p[5] is not None else None,
+                                "rating": p[6],
+                            }
+                            images = images_by_post.get(pid, [])
+                            logger.info("SAMPLE POST: %s", json.dumps(post_obj, ensure_ascii=False))
+                            logger.info("ASSOCIATED IMAGES: %s", json.dumps(images, ensure_ascii=False))
         except Exception:
             logger.exception("failed to fetch sample posts/images for inspection")
 
@@ -337,6 +506,52 @@ class Pipeline:
         (per-worker).
         """
         total_processed = 0
+
+        use_json = bool(self.output_json)
+
+        if use_json:
+            # build list of images without analysis
+            all_images = list(self._json_store.get("images", []))
+            analyzed_ids = {a.get("image_id") for a in self._json_store.get("image_analysis", [])}
+            rows = [(img["id"], img.get("path")) for img in all_images if img["id"] not in analyzed_ids]
+
+            processed_local = 0
+            for start in range(0, len(rows), batch_size):
+                batch = rows[start : start + batch_size]
+                ids = [r[0] for r in batch]
+                blobs = []
+                for _, img_path in batch:
+                    if not img_path:
+                        blobs.append(b"")
+                        continue
+                    p = Path(img_path)
+                    if not p.is_file():
+                        logger.warning("image file for id %s path %s not found", _, img_path)
+                        blobs.append(b"")
+                        continue
+                    try:
+                        with open(p, "rb") as f:
+                            blobs.append(f.read())
+                    except Exception:
+                        logger.exception("failed to read image %s", p)
+                        blobs.append(b"")
+
+                if self.bio_service_url:
+                    payload = {"images": [base64.b64encode(b).decode("ascii") for b in blobs]}
+                    r = requests.post(f"{self.bio_service_url.rstrip('/')}/analyze_images", json=payload)
+                    r.raise_for_status()
+                    results = r.json().get("results", [])
+                elif self._get_bio_model() is not None:
+                    results = self.bio.analyze_image_blobs(blobs, threshold=0.05)
+                else:
+                    results = [([], []) for _ in blobs]
+
+                for img_id, (species, confidence) in zip(ids, results):
+                    self._json_store.setdefault("image_analysis", []).append({"image_id": img_id, "species": species, "confidence": confidence})
+                processed_local += len(batch)
+                if max_batches is not None and processed_local >= batch_size * max_batches:
+                    break
+            return processed_local
 
         def _worker() -> int:
             processed_local = 0
@@ -408,6 +623,38 @@ class Pipeline:
         """
         total = 0
 
+        use_json = bool(self.output_json)
+
+        if use_json:
+            posts = list(self._json_store.get("posts", []))
+            scored_ids = {s.get("post_id") for s in self._json_store.get("post_sentiment", [])}
+            rows = [(p["id"], p.get("comment")) for p in posts if p["id"] not in scored_ids and p.get("comment")]
+
+            local_count = 0
+            for start in range(0, len(rows), batch_size):
+                batch = rows[start : start + batch_size]
+                post_ids, comments = zip(*batch)
+
+                if self.bert_service_url:
+                    r = requests.post(
+                        f"{self.bert_service_url.rstrip('/')}/analyze_posts",
+                        json={"comments": list(comments)},
+                    )
+                    r.raise_for_status()
+                    scores = r.json().get("scores", [])
+                else:
+                    bert_model = self._get_bert_model()
+                    if bert_model is None:
+                        raise RuntimeError(
+                            "No Bert analyzer available: provide --bert-service-url or remove --skip-bert"
+                        )
+                    scores = bert_model.batch_analyze(list(comments))
+
+                for pid, score_dict in zip(post_ids, scores):
+                    self._json_store.setdefault("post_sentiment", []).append({"post_id": pid, "score": score_dict["sentiment_score"], "label": score_dict.get("sentiment_label", "")})
+                local_count += len(batch)
+            return local_count
+
         def _worker() -> int:
             local_count = 0
             with db.connect(self.dsn) as conn:
@@ -465,26 +712,53 @@ class Pipeline:
             "model": self.qwen_image_model,
         }
         
-        # Gather images to process
-        with db.connect(self.dsn) as conn:
-            # Reusing unanalyzed fetch, or better just fetch all without image_qwen_detail
-            limit = max_images if max_images else 1000000
-            try:
-                import sqlite3  # type: ignore
-            except Exception:
-                sqlite3 = None  # type: ignore
+        use_json = bool(self.output_json)
 
-            if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
-                cur = conn.cursor()
+        # Gather images to process
+        if use_json:
+            limit = max_images if max_images else 1000000
+            all_images = list(self._json_store.get("images", []))
+            existing = {d.get("image_id") for d in self._json_store.get("image_qwen_detail", [])}
+            rows = [(img["id"], img.get("path")) for img in all_images if img["id"] not in existing][:limit]
+        else:
+            with db.connect(self.dsn) as conn:
+                # Reusing unanalyzed fetch, or better just fetch all without image_qwen_detail
+                limit = max_images if max_images else 1000000
                 try:
-                    # if image_qwen_detail doesn't exist (sqlite tests), select all images
-                    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='image_qwen_detail'")
-                    if cur.fetchone() is None:
-                        cur.execute(
-                            "SELECT id, path FROM images ORDER BY id LIMIT ?",
-                            (limit,),
-                        )
-                    else:
+                    import sqlite3  # type: ignore
+                except Exception:
+                    sqlite3 = None  # type: ignore
+
+                if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
+                    cur = conn.cursor()
+                    try:
+                        # if image_qwen_detail doesn't exist (sqlite tests), select all images
+                        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='image_qwen_detail'")
+                        if cur.fetchone() is None:
+                            cur.execute(
+                                "SELECT id, path FROM images ORDER BY id LIMIT ?",
+                                (limit,),
+                            )
+                        else:
+                            cur.execute(
+                                """
+                                SELECT i.id, i.path
+                                FROM images i
+                                LEFT JOIN image_qwen_detail d ON i.id = d.image_id
+                                WHERE d.id IS NULL
+                                ORDER BY i.id
+                                LIMIT ?
+                                """,
+                                (limit,)
+                            )
+                        rows = cur.fetchall()
+                    finally:
+                        try:
+                            cur.close()
+                        except Exception:
+                            pass
+                else:
+                    with conn.cursor() as cur:
                         cur.execute(
                             """
                             SELECT i.id, i.path
@@ -492,30 +766,11 @@ class Pipeline:
                             LEFT JOIN image_qwen_detail d ON i.id = d.image_id
                             WHERE d.id IS NULL
                             ORDER BY i.id
-                            LIMIT ?
+                            LIMIT %s
                             """,
                             (limit,)
                         )
-                    rows = cur.fetchall()
-                finally:
-                    try:
-                        cur.close()
-                    except Exception:
-                        pass
-            else:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        SELECT i.id, i.path
-                        FROM images i
-                        LEFT JOIN image_qwen_detail d ON i.id = d.image_id
-                        WHERE d.id IS NULL
-                        ORDER BY i.id
-                        LIMIT %s
-                        """,
-                        (limit,)
-                    )
-                    rows = cur.fetchall()
+                        rows = cur.fetchall()
 
         if not rows:
             logger.info("no unanalyzed images found for Qwen")
@@ -571,19 +826,32 @@ class Pipeline:
                             animals_detected = parsed.get("animals_detected")
                             human_acts_detected = parsed.get("human_activities_detected")
                             
-                            with db.connect(self.dsn) as conn:
-                                db.insert_image_qwen_detail(
-                                    conn,
-                                    image_id=img_id,
-                                    image_summary=parsed.get("image_summary"),
-                                    visible_species=vis_species if isinstance(vis_species, list) else None,
-                                    landscape_elements=landscape if isinstance(landscape, list) else None,
-                                    human_activities=human_acts if isinstance(human_acts, list) else None,
-                                    plants_detected=plants_detected if isinstance(plants_detected, list) else None,
-                                    animals_detected=animals_detected if isinstance(animals_detected, list) else None,
-                                    human_activities_detected=human_acts_detected if isinstance(human_acts_detected, list) else None,
-                                    raw_response=json.dumps(parsed_raw, ensure_ascii=False)
-                                )
+                            if use_json:
+                                self._json_store.setdefault("image_qwen_detail", []).append({
+                                    "image_id": img_id,
+                                    "image_summary": parsed.get("image_summary"),
+                                    "visible_species": vis_species if isinstance(vis_species, list) else None,
+                                    "landscape_elements": landscape if isinstance(landscape, list) else None,
+                                    "human_activities": human_acts if isinstance(human_acts, list) else None,
+                                    "plants_detected": plants_detected if isinstance(plants_detected, list) else None,
+                                    "animals_detected": animals_detected if isinstance(animals_detected, list) else None,
+                                    "human_activities_detected": human_acts_detected if isinstance(human_acts_detected, list) else None,
+                                    "raw_response": json.dumps(parsed_raw, ensure_ascii=False),
+                                })
+                            else:
+                                with db.connect(self.dsn) as conn:
+                                    db.insert_image_qwen_detail(
+                                        conn,
+                                        image_id=img_id,
+                                        image_summary=parsed.get("image_summary"),
+                                        visible_species=vis_species if isinstance(vis_species, list) else None,
+                                        landscape_elements=landscape if isinstance(landscape, list) else None,
+                                        human_activities=human_acts if isinstance(human_acts, list) else None,
+                                        plants_detected=plants_detected if isinstance(plants_detected, list) else None,
+                                        animals_detected=animals_detected if isinstance(animals_detected, list) else None,
+                                        human_activities_detected=human_acts_detected if isinstance(human_acts_detected, list) else None,
+                                        raw_response=json.dumps(parsed_raw, ensure_ascii=False)
+                                    )
 
                             success += 1
                 except Exception as exc:
@@ -609,24 +877,50 @@ class Pipeline:
             "model": self.qwen_text_model,
         }
         
-        with db.connect(self.dsn) as conn:
+        use_json = bool(self.output_json)
+        if use_json:
             limit = max_posts if max_posts else 1000000
-            try:
-                import sqlite3  # type: ignore
-            except Exception:
-                sqlite3 = None  # type: ignore
-
-            if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
-                cur = conn.cursor()
+            posts = list(self._json_store.get("posts", []))
+            existing = {d.get("post_id") for d in self._json_store.get("post_qwen_detail", [])}
+            rows = [(p["id"], p.get("comment")) for p in posts if p["id"] not in existing and p.get("comment")][:limit]
+        else:
+            with db.connect(self.dsn) as conn:
+                limit = max_posts if max_posts else 1000000
                 try:
-                    # if post_qwen_detail doesn't exist, select all posts with non-empty comments
-                    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='post_qwen_detail'")
-                    if cur.fetchone() is None:
-                        cur.execute(
-                            "SELECT id, comment FROM posts WHERE comment IS NOT NULL AND TRIM(comment) != '' ORDER BY id LIMIT ?",
-                            (limit,),
-                        )
-                    else:
+                    import sqlite3  # type: ignore
+                except Exception:
+                    sqlite3 = None  # type: ignore
+
+                if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
+                    cur = conn.cursor()
+                    try:
+                        # if post_qwen_detail doesn't exist, select all posts with non-empty comments
+                        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='post_qwen_detail'")
+                        if cur.fetchone() is None:
+                            cur.execute(
+                                "SELECT id, comment FROM posts WHERE comment IS NOT NULL AND TRIM(comment) != '' ORDER BY id LIMIT ?",
+                                (limit,),
+                            )
+                        else:
+                            cur.execute(
+                                """
+                                SELECT p.id, p.comment
+                                FROM posts p
+                                LEFT JOIN post_qwen_detail d ON p.id = d.post_id
+                                WHERE d.id IS NULL AND p.comment IS NOT NULL AND TRIM(p.comment) != ''
+                                ORDER BY p.id
+                                LIMIT ?
+                                """,
+                                (limit,)
+                            )
+                        rows = cur.fetchall()
+                    finally:
+                        try:
+                            cur.close()
+                        except Exception:
+                            pass
+                else:
+                    with conn.cursor() as cur:
                         cur.execute(
                             """
                             SELECT p.id, p.comment
@@ -634,30 +928,11 @@ class Pipeline:
                             LEFT JOIN post_qwen_detail d ON p.id = d.post_id
                             WHERE d.id IS NULL AND p.comment IS NOT NULL AND TRIM(p.comment) != ''
                             ORDER BY p.id
-                            LIMIT ?
+                            LIMIT %s
                             """,
                             (limit,)
                         )
-                    rows = cur.fetchall()
-                finally:
-                    try:
-                        cur.close()
-                    except Exception:
-                        pass
-            else:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        SELECT p.id, p.comment
-                        FROM posts p
-                        LEFT JOIN post_qwen_detail d ON p.id = d.post_id
-                        WHERE d.id IS NULL AND p.comment IS NOT NULL AND TRIM(p.comment) != ''
-                        ORDER BY p.id
-                        LIMIT %s
-                        """,
-                        (limit,)
-                    )
-                    rows = cur.fetchall()
+                        rows = cur.fetchall()
 
         if not rows:
             logger.info("no unanalyzed posts found for Qwen")
@@ -684,35 +959,52 @@ class Pipeline:
                         if "error" in parsed:
                             logger.warning("qwen post %d returned error: %s", post_id, parsed["error"])
                         else:
-                            with db.connect(self.dsn) as conn:
-                                # New Qwen comment schema wraps fields under text_analysis.
-                                text_analysis = parsed.get("text_analysis") if isinstance(parsed, dict) else None
-                                if not isinstance(text_analysis, dict):
-                                    text_analysis = parsed if isinstance(parsed, dict) else {}
+                            # New Qwen comment schema wraps fields under text_analysis.
+                            text_analysis = parsed.get("text_analysis") if isinstance(parsed, dict) else None
+                            if not isinstance(text_analysis, dict):
+                                text_analysis = parsed if isinstance(parsed, dict) else {}
 
-                                emotions = text_analysis.get("emotions")
-                                influence = text_analysis.get("influence_of_emotions")
-                                ts = text_analysis.get("text_species_mentions")
-                                fs = text_analysis.get("feeling_correlated_to_text_species")
-                                ta = text_analysis.get("text_activities_or_facilities")
-                                fa = text_analysis.get("feeling_correlated_to_text_activities_or_facilities")
+                            emotions = text_analysis.get("emotions")
+                            influence = text_analysis.get("influence_of_emotions")
+                            ts = text_analysis.get("text_species_mentions")
+                            fs = text_analysis.get("feeling_correlated_to_text_species")
+                            ta = text_analysis.get("text_activities_or_facilities")
+                            fa = text_analysis.get("feeling_correlated_to_text_activities_or_facilities")
 
-                                db.insert_post_qwen_detail(
-                                    conn,
-                                    post_id=post_id,
-                                    emotions=emotions if isinstance(emotions, list) else None,
-                                    influence_of_emotions=str(influence) if influence else None,
-                                    text_species_mentions=ts if isinstance(ts, list) else None,
-                                    feeling_correlated_to_text_species=fs if isinstance(fs, list) else None,
-                                    text_activities_or_facilities=ta if isinstance(ta, list) else None,
-                                    feeling_correlated_to_text_activities_or_facilities=fa if isinstance(fa, list) else None,
-                                    raw_response=json.dumps(parsed, ensure_ascii=False)
-                                )
+                            if use_json:
+                                self._json_store.setdefault("post_qwen_detail", []).append({
+                                    "post_id": post_id,
+                                    "emotions": emotions if isinstance(emotions, list) else None,
+                                    "influence_of_emotions": str(influence) if influence else None,
+                                    "text_species_mentions": ts if isinstance(ts, list) else None,
+                                    "feeling_correlated_to_text_species": fs if isinstance(fs, list) else None,
+                                    "text_activities_or_facilities": ta if isinstance(ta, list) else None,
+                                    "feeling_correlated_to_text_activities_or_facilities": fa if isinstance(fa, list) else None,
+                                    "raw_response": json.dumps(parsed, ensure_ascii=False),
+                                })
 
                                 sentiment = text_analysis.get("comment_sentiment", {})
                                 sentiment_score = sentiment.get("score_0_to_1") if isinstance(sentiment, dict) else None
                                 if sentiment_score is not None:
-                                    db.update_qwen_sentiment(conn, post_id=post_id, score=float(sentiment_score))
+                                    self._json_store.setdefault("post_sentiment", []).append({"post_id": post_id, "score": float(sentiment_score)})
+                            else:
+                                with db.connect(self.dsn) as conn:
+                                    db.insert_post_qwen_detail(
+                                        conn,
+                                        post_id=post_id,
+                                        emotions=emotions if isinstance(emotions, list) else None,
+                                        influence_of_emotions=str(influence) if influence else None,
+                                        text_species_mentions=ts if isinstance(ts, list) else None,
+                                        feeling_correlated_to_text_species=fs if isinstance(fs, list) else None,
+                                        text_activities_or_facilities=ta if isinstance(ta, list) else None,
+                                        feeling_correlated_to_text_activities_or_facilities=fa if isinstance(fa, list) else None,
+                                        raw_response=json.dumps(parsed, ensure_ascii=False)
+                                    )
+
+                                    sentiment = text_analysis.get("comment_sentiment", {})
+                                    sentiment_score = sentiment.get("score_0_to_1") if isinstance(sentiment, dict) else None
+                                    if sentiment_score is not None:
+                                        db.update_qwen_sentiment(conn, post_id=post_id, score=float(sentiment_score))
 
                             success += 1
                 except Exception as exc:
@@ -747,54 +1039,90 @@ class Pipeline:
 
         inserted = 0
         processed = 0
-        with db.connect(self.dsn) as conn:
-            db.ensure_schema(conn)
+        use_json = bool(self.output_json)
 
-            # Count images per folder to report totals
-            folder_paths_list: list[tuple[Path, list[Path]]] = []
-            total_images = 0
-            for folder in folders:
-                if not folder.exists():
-                    logger.warning("image folder does not exist: %s", folder)
-                    folder_paths_list.append((folder, []))
-                    continue
-                # collect eligible files
-                paths = [p for p in folder.rglob("*") if p.is_file() and not p.name.startswith('.') and p.suffix.lower() not in {'.csv', '.txt'}]
-                folder_paths_list.append((folder, paths))
-                total_images += len(paths)
+        # Count images per folder to report totals
+        folder_paths_list: list[tuple[Path, list[Path]]] = []
+        total_images = 0
+        for folder in folders:
+            if not folder.exists():
+                logger.warning("image folder does not exist: %s", folder)
+                folder_paths_list.append((folder, []))
+                continue
+            # collect eligible files
+            paths = [p for p in folder.rglob("*") if p.is_file() and not p.name.startswith('.') and p.suffix.lower() not in {'.csv', '.txt'}]
+            folder_paths_list.append((folder, paths))
+            total_images += len(paths)
 
-            logger.info("Found %d images to process across %d folders", total_images, len(folder_paths_list))
+        logger.info("Found %d images to process across %d folders", total_images, len(folder_paths_list))
 
+        if not use_json:
+            with db.connect(self.dsn) as conn:
+                db.ensure_schema(conn)
+
+                for folder, paths in folder_paths_list:
+                    # Skip folders already fully processed (HPC resume support)
+                    prev = db.get_ingestion_status(conn, str(folder))
+                    if prev is not None and prev[2] == "done":
+                        logger.info("skipping already-done image folder %s", folder)
+                        continue
+
+                    logger.info("scanning images in %s (found %d)", folder, len(paths))
+                    db.upsert_ingestion_status(conn, filename=str(folder), status="processing")
+
+                    for path in paths:
+                        # Skip individual images already ingested (HPC resume support)
+                        if db.image_path_exists(conn, str(path)):
+                            logger.debug("skipping already-ingested image %s", path)
+                            processed += 1
+                            continue
+
+                        stem = path.stem
+                        username_hash = stem.split("_")[0] if "_" in stem else None
+                        try:
+                            image_id = db.insert_image(
+                                conn,
+                                post_id=None,
+                                path=str(path),  # passed for compatibility but ignored by PG
+                                username_hash=username_hash,
+                            )
+                        except Exception:
+                            logger.exception("failed to insert image %s", path)
+                            continue
+                        # copy file to storage identified by id and original suffix
+                        dest = image_storage / f"{image_id}{path.suffix}"
+                        try:
+                            shutil.copy2(path, dest)
+                        except Exception:
+                            logger.exception("failed to copy image %s to %s", path, dest)
+                        inserted += 1
+                        processed += 1
+                        if processed % 100 == 0:
+                            logger.info("progress: processed %d/%d images", processed, total_images)
+
+                    db.upsert_ingestion_status(conn, filename=str(folder), status="done")
+        else:
             for folder, paths in folder_paths_list:
-                # Skip folders already fully processed (HPC resume support)
-                prev = db.get_ingestion_status(conn, str(folder))
-                if prev is not None and prev[2] == "done":
+                prev = next((s for s in self._json_store["ingestion_status"] if s.get("filename") == str(folder)), None)
+                if prev is not None and prev.get("status") == "done":
                     logger.info("skipping already-done image folder %s", folder)
                     continue
 
                 logger.info("scanning images in %s (found %d)", folder, len(paths))
-                db.upsert_ingestion_status(conn, filename=str(folder), status="processing")
+                self._json_store.setdefault("ingestion_status", []).append({"filename": str(folder), "status": "processing", "last_processed_row": 0})
 
                 for path in paths:
-                    # Skip individual images already ingested (HPC resume support)
-                    if db.image_path_exists(conn, str(path)):
+                    # Skip images already ingested
+                    if any(p.get("path") == str(path) for p in self._json_store.get("images", [])):
                         logger.debug("skipping already-ingested image %s", path)
                         processed += 1
                         continue
 
                     stem = path.stem
                     username_hash = stem.split("_")[0] if "_" in stem else None
-                    try:
-                        image_id = db.insert_image(
-                            conn,
-                            post_id=None,
-                            path=str(path),  # passed for compatibility but ignored by PG
-                            username_hash=username_hash,
-                        )
-                    except Exception:
-                        logger.exception("failed to insert image %s", path)
-                        continue
-                    # copy file to storage identified by id and original suffix
+                    image_id = self._next_image_id
+                    self._next_image_id += 1
+                    self._json_store.setdefault("images", []).append({"id": image_id, "post_id": None, "path": str(path), "username_hash": username_hash})
                     dest = image_storage / f"{image_id}{path.suffix}"
                     try:
                         shutil.copy2(path, dest)
@@ -805,10 +1133,25 @@ class Pipeline:
                     if processed % 100 == 0:
                         logger.info("progress: processed %d/%d images", processed, total_images)
 
-                db.upsert_ingestion_status(conn, filename=str(folder), status="done")
+                for s in self._json_store.get("ingestion_status", []):
+                    if s.get("filename") == str(folder):
+                        s["status"] = "done"
+                        break
 
-        logger.info("All images processed: %d/%d; inserted %d images into DB", processed, total_images, inserted)
+        logger.info("All images processed: %d/%d; inserted %d images", processed, total_images, inserted)
         return inserted
+
+    def dump_results(self, path: Optional[str] = None) -> None:
+        """Write the in-memory JSON results to `path` (or the configured output_json)."""
+        p = path or self.output_json
+        if not p:
+            raise ValueError("no output path provided for JSON dump")
+        try:
+            with open(p, "w", encoding="utf-8") as fh:
+                json.dump(self._json_store, fh, ensure_ascii=False, indent=2)
+            logger.info("wrote JSON results to %s", p)
+        except Exception:
+            logger.exception("failed to write JSON results to %s", p)
 
 
 # convenience CLI entrypoint
@@ -842,6 +1185,7 @@ def main() -> None:
 
     db_arg = parser.add_argument_group("database")
     db_arg.add_argument("--db-dsn", default=None, help="Postgres DSN or use PIPELINE_DATABASE_DSN env var")
+    db_arg.add_argument("--output-json", default=None, help="path to write JSON results; disables DB usage")
 
     svc_arg = parser.add_argument_group("services")
     svc_arg.add_argument("--bio-service-url", default=None, help="URL for the BioClip container (e.g. http://localhost:5000)")
@@ -859,6 +1203,7 @@ def main() -> None:
     dsn = args.db_dsn or os.environ.get("PIPELINE_DATABASE_DSN", "")
     pipeline = Pipeline(
         dsn=dsn,
+        output_json=args.output_json,
         bio_clip_args={
             "species_tokens_path": Path("src/models/BioClip/species_tokens_latin.pt"),
             "species_names_path": Path("src/models/BioClip/species_names_latin.txt"),
@@ -911,6 +1256,13 @@ def main() -> None:
             logger.info("analyzed %d posts with Qwen", nqwen_post)
     else:
         parser.print_help()
+
+    # If running in JSON/no-db mode, dump the collected results
+    if getattr(args, "output_json", None):
+        try:
+            pipeline.dump_results(args.output_json)
+        except Exception:
+            logger.exception("failed to dump JSON results")
 
 
 if __name__ == "__main__":
