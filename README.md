@@ -163,7 +163,8 @@ If you run this project on an HPC cluster where Docker is unavailable, we provid
 
 Key notes:
 
-- Build SIF images locally or with the remote builder: `apptainer build --remote <image>.sif <Singularity.def>`
+- SIF image builds are performed externally (e.g. on an HPC cluster); project
+  repository no longer includes automated SIF build workflows or scripts.
 - Use `apptainer instance start|exec` to run services and reach them via `http://127.0.0.1:<port>` from the orchestrator.
 - Ensure `NO_PROXY`/`no_proxy` includes `127.0.0.1,localhost` so intra-node requests bypass cluster proxies.
 
