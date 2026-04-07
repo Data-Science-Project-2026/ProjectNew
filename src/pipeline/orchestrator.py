@@ -130,6 +130,72 @@ class Pipeline:
                     lookup.setdefault(image_path.name, image_path)
         return lookup
 
+    def print_sample_posts(self, limit: int = 5) -> None:
+        """Select `limit` random posts and log the post row plus associated images.
+
+        Tries a direct `post_id` lookup first; if no rows are found, falls back to
+        matching images by `username_hash` so samples are informative even when
+        images were ingested without `post_id` linkage.
+        """
+        try:
+            if self.output_json:
+                posts = list(self._json_store.get("posts", []))
+                if not posts:
+                    logger.info("no posts available to sample")
+                    return
+                import random
+
+                sample = random.sample(posts, min(limit, len(posts)))
+                images = list(self._json_store.get("images", []))
+                images_by_post: Dict[int, List[dict]] = {}
+                for i in images:
+                    images_by_post.setdefault(i.get("post_id"), []).append({"id": i.get("id"), "username_hash": i.get("username_hash"), "path": i.get("path")})
+                for p in sample:
+                    pid = p.get("id")
+                    post_obj = p.copy()
+                    logger.info("SAMPLE POST: %s", json.dumps(post_obj, ensure_ascii=False))
+                    logger.info("ASSOCIATED IMAGES: %s", json.dumps(images_by_post.get(pid, []), ensure_ascii=False))
+            else:
+                with db.connect(self.dsn) as conn2:
+                    with conn2.cursor() as cur:
+                        cur.execute(
+                            "SELECT id, city, park, username_hash, comment, time, rating FROM posts ORDER BY RANDOM() LIMIT %s",
+                            (limit,),
+                        )
+                        posts = cur.fetchall()
+                        post_ids = [p[0] for p in posts]
+                        if not post_ids:
+                            logger.info("no posts available to sample")
+                            return
+
+                        placeholders = ",".join(["%s"] * len(post_ids))
+                        cur.execute(
+                            f"SELECT id, post_id, username_hash, path FROM images WHERE post_id IN ({placeholders})",
+                            tuple(post_ids),
+                        )
+                        imgs = cur.fetchall()
+                        images_by_post: Dict[int, List[dict]] = {}
+                        for i in imgs:
+                            iid, pid, uh, path = i[0], i[1], i[2], i[3]
+                            images_by_post.setdefault(pid, []).append({"id": iid, "username_hash": uh, "path": path})
+
+                        for p in posts:
+                            pid = p[0]
+                            post_obj = {
+                                "id": p[0],
+                                "city": p[1],
+                                "park": p[2],
+                                "username_hash": p[3],
+                                "comment": p[4],
+                                "time": str(p[5]) if p[5] is not None else None,
+                                "rating": p[6],
+                            }
+                            images = images_by_post.get(pid, [])
+                            logger.info("SAMPLE POST: %s", json.dumps(post_obj, ensure_ascii=False))
+                            logger.info("ASSOCIATED IMAGES: %s", json.dumps(images, ensure_ascii=False))
+        except Exception:
+            logger.exception("failed to fetch sample posts/images for inspection")
+
     # ingestion delegators
     def ingest_posts(
         self,
