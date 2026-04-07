@@ -19,11 +19,12 @@ logger = logging.getLogger(__name__)
 # logic elsewhere.
 
 
-def connect(dsn: str | None = None, retries: int = 5, delay: float = 2.0) -> psycopg2.extensions.connection:
-    """Return a new psycopg2 connection using DSN or environment variable.
+def connect(dsn: str | None = None, retries: int = 5, delay: float = 2.0):
+    """Return a database connection for the given DSN.
 
-    Retries the connection ``retries`` times with exponential back-off so
-    parallel orchestrators survive brief Postgres startup delays.
+    If ``dsn`` ends with ``.db``, ``.sqlite``, or starts with ``sqlite:``,
+    a :class:`sqlite3.Connection` is returned instead of a psycopg2 connection.
+    Otherwise, connects to PostgreSQL with exponential-backoff retries.
 
     ``dsn`` may be any string accepted by :func:`psycopg2.connect` (e.g.
     ``"dbname=... user=... password=... host=..."``) or, when omitted, the
@@ -34,6 +35,15 @@ def connect(dsn: str | None = None, retries: int = 5, delay: float = 2.0) -> psy
         dsn = os.environ.get("PIPELINE_DATABASE_DSN")
     if not dsn:
         raise ValueError("no database DSN configured")
+    # SQLite detection: path ending in .db/.sqlite/.sqlite3 or sqlite: prefix
+    import sqlite3 as _sqlite3
+    _lower = dsn.lower()
+    if _lower.startswith("sqlite:") or _lower.endswith(".db") or _lower.endswith(".sqlite") or _lower.endswith(".sqlite3"):
+        _path = dsn.split(":", 1)[1].lstrip("/") if _lower.startswith("sqlite:") else dsn
+        conn = _sqlite3.connect(_path, check_same_thread=False)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        return conn
     for attempt in range(1, retries + 1):
         try:
             return psycopg2.connect(dsn)
@@ -52,13 +62,19 @@ def _serialize_optional(values: Sequence[object] | None) -> str | None:
     return json.dumps(list(values), ensure_ascii=False)
 
 
-def ensure_schema(conn: psycopg2.extensions.connection) -> None:
+def ensure_schema(conn) -> None:
     """Create the tables if they don't already exist.
 
     Images are referenced by file path in the ``images`` table; binary data is
     still kept out of Postgres. The orchestrator/model readers load blobs
     directly from the stored path.
     """
+    import sqlite3 as _sqlite3
+    if isinstance(conn, _sqlite3.Connection):
+        from database import sql as sqlmod
+        sqlmod.ensure_schema(conn)
+        conn.commit()
+        return
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -210,6 +226,10 @@ def insert_post(
     ``username_hash`` is stored for privacy when the data is exported to
     downstream systems. ``username`` is accepted but not stored in Postgres.
     """
+    import sqlite3 as _sqlite3
+    if isinstance(conn, _sqlite3.Connection):
+        from database import sql as sqlmod
+        return sqlmod.insert_post(conn, city=city, park=park, username=username, username_hash=username_hash, comment=comment, time=time, rating=rating, sentiment_score=sentiment_score)
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -262,6 +282,10 @@ def insert_image(
     origin. ``path`` is persisted so analyzers can read the image directly
     from its recorded location.
     """
+    import sqlite3 as _sqlite3
+    if isinstance(conn, _sqlite3.Connection):
+        from database import sql as sqlmod
+        return sqlmod.insert_image(conn, post_id=post_id, path=path, username_hash=username_hash)
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -406,6 +430,12 @@ def upsert_ingestion_status(
     ``failed``.  ``last_processed_row`` is optional and indicates how far the
     import progressed.
     """
+    import sqlite3 as _sqlite3
+    if isinstance(conn, _sqlite3.Connection):
+        from database import sql as sqlmod
+        sqlmod.upsert_ingestion_status(conn, filename=filename, status=status, last_processed_row=last_processed_row)
+        conn.commit()
+        return
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -588,6 +618,10 @@ def insert_post_qwen_detail(
     raw_response: str | None = None,
 ) -> int:
     """Insert one Qwen post comment detail row."""
+    import sqlite3 as _sqlite3
+    if isinstance(conn, _sqlite3.Connection):
+        from database import sql as sqlmod
+        return sqlmod.insert_post_qwen_detail(conn, post_id=post_id, emotions=emotions, influence_of_emotions=influence_of_emotions, text_species_mentions=text_species_mentions, feeling_correlated_to_text_species=feeling_correlated_to_text_species, text_activities_or_facilities=text_activities_or_facilities, feeling_correlated_to_text_activities_or_facilities=feeling_correlated_to_text_activities_or_facilities, raw_response=raw_response)
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -634,6 +668,10 @@ def insert_image_qwen_detail(
     All Qwen-image outputs are consolidated in ``image_qwen_detail`` and keyed
     by ``image_id`` so Qwen metadata stays isolated from BioCLIP result tables.
     """
+    import sqlite3 as _sqlite3
+    if isinstance(conn, _sqlite3.Connection):
+        from database import sql as sqlmod
+        return sqlmod.insert_image_qwen_detail(conn, image_id=image_id, image_summary=image_summary, visible_species=visible_species, landscape_elements=landscape_elements, human_activities=human_activities, plants_detected=plants_detected, animals_detected=animals_detected, human_activities_detected=human_activities_detected, raw_response=raw_response)
     with conn.cursor() as cur:
         cur.execute(
             """

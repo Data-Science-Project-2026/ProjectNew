@@ -130,6 +130,41 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS image_qwen_detail (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            image_id INTEGER NOT NULL UNIQUE,
+            image_summary TEXT,
+            visible_species TEXT,
+            landscape_elements TEXT,
+            human_activities TEXT,
+            plants_detected TEXT,
+            animals_detected TEXT,
+            human_activities_detected TEXT,
+            raw_response TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS post_qwen_detail (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER NOT NULL,
+            emotions TEXT,
+            influence_of_emotions TEXT,
+            text_species_mentions TEXT,
+            feeling_correlated_to_text_species TEXT,
+            text_activities_or_facilities TEXT,
+            feeling_correlated_to_text_activities_or_facilities TEXT,
+            raw_response TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+        )
+        """
+    )
 
 
 def upsert_ingestion_status(
@@ -329,6 +364,93 @@ def update_image_activity(
         "UPDATE images SET activity = ? WHERE id = ?",
         (activity, int(image_id)),
     )
+
+
+def insert_image_qwen_detail(
+    conn: sqlite3.Connection,
+    *,
+    image_id: int,
+    image_summary: str | None = None,
+    visible_species: list | None = None,
+    landscape_elements: list | None = None,
+    human_activities: list | None = None,
+    plants_detected: list | None = None,
+    animals_detected: list | None = None,
+    human_activities_detected: list | None = None,
+    raw_response: str | None = None,
+) -> int:
+    """Insert or update one per-image Qwen detail row."""
+    conn.execute(
+        """
+        INSERT INTO image_qwen_detail (
+            image_id, image_summary, visible_species, landscape_elements,
+            human_activities, plants_detected, animals_detected,
+            human_activities_detected, raw_response
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(image_id) DO UPDATE SET
+            image_summary=excluded.image_summary,
+            visible_species=excluded.visible_species,
+            landscape_elements=excluded.landscape_elements,
+            human_activities=excluded.human_activities,
+            plants_detected=excluded.plants_detected,
+            animals_detected=excluded.animals_detected,
+            human_activities_detected=excluded.human_activities_detected,
+            raw_response=excluded.raw_response,
+            created_at=datetime('now')
+        """,
+        (
+            image_id,
+            image_summary,
+            json.dumps(visible_species) if isinstance(visible_species, list) else None,
+            json.dumps(landscape_elements) if isinstance(landscape_elements, list) else None,
+            json.dumps(human_activities) if isinstance(human_activities, list) else None,
+            json.dumps(plants_detected) if isinstance(plants_detected, list) else None,
+            json.dumps(animals_detected) if isinstance(animals_detected, list) else None,
+            json.dumps(human_activities_detected) if isinstance(human_activities_detected, list) else None,
+            raw_response,
+        ),
+    )
+    conn.commit()
+    row = conn.execute("SELECT id FROM image_qwen_detail WHERE image_id = ?", (image_id,)).fetchone()
+    return int(row[0]) if row else -1
+
+
+def insert_post_qwen_detail(
+    conn: sqlite3.Connection,
+    *,
+    post_id: int,
+    emotions: list | str | None = None,
+    influence_of_emotions: str | None = None,
+    text_species_mentions: list | str | None = None,
+    feeling_correlated_to_text_species: list | str | None = None,
+    text_activities_or_facilities: list | str | None = None,
+    feeling_correlated_to_text_activities_or_facilities: list | str | None = None,
+    raw_response: str | None = None,
+) -> int:
+    """Insert one Qwen post comment detail row."""
+    cursor = conn.execute(
+        """
+        INSERT INTO post_qwen_detail (
+            post_id, emotions, influence_of_emotions,
+            text_species_mentions, feeling_correlated_to_text_species,
+            text_activities_or_facilities,
+            feeling_correlated_to_text_activities_or_facilities,
+            raw_response
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            post_id,
+            json.dumps(emotions) if isinstance(emotions, list) else emotions,
+            influence_of_emotions,
+            json.dumps(text_species_mentions) if isinstance(text_species_mentions, list) else text_species_mentions,
+            json.dumps(feeling_correlated_to_text_species) if isinstance(feeling_correlated_to_text_species, list) else feeling_correlated_to_text_species,
+            json.dumps(text_activities_or_facilities) if isinstance(text_activities_or_facilities, list) else text_activities_or_facilities,
+            json.dumps(feeling_correlated_to_text_activities_or_facilities) if isinstance(feeling_correlated_to_text_activities_or_facilities, list) else feeling_correlated_to_text_activities_or_facilities,
+            raw_response,
+        ),
+    )
+    conn.commit()
+    return int(cursor.lastrowid)
 
 
 def _human_readable_bytes(num_bytes: int | None) -> str:
