@@ -321,3 +321,67 @@ def test_service_urls(tmp_path: Path):
     # restore
     requests.post = real_post
     pgmod3.connect = real_connect3
+
+
+def test_load_images_from_folder(tmp_path: Path):
+    """load_images_from_folder should populate _json_store['images'] in JSON mode."""
+    img_dir = tmp_path / "imgs"
+    sub = img_dir / "sub"
+    sub.mkdir(parents=True)
+    (img_dir / "photo1.jpg").write_bytes(b"\xff\xd8\xff")
+    (img_dir / "photo2.png").write_bytes(b"\x89PNG")
+    (sub / "photo3.jpeg").write_bytes(b"\xff\xd8\xff")
+    # non-image file should be ignored
+    (img_dir / "notes.txt").write_text("ignore me")
+
+    json_out = tmp_path / "out.json"
+    pipeline = Pipeline(
+        dsn="",
+        bio_clip_args={
+            "species_tokens_path": Path("/dev/null"),
+            "species_names_path": Path("/dev/null"),
+            "use_half": False,
+            "text_batch_size": 1,
+        },
+        output_json=str(json_out),
+    )
+
+    added = pipeline.load_images_from_folder(img_dir)
+
+    assert added == 3
+    images = pipeline._json_store["images"]
+    assert len(images) == 3
+    paths = {img["path"] for img in images}
+    assert str(img_dir / "photo1.jpg") in paths
+    assert str(img_dir / "photo2.png") in paths
+    assert str(sub / "photo3.jpeg") in paths
+    # all entries have post_id=None since no ingestion was done
+    assert all(img["post_id"] is None for img in images)
+    # ids should be unique and sequential
+    ids = [img["id"] for img in images]
+    assert ids == sorted(ids)
+    assert len(set(ids)) == 3
+
+    # calling again should not add duplicates
+    added2 = pipeline.load_images_from_folder(img_dir)
+    assert added2 == 0
+    assert len(pipeline._json_store["images"]) == 3
+
+
+def test_load_images_from_folder_noop_without_json_mode(tmp_path: Path):
+    """load_images_from_folder is a no-op when output_json is not set."""
+    img_dir = tmp_path / "imgs"
+    img_dir.mkdir()
+    (img_dir / "photo.jpg").write_bytes(b"\xff\xd8\xff")
+
+    pipeline = Pipeline(
+        dsn="",
+        bio_clip_args={
+            "species_tokens_path": Path("/dev/null"),
+            "species_names_path": Path("/dev/null"),
+            "use_half": False,
+            "text_batch_size": 1,
+        },
+    )
+    added = pipeline.load_images_from_folder(img_dir)
+    assert added == 0

@@ -196,6 +196,41 @@ class Pipeline:
         except Exception:
             logger.exception("failed to fetch sample posts/images for inspection")
 
+    def load_images_from_folder(self, folder: Path) -> int:
+        """Scan *folder* recursively for image files and add them to the JSON store.
+
+        Only meaningful in JSON/no-db mode (``output_json`` is set).  Each
+        discovered image file is appended to ``_json_store["images"]`` with
+        ``post_id=None`` so that subsequent analysis steps (e.g. Qwen) can
+        process them without requiring a prior ingestion run.
+
+        Returns the number of images added.
+        """
+        if not self.output_json:
+            logger.warning("load_images_from_folder called outside JSON mode; no-op")
+            return 0
+
+        image_exts = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".gif"}
+        added = 0
+        existing_paths = {img["path"] for img in self._json_store.get("images", [])}
+        for p in sorted(folder.rglob("*")):
+            if p.is_file() and p.suffix.lower() in image_exts:
+                path_str = str(p)
+                if path_str in existing_paths:
+                    continue
+                image_id = self._next_image_id
+                self._next_image_id += 1
+                self._json_store["images"].append({
+                    "id": image_id,
+                    "post_id": None,
+                    "path": path_str,
+                    "username_hash": None,
+                })
+                existing_paths.add(path_str)
+                added += 1
+        logger.info("load_images_from_folder: added %d images from %s", added, folder)
+        return added
+
     # ingestion delegators
     def ingest_posts(
         self,
@@ -462,6 +497,7 @@ def main() -> None:
     analyze.add_argument("--batch-size", type=int, default=1000)
     analyze.add_argument("--max-batches", type=int, default=None)
     analyze.add_argument("--workers", type=int, default=1)
+    analyze.add_argument("--images-root", required=False, help="folder of images to load into JSON store before analysis (JSON mode only)")
 
     qwen_arg = parser.add_argument_group("qwen configuration")
     qwen_arg.add_argument("--qwen-image-model", default="Qwen/Qwen3.5-4B", help="Qwen model name for images")
@@ -530,6 +566,9 @@ def main() -> None:
         logger.info("ingested %d images", n)
         logger.info("ingest_images duration: %.3f seconds", dt)
     elif args.command == "analyze":
+        images_root = getattr(args, "images_root", None)
+        if pipeline.output_json and images_root:
+            pipeline.load_images_from_folder(Path(images_root))
         nimg = pipeline.analyze_images(batch_size=args.batch_size, max_batches=args.max_batches, workers=args.workers)
         logger.info("processed %d images with BioClip", nimg)
         npost = pipeline.analyze_posts(batch_size=args.batch_size, workers=args.workers)
