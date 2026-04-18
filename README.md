@@ -99,6 +99,31 @@ docker compose run --rm orchestrator-1 \
   analyze --batch-size 10 --workers 1
 ```
 
+If you want a single step-by-step script for a fresh local run, use:
+
+```powershell
+# 1) start required services
+docker compose up -d postgres bioclip bert qwen
+
+# 2) import CSV posts from mounted split_1 data
+docker compose run --rm orchestrator-1 \
+  --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
+  upload-posts --city-folder /data
+
+# 3) ingest images from mounted split_1 data
+docker compose run --rm orchestrator-1 \
+  --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
+  upload-images --folders /data --image-root /data/images
+
+# 4) run analysis using service containers
+docker compose run --rm orchestrator-1 \
+  --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
+  --bio-service-url http://bioclip:5000 \
+  --bert-service-url http://bert:5000 \
+  --qwen-service-url http://qwen:5000 \
+  analyze --batch-size 10 --workers 1
+```
+
 Notes:
 - If you have CSVs, use `upload-posts --city-folder /data` (the command
   looks for CSVs and associated park image folders inside the provided
