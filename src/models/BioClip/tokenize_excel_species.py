@@ -6,6 +6,23 @@ import torch
 import open_clip
 
 
+def _write_names_file(names_out: Path, names: list[str], source_path: Path | None = None) -> None:
+    # If caller points names output at the same input file, keep the file untouched.
+    if source_path is not None:
+        try:
+            if names_out.resolve() == source_path.resolve():
+                print(f"Keeping existing names file unchanged: {names_out}")
+                return
+        except OSError:
+            pass
+
+    payload = "\n".join(names)
+    if payload:
+        payload += "\n"
+    names_out.write_text(payload, encoding="utf-8")
+    print(f"Wrote {len(names)} lines to {names_out}")
+
+
 def extract_and_tokenize(xlsx_path: Path, names_out: Path, tokens_out: Path, model_name: str, include_kingdoms=None, exclude_phyla=None, name_col: str = "Species"):
     df = pd.read_excel(xlsx_path, engine="openpyxl", header=0, dtype=str)
 
@@ -39,19 +56,13 @@ def extract_and_tokenize(xlsx_path: Path, names_out: Path, tokens_out: Path, mod
         col = df.iloc[:, 0]
 
     first_col = col.astype(str).str.strip()
-    names = first_col[first_col.notna() & (first_col != "")].drop_duplicates().tolist()
+    names = first_col[first_col.notna() & (first_col != "")].tolist()
 
     names_out.parent.mkdir(parents=True, exist_ok=True)
     tokens_out.parent.mkdir(parents=True, exist_ok=True)
 
     # save plain names (one per line)
-    names_out.write_text("\n".join(names), encoding="utf-8")
-    # print number of lines written to the species text file
-    try:
-        print(f"Wrote {len(names)} lines to {names_out}")
-    except Exception:
-        # best-effort print, do not fail the pipeline
-        print(f"Wrote {len(names)} lines to species text")
+    _write_names_file(names_out, names)
 
     # tokenize using open_clip tokenizer for the chosen model
     tokenizer = open_clip.get_tokenizer(model_name)
@@ -73,51 +84,54 @@ def extract_and_tokenize_from_txt(txt_path: Path, names_out: Path, tokens_out: P
         line_count = 0
     print(f"Lines in {txt_path}: {line_count}")
 
-    # read tab-separated text file (with header)
-    df = pd.read_csv(txt_path, sep="\t", header=0, dtype=str, engine="python")
+    raw_lines = txt_path.read_text(encoding="utf-8").splitlines()
+    non_empty = [line.strip() for line in raw_lines if line.strip()]
+    first_non_empty = non_empty[0] if non_empty else ""
+    is_tabular = "\t" in first_non_empty
 
-    # filter by kingdom if present and a filter was provided via global variable
-    # note: include_kingdoms will be injected via optional attribute on function (see CLI caller)
-    include_kingdoms = getattr(extract_and_tokenize_from_txt, "include_kingdoms", None)
-    if include_kingdoms:
-        if "kingdom" in df.columns:
-            df = df[df["kingdom"].isin(include_kingdoms)]
+    if is_tabular:
+        # Read tabular TXT/TSV that includes a header row.
+        df = pd.read_csv(txt_path, sep="\t", header=0, dtype=str, engine="python")
+
+        # filter by kingdom if present and a filter was provided via global variable
+        # note: include_kingdoms will be injected via optional attribute on function (see CLI caller)
+        include_kingdoms = getattr(extract_and_tokenize_from_txt, "include_kingdoms", None)
+        if include_kingdoms:
+            if "kingdom" in df.columns:
+                df = df[df["kingdom"].isin(include_kingdoms)]
+            else:
+                print("Warning: 'kingdom' column not found in TXT — skipping kingdom filter")
+
+        # filter out unwanted phyla if provided via function attribute
+        exclude_phyla = getattr(extract_and_tokenize_from_txt, "exclude_phyla", None)
+        if exclude_phyla:
+            if "phylum" in df.columns:
+                exset = {p.strip().lower() for p in exclude_phyla if p}
+                phcol = df["phylum"].astype(str).str.strip().str.lower()
+                df = df[~phcol.isin(exset)]
+            else:
+                print("Warning: 'phylum' column not found in TXT — cannot exclude phyla")
+
+        # prefer the named column if present, otherwise fall back to the 4th column (scientificName position)
+        if name_col in df.columns:
+            col = df[name_col]
         else:
-            print("Warning: 'kingdom' column not found in TXT — skipping kingdom filter")
+            # protect against files with fewer columns
+            if df.shape[1] > 3:
+                col = df.iloc[:, 3]
+            else:
+                col = df.iloc[:, 0]
 
-    # filter out unwanted phyla if provided via function attribute
-    exclude_phyla = getattr(extract_and_tokenize_from_txt, "exclude_phyla", None)
-    if exclude_phyla:
-        if "phylum" in df.columns:
-            exset = {p.strip().lower() for p in exclude_phyla if p}
-            phcol = df["phylum"].astype(str).str.strip().str.lower()
-            df = df[~phcol.isin(exset)]
-        else:
-            print("Warning: 'phylum' column not found in TXT — cannot exclude phyla")
-
-    # prefer the named column if present, otherwise fall back to the 4th column (scientificName position)
-    if name_col in df.columns:
-        col = df[name_col]
+        first_col = col.astype(str).str.strip()
+        names = first_col[first_col.notna() & (first_col != "")].tolist()
     else:
-        # protect against files with fewer columns
-        if df.shape[1] > 3:
-            col = df.iloc[:, 3]
-        else:
-            col = df.iloc[:, 0]
-
-    first_col = col.astype(str).str.strip()
-    names = first_col[first_col.notna() & (first_col != "")].drop_duplicates().tolist()
+        # For plain one-name-per-line files, keep every non-empty line as-is.
+        names = non_empty
 
     names_out.parent.mkdir(parents=True, exist_ok=True)
     tokens_out.parent.mkdir(parents=True, exist_ok=True)
 
-    names_out.write_text("\n".join(names), encoding="utf-8")
-
-    # print number of lines written to the species text file
-    try:
-        print(f"Wrote {len(names)} lines to {names_out}")
-    except Exception:
-        print(f"Wrote {len(names)} lines to species text")
+    _write_names_file(names_out, names, source_path=txt_path)
 
     tokenizer = open_clip.get_tokenizer(model_name)
     token_tensor = tokenizer(names)
