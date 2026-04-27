@@ -65,7 +65,7 @@ services:
   local-llm:
     image: vllm/vllm-openai:cu130-nightly
     ports:
-      - "8000:8000"
+      - "${LOCAL_LLM_PORT:-8000}:${LOCAL_LLM_PORT:-8000}"
     volumes:
       - ${HF_CACHE_DIR:-~/.cache/huggingface}:/root/.cache/huggingface
       - ${LOCAL_LLM_MODEL_DIR:-./models}:/models:ro
@@ -76,6 +76,7 @@ services:
       VLLM_NO_USAGE_STATS: ${VLLM_NO_USAGE_STATS:-1}
     command: >
       ${LOCAL_LLM_MODEL:-/models/Qwen3.5-4B}
+      --port ${LOCAL_LLM_PORT:-8000}
       --max-model-len ${LOCAL_LLM_MAX_MODEL_LEN:-8192}
       --gpu-memory-utilization ${LOCAL_LLM_GPU_MEMORY_UTILIZATION:-0.7}
       --kv-cache-dtype ${LOCAL_LLM_KV_CACHE_DTYPE:-fp8}
@@ -89,7 +90,7 @@ services:
               count: 1
               capabilities: [gpu]
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8000/v1/models || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:${LOCAL_LLM_PORT:-8000}/v1/models || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -124,7 +125,8 @@ services:
       --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432"
       --bio-service-url http://bioclip:5000
       --bert-service-url http://bert:5000
-      --qwen-service-url http://local-llm:8000/v1
+      --qwen-port ${LOCAL_LLM_PORT:-8000}
+      --qwen-service-url http://local-llm:${LOCAL_LLM_PORT:-8000}/v1
       --qwen-image-instruction-file /app/images.md
       --qwen-comment-instruction-file /app/comment.md
       --qwen-image-model "Qwen/Qwen3.5-4B"
@@ -154,7 +156,8 @@ services:
       --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432"
       --bio-service-url http://bioclip:5000
       --bert-service-url http://bert:5000
-      --qwen-service-url http://local-llm:8000/v1
+      --qwen-port ${LOCAL_LLM_PORT:-8000}
+      --qwen-service-url http://local-llm:${LOCAL_LLM_PORT:-8000}/v1
       --qwen-image-instruction-file /app/images.md
       --qwen-comment-instruction-file /app/comment.md
       --qwen-image-model "Qwen/Qwen3.5-4B"

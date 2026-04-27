@@ -346,7 +346,9 @@ def main() -> None:
     svc_arg = parser.add_argument_group("services")
     svc_arg.add_argument("--bio-service-url", default=None, help="URL for the BioClip container (e.g. http://localhost:5000)")
     svc_arg.add_argument("--bert-service-url", default=None, help="URL for the Bert container")
-    svc_arg.add_argument("--qwen-service-url", default=None, help="URL for the Qwen container")
+    svc_arg.add_argument("--qwen-service-url", default=None, help="URL for the Qwen container (e.g. http://localhost:8000/v1)")
+    svc_arg.add_argument("--qwen-port", type=int, default=8000, help="Port for local Qwen vLLM service. Used if --qwen-service-url is not explicitly provided.")
+
 
     skip_arg = parser.add_argument_group("skip models")
     skip_arg.add_argument("--skip-bio", action="store_true", help="do not load or call BioClip locally (use service or skip)")
@@ -373,7 +375,7 @@ def main() -> None:
         },
         bio_service_url=args.bio_service_url,
         bert_service_url=args.bert_service_url,
-        qwen_service_url=args.qwen_service_url,
+        qwen_service_url=args.qwen_service_url or f"http://localhost:{args.qwen_port}/v1",
         skip_bio=args.skip_bio,
         skip_bert=args.skip_bert,
         skip_qwen=args.skip_qwen,
