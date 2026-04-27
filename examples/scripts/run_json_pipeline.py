@@ -643,6 +643,12 @@ def main() -> int:
         default=None,
         help="Qwen service URL (e.g. http://localhost:8000/v1); overrides local model",
     )
+    svc_group.add_argument(
+        "--qwen-port",
+        type=int,
+        default=8000,
+        help="Port for local Qwen vLLM service. Used if --qwen-service-url is not explicitly provided.",
+    )
     
     # Qwen configuration
     qwen_group = parser.add_argument_group("qwen configuration")
@@ -738,7 +744,7 @@ def main() -> int:
             workers=args.workers,
             bio_service_url=args.bio_service_url,
             bert_service_url=args.bert_service_url,
-            qwen_service_url=args.qwen_service_url,
+            qwen_service_url=args.qwen_service_url or f"http://localhost:{args.qwen_port}/v1",
             run_bio=run_bio,
             run_bert=run_bert,
             run_qwen=run_qwen,
