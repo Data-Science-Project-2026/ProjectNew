@@ -17,7 +17,7 @@ Usage examples:
   python examples/scripts/run_json_pipeline.py \\
     --csv-folder data/split_1/... \\
     --image-folder data/split_1/.../images \\
-    --qwen-service-url http://localhost:5002 \\
+    --qwen-service-url http://localhost:8000/v1 \\
     --output results.json \\
     --run-qwen
 
@@ -34,6 +34,12 @@ Usage examples:
     --image-folder data/split_1/.../images \\
     --output results.json \\
     --skip-bio --skip-bert --skip-qwen
+        proc_group.add_argument(
+            "--qwen-workers",
+            type=int,
+            default=4,
+            help="Number of workers for concurrent Qwen requests",
+        )
 
   # Process only first N posts/images:
   python examples/scripts/run_json_pipeline.py \\
@@ -227,6 +233,7 @@ def run_pipeline_json_mode(
             "text_model": qwen_text_model,
             "image_instruction_file": qwen_image_instruction_file,
             "comment_instruction_file": qwen_comment_instruction_file,
+            "workers": args.qwen_workers,
         },
         bio_service_url=bio_service_url,
         bert_service_url=bert_service_url,
@@ -606,6 +613,12 @@ def main() -> int:
     )
     model_group.add_argument(
         "--skip-qwen",
+        proc_group.add_argument(
+            "--qwen-workers",
+            type=int,
+            default=4,
+            help="Number of workers for concurrent Qwen requests",
+        )
         action="store_true",
         help="Skip Qwen (useful when model deps not installed)",
     )
@@ -628,7 +641,13 @@ def main() -> int:
         "--qwen-service-url",
         type=str,
         default=None,
-        help="Qwen service URL (e.g. http://localhost:5002); overrides local model",
+        help="Qwen service URL (e.g. http://localhost:8000/v1); overrides local model",
+    )
+    svc_group.add_argument(
+        "--qwen-port",
+        type=int,
+        default=8000,
+        help="Port for local Qwen vLLM service. Used if --qwen-service-url is not explicitly provided.",
     )
     
     # Qwen configuration
@@ -725,7 +744,7 @@ def main() -> int:
             workers=args.workers,
             bio_service_url=args.bio_service_url,
             bert_service_url=args.bert_service_url,
-            qwen_service_url=args.qwen_service_url,
+            qwen_service_url=args.qwen_service_url or f"http://localhost:{args.qwen_port}/v1",
             run_bio=run_bio,
             run_bert=run_bert,
             run_qwen=run_qwen,
