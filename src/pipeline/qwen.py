@@ -172,7 +172,7 @@ def run_qwen_image_analysis_impl(self, max_images: Optional[int] = None) -> int:
 
             handled_ids.add(int(img_id))
             success += 1
-            _log_progress_milestone(success, total_rows, label="Qwen images", step=100)
+            _log_progress_milestone(success, total_rows, label="Qwen image analysis", step=100)
         except Exception as exc:
             logger.error("qwen image %d failed: %s", img_id, exc)
             if not use_json:
@@ -299,7 +299,7 @@ def run_qwen_comment_analysis_impl(self, max_posts: Optional[int] = None) -> int
 
             handled_ids.add(int(post_id))
             success += 1
-            _log_progress_milestone(success, total_rows, label="Qwen comments", step=1000)
+            _log_progress_milestone(success, total_rows, label="Qwen comment analysis", step=1000)
         except Exception as exc:
             logger.error("qwen post %d failed: %s", post_id, exc)
             if not use_json:

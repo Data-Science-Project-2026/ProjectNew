@@ -420,6 +420,12 @@ def main() -> None:
         if args.skip_bio:
             logger.info("skipping BioClip image analysis (--skip-bio)")
         else:
+            logger.info(
+                "starting BioClip image analysis: batch_size=%d, max_batches=%s, workers=%d",
+                args.batch_size,
+                args.max_batches,
+                args.workers,
+            )
             nimg = pipeline.analyze_images(batch_size=args.batch_size, max_batches=args.max_batches, workers=args.workers)
             logger.info("processed %d images with BioClip", nimg)
 
@@ -430,8 +436,10 @@ def main() -> None:
             logger.info("scored %d posts with Bert", npost)
         
         if not args.skip_qwen:
+            logger.info("starting Qwen image analysis: model=%s", args.qwen_image_model)
             nqwen_img = pipeline.run_qwen_image_analysis()
             logger.info("analyzed %d images with Qwen", nqwen_img)
+            logger.info("starting Qwen comment analysis: model=%s", args.qwen_text_model)
             nqwen_post = pipeline.run_qwen_comment_analysis()
             logger.info("analyzed %d posts with Qwen", nqwen_post)
     else:
