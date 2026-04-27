@@ -34,6 +34,12 @@ Usage examples:
     --image-folder data/split_1/.../images \\
     --output results.json \\
     --skip-bio --skip-bert --skip-qwen
+        proc_group.add_argument(
+            "--qwen-workers",
+            type=int,
+            default=4,
+            help="Number of workers for concurrent Qwen requests",
+        )
 
   # Process only first N posts/images:
   python examples/scripts/run_json_pipeline.py \\
@@ -227,6 +233,7 @@ def run_pipeline_json_mode(
             "text_model": qwen_text_model,
             "image_instruction_file": qwen_image_instruction_file,
             "comment_instruction_file": qwen_comment_instruction_file,
+            "workers": args.qwen_workers,
         },
         bio_service_url=bio_service_url,
         bert_service_url=bert_service_url,
@@ -606,6 +613,12 @@ def main() -> int:
     )
     model_group.add_argument(
         "--skip-qwen",
+        proc_group.add_argument(
+            "--qwen-workers",
+            type=int,
+            default=4,
+            help="Number of workers for concurrent Qwen requests",
+        )
         action="store_true",
         help="Skip Qwen (useful when model deps not installed)",
     )
