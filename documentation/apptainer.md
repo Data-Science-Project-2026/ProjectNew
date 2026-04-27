@@ -1,21 +1,26 @@
-Apptainer / Singularity build & run
+Singularity build & run
 
-This document shows example `apptainer` (Singularity) build and run commands for the project containers and a simple Slurm orchestration example.
+This document shows example `singularity` commands for the project containers and a simple Slurm orchestration example.
 
-Build images (local root) — on a machine with `apptainer` and root privileges:
+No-install policy for the target HPC environment:
+- Use prebuilt `.sif` images
+- Load Python with `module load python`
+- Use `singularity` runtime commands only
+
+Build images (outside HPC compute nodes) — on a machine with Singularity privileges:
 
 ```bash
 cd /path/to/repo
-apptainer build src/models/BioClip-Container/BioClip.sif src/models/BioClip-Container/Singularity.def
-apptainer build src/models/Bert-Container/Bert.sif src/models/Bert-Container/Singularity.def
-apptainer build src/models/Qwen-Container/Qwen.sif src/models/Qwen-Container/Singularity.def
-apptainer build src/pipeline/Orchestrator-Container/Orchestrator.sif src/pipeline/Orchestrator-Container/Singularity.def
+singularity build src/models/BioClip-Container/BioClip.sif src/models/BioClip-Container/Singularity.def
+singularity build src/models/Bert-Container/Bert.sif src/models/Bert-Container/Singularity.def
+singularity build src/models/Qwen-Container/Qwen.sif src/models/Qwen-Container/Singularity.def
+singularity build src/pipeline/Orchestrator-Container/Orchestrator.sif src/pipeline/Orchestrator-Container/Singularity.def
 ```
 
-Build images (non-root / remote builder):
+Build images remotely (outside restricted clusters):
 
 ```bash
-apptainer build --remote src/models/BioClip-Container/BioClip.sif src/models/BioClip-Container/Singularity.def
+singularity build --remote src/models/BioClip-Container/BioClip.sif src/models/BioClip-Container/Singularity.def
 # repeat for other .def files
 ```
 
@@ -23,7 +28,7 @@ Run a single container (GPU-aware):
 
 ```bash
 # Bind project directory and data, run Bioclip service in foreground
-apptainer exec --nv --bind $PWD:/app --pwd /app src/models/BioClip-Container/BioClip.sif python /app/src/models/BioClip-Container/app.py
+singularity exec --nv --bind $PWD:/app --pwd /app src/models/BioClip-Container/BioClip.sif python /app/src/models/BioClip-Container/app.py
 # then test
 curl --noproxy 127.0.0.1 -v http://127.0.0.1:5000/health
 ```
@@ -32,9 +37,9 @@ Run as background processes (simple approach) — all on a single allocated node
 
 ```bash
 # start three services in background (adjust binds and --nv as needed)
-apptainer exec --nv --bind $PWD:/app --pwd /app src/models/BioClip-Container/BioClip.sif bash -c "PORT=5000 python /app/src/models/BioClip-Container/app.py" &
-apptainer exec --nv --bind $PWD:/app --pwd /app src/models/Bert-Container/Bert.sif bash -c "PORT=5001 python /app/src/models/Bert-Container/app.py" &
-apptainer exec --bind $PWD:/app --pwd /app src/models/Qwen-Container/Qwen.sif bash -c "PORT=5002 python /app/src/models/Qwen-Container/app.py" &
+singularity exec --nv --bind $PWD:/app --pwd /app src/models/BioClip-Container/BioClip.sif bash -c "PORT=5000 python /app/src/models/BioClip-Container/app.py" &
+singularity exec --nv --bind $PWD:/app --pwd /app src/models/Bert-Container/Bert.sif bash -c "PORT=5001 python /app/src/models/Bert-Container/app.py" &
+singularity exec --bind $PWD:/app --pwd /app src/models/Qwen-Container/Qwen.sif bash -c "PORT=5002 python /app/src/models/Qwen-Container/app.py" &
 
 # wait a few seconds then verify
 sleep 3
@@ -43,14 +48,14 @@ curl --noproxy 127.0.0.1 -v http://127.0.0.1:5001/health
 curl --noproxy 127.0.0.1 -v http://127.0.0.1:5002/health
 ```
 
-Run with `apptainer instance` (optional) — start instance then exec into it:
+Run with `singularity instance` (optional) — start instance then exec into it:
 
 ```bash
-apptainer instance start --nv --bind $PWD:/app src/models/BioClip-Container/BioClip.sif bioclip
+singularity instance start --nv --bind $PWD:/app src/models/BioClip-Container/BioClip.sif bioclip
 # run health check via exec
-apptainer exec --no-home instance://bioclip curl --noproxy 127.0.0.1 -v http://127.0.0.1:5000/health
+singularity exec --no-home instance://bioclip curl --noproxy 127.0.0.1 -v http://127.0.0.1:5000/health
 # stop instance
-apptainer instance stop bioclip
+singularity instance stop bioclip
 ```
 
 Slurm example: start services on one node and run the orchestrator using localhost URLs.
@@ -73,11 +78,11 @@ QWEN_SIF=${REPO_DIR}/src/models/Qwen-Container/Qwen.sif
 ORCH_SIF=${REPO_DIR}/src/pipeline/Orchestrator-Container/Orchestrator.sif
 
 # Start services (background)
-apptainer exec --nv --bind ${REPO_DIR}:/app --pwd /app ${BIO_SIF} bash -c "PORT=5000 python /app/src/models/BioClip-Container/app.py" &
+singularity exec --nv --bind ${REPO_DIR}:/app --pwd /app ${BIO_SIF} bash -c "PORT=5000 python /app/src/models/BioClip-Container/app.py" &
 BIO_PID=$!
-apptainer exec --nv --bind ${REPO_DIR}:/app --pwd /app ${BERT_SIF} bash -c "PORT=5001 python /app/src/models/Bert-Container/app.py" &
+singularity exec --nv --bind ${REPO_DIR}:/app --pwd /app ${BERT_SIF} bash -c "PORT=5001 python /app/src/models/Bert-Container/app.py" &
 BERT_PID=$!
-apptainer exec --bind ${REPO_DIR}:/app --pwd /app ${QWEN_SIF} bash -c "PORT=5002 python /app/src/models/Qwen-Container/app.py" &
+singularity exec --bind ${REPO_DIR}:/app --pwd /app ${QWEN_SIF} bash -c "PORT=5002 python /app/src/models/Qwen-Container/app.py" &
 QWEN_PID=$!
 
 # Give services time to start
@@ -88,12 +93,17 @@ curl --noproxy 127.0.0.1 -sS http://127.0.0.1:5000/health
 curl --noproxy 127.0.0.1 -sS http://127.0.0.1:5001/health
 curl --noproxy 127.0.0.1 -sS http://127.0.0.1:5002/health
 
-# Run orchestrator pointing to local services
-apptainer exec --bind ${REPO_DIR}:/app --pwd /app ${ORCH_SIF} python -m pipeline.orchestrator \
-    --dsn "postgresql://user:pass@db:5432/dbname" \
+# Run orchestrator upload first, then analysis, pointing to local services
+singularity exec --bind ${REPO_DIR}:/app --pwd /app ${ORCH_SIF} python -m pipeline.orchestrator \
+    --db-dsn "postgresql://user:pass@db:5432/dbname" \
+    upload --csv-folder /input/36Chengdu --image-folder /input/36Chengdu --city Chengdu
+
+singularity exec --bind ${REPO_DIR}:/app --pwd /app ${ORCH_SIF} python -m pipeline.orchestrator \
+    --db-dsn "postgresql://user:pass@db:5432/dbname" \
     --bio-service-url "http://127.0.0.1:5000" \
     --bert-service-url "http://127.0.0.1:5001" \
-    --qwen-service-url "http://127.0.0.1:5002"
+    --qwen-service-url "http://127.0.0.1:5002" \
+    analyze --batch-size 1000 --workers 1
 
 # tear down background services
 kill ${BIO_PID} ${BERT_PID} ${QWEN_PID} || true
@@ -104,8 +114,9 @@ Notes & tips
 
 - Proxy/no_proxy: set `NO_PROXY`/`no_proxy` for `127.0.0.1,localhost` to ensure `curl` and Python `requests` do not use the cluster proxy for intra-node calls.
 - Building images requiring GPU libs: base images using `nvidia/cuda` may be large — prefer building on a host with the same CUDA stack or use `docker://` bootstrap so remote builder pulls the base image.
-- If you cannot build SIF locally and `apptainer build --remote` is not allowed, ask admins to provide the built SIF files or enable remote builds.
-- Port binding: Apptainer does not map host ports like Docker; run all services on the same node and use `127.0.0.1:<port>` to reach them from the orchestrator when they share the job allocation.
+- If you cannot build SIF locally and `singularity build --remote` is not allowed, ask admins to provide the built SIF files.
+- Port binding: Singularity does not map host ports like Docker; run all services on the same node and use `127.0.0.1:<port>` to reach them from the orchestrator when they share the job allocation.
+- For generic bind targets such as `/input`, pass `--city` during `upload` so `posts.city` is populated from the actual dataset city rather than the mount name.
 - If Slurm isolates network namespaces between tasks, run all services and the orchestrator inside the same allocation/process (as above) or use a single job script to start them.
 
 Further help
@@ -116,7 +127,7 @@ If you'd like, I can:
 
 Helper scripts
 
-We provide several helper scripts under `examples/scripts/` to simplify SIF builds and runner setup:
+We provide several helper scripts under `examples/scripts/` to simplify SIF usage and job execution:
 
 - `build_sifs_local.sh` — Build all images locally (root required). Usage:
 
@@ -130,10 +141,4 @@ sudo bash examples/scripts/build_sifs_local.sh
 bash examples/scripts/build_sifs_remote.sh
 ```
 
-- `install_apptainer_runner.sh` — (Optional) Install Apptainer on a self-hosted Ubuntu runner. Run as root on the runner machine.
-
-```bash
-sudo bash examples/scripts/install_apptainer_runner.sh
-```
-
-These scripts are small wrappers around the commands shown above and check for missing files or prerequisites; inspect them before running in your environment.
+`install_apptainer_runner.sh` now serves as a no-install policy reminder and does not install anything.

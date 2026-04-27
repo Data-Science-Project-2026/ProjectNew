@@ -20,6 +20,10 @@ docker build -t bioclip-service .
 docker run -p 5000:5000 bioclip-service
 ```
 
+The image is self-contained: BioClip assets are loaded from paths inside the
+container image, so a host bind mount like `./src/models/BioClip:/app/src/models/BioClip`
+is not required for normal use.
+
 To run the batch analyzer inside the same image:
 
 ```sh

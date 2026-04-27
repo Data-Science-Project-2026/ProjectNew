@@ -23,12 +23,21 @@ Free open source dashboard tool [Metabase](https://www.metabase.com/) is used fo
 ## Pipeline & Deployment
 
 The core workflow is orchestrated by `src/pipeline/orchestrator.py`. It
-imports CSVs, ingests raw image files (copying them into a managed
-`image_root` directory) and then runs three kinds of models (BioClip,
-sentiment/BERT and Qwen). By default results are written to a PostgreSQL
+imports CSVs, ingests raw image files, and then runs three kinds of models
+(BioClip, sentiment/BERT and Qwen). Image files are analyzed from their
+original paths recorded in the database (files are not copied). By default
+results are written to a PostgreSQL
 database. For production provide a Postgres DSN via `--db-dsn` or the
 `PIPELINE_DATABASE_DSN` environment variable; SQLite is supported only in
 tests and import utilities.
+
+Model execution status is tracked per row in Postgres:
+- posts: Bert and Qwen status fields
+- images: BioClip and Qwen status fields
+
+Each model path transitions through `pending -> processing -> ready` (or
+`failed` on error). Stale rows in `processing` for more than 1 hour are
+reset back to `pending` before the next claim.
 
 Note: the orchestrator also supports a DB-less JSON output mode via
 `--output-json <path>`. When provided the orchestrator will bypass the
@@ -75,7 +84,7 @@ ports 5000–5002 and Postgres on 5432. The orchestrator service instances
 mount `./data/split_*` so each orchestrator can work on a separate data
 shard.
 
-### Uploading CSVs or Images into the Orchestrator
+### Uploading Data into the Orchestrator
 
 The orchestrator expects input under `/data` inside the container. The
 compose file mounts host `./data/split_1` (and `split_2`) into the
@@ -85,10 +94,10 @@ compose file mounts host `./data/split_1` (and `split_2`) into the
 Example (this repository used `data/split_1` during testing):
 
 ```powershell
-# ingest images from the mounted folder into Postgres
+# ingest posts and images in one step
 docker compose run --rm orchestrator-1 \
   --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
-  upload-images --folders /data --image-root /data/images
+  upload --csv-folder /data/csvs --image-folder /data/images
 
 # run full analysis (BioClip, Bert, Qwen via services)
 docker compose run --rm orchestrator-1 \
@@ -105,17 +114,12 @@ If you want a single step-by-step script for a fresh local run, use:
 # 1) start required services
 docker compose up -d postgres bioclip bert qwen
 
-# 2) import CSV posts from mounted split_1 data
+# 2) import CSV posts and images from mounted split_1 data
 docker compose run --rm orchestrator-1 \
   --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
-  upload-posts --city-folder /data
+  upload --csv-folder /data/csvs --image-folder /data/images
 
-# 3) ingest images from mounted split_1 data
-docker compose run --rm orchestrator-1 \
-  --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
-  upload-images --folders /data --image-root /data/images
-
-# 4) run analysis using service containers
+# 3) run analysis using service containers
 docker compose run --rm orchestrator-1 \
   --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
   --bio-service-url http://bioclip:5000 \
@@ -125,14 +129,22 @@ docker compose run --rm orchestrator-1 \
 ```
 
 Notes:
-- If you have CSVs, use `upload-posts --city-folder /data` (the command
-  looks for CSVs and associated park image folders inside the provided
-  folder). The orchestrator will write records to `posts` and `images`.
-- `upload-images` copies each image into `image_root` named by the DB id
-  and persists the original path into the DB so analyzers can access the
-  original file (mounted path) or the copied storage path.
+- Use `upload` for ingestion. It supports `--csv-folder`, optional
+  `--image-folder`, and optional extra `--image-folders` values.
+- If the container mount path is generic, such as `/input`, pass `--city`
+  explicitly so `posts.city` uses the real city name instead of the mount
+  folder.
+- The orchestrator stores original image paths in `images.path` and
+  analyzers read those original files directly.
 - To avoid loading large local models during quick tests, use
   `--skip-bio` and/or `--skip-bert` and point at running service URLs.
+
+To build the standalone orchestrator image directly, run from the repository
+root:
+
+```powershell
+docker build -f src/pipeline/Orchestrator-Container/Dockerfile -t pipeline-orchestrator .
+```
 
 ### Running the integration tests
 

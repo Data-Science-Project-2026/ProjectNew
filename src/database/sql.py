@@ -5,6 +5,12 @@ import sqlite3
 from typing import Sequence
 
 
+STATUS_PENDING = "pending"
+STATUS_PROCESSING = "processing"
+STATUS_READY = "ready"
+STATUS_FAILED = "failed"
+
+
 POST_COLUMNS = [
     ("id", "INTEGER"),
     ("city", "TEXT"),
@@ -41,27 +47,12 @@ def _ensure_posts_table(conn: sqlite3.Connection) -> None:
         )
         """
     )
-    existing_columns = [row[1] for row in conn.execute("PRAGMA table_info(posts)")]
-    expected = [name for name, _ in POST_COLUMNS]
-    if existing_columns != expected:
-        conn.execute("DROP TABLE IF EXISTS posts")
-        conn.execute(
-            """
-            CREATE TABLE posts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                city TEXT NOT NULL,
-                park TEXT NOT NULL,
-                username TEXT NOT NULL,
-                comment TEXT,
-                time TEXT,
-                rating TEXT,
-                sentiment_score REAL,
-                bert_sentiment_score REAL,
-                bert_sentiment_label TEXT,
-                qwen_sentiment_score REAL
-            )
-            """
-        )
+    _ensure_column(conn, "posts", "bert_status", "TEXT NOT NULL DEFAULT 'pending'")
+    _ensure_column(conn, "posts", "bert_processing_started_at", "TEXT")
+    _ensure_column(conn, "posts", "bert_error", "TEXT")
+    _ensure_column(conn, "posts", "qwen_status", "TEXT NOT NULL DEFAULT 'pending'")
+    _ensure_column(conn, "posts", "qwen_processing_started_at", "TEXT")
+    _ensure_column(conn, "posts", "qwen_error", "TEXT")
 
 
 IMAGE_COLUMNS = [
@@ -91,23 +82,18 @@ def _ensure_images_table(conn: sqlite3.Connection) -> None:
         )
         """
     )
-    existing_columns = [row[1] for row in conn.execute("PRAGMA table_info(images)")]
-    expected = [name for name, _ in IMAGE_COLUMNS]
-    if existing_columns != expected:
-        conn.execute("DROP TABLE IF EXISTS images")
-        conn.execute(
-            """
-            CREATE TABLE images (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                post_id INTEGER,
-                path TEXT NOT NULL,
-                species TEXT,
-                confidence TEXT,
-                activity TEXT,
-                FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
-            )
-            """
-        )
+    _ensure_column(conn, "images", "bioclip_status", "TEXT NOT NULL DEFAULT 'pending'")
+    _ensure_column(conn, "images", "bioclip_processing_started_at", "TEXT")
+    _ensure_column(conn, "images", "bioclip_error", "TEXT")
+    _ensure_column(conn, "images", "qwen_status", "TEXT NOT NULL DEFAULT 'pending'")
+    _ensure_column(conn, "images", "qwen_processing_started_at", "TEXT")
+    _ensure_column(conn, "images", "qwen_error", "TEXT")
+
+
+def _ensure_column(conn: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+    existing_columns = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+    if column not in existing_columns:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
 def ensure_schema(conn: sqlite3.Connection) -> None:
@@ -272,11 +258,11 @@ def fetch_unanalyzed_images(
         """
         SELECT id, path
         FROM images
-        WHERE species IS NULL AND confidence IS NULL
+        WHERE bioclip_status = ?
         ORDER BY id
         LIMIT ?
         """,
-        (int(limit),),
+        (STATUS_PENDING, int(limit)),
     ).fetchall()
     return [(int(row[0]), str(row[1])) for row in rows]
 
@@ -293,10 +279,10 @@ def update_image_analysis(
     conn.execute(
         """
         UPDATE images
-        SET species = ?, confidence = ?
+        SET species = ?, confidence = ?, bioclip_status = ?, bioclip_processing_started_at = NULL, bioclip_error = NULL
         WHERE id = ?
         """,
-        (_serialize_optional(species), _serialize_optional(confidence), int(image_id)),
+        (_serialize_optional(species), _serialize_optional(confidence), STATUS_READY, int(image_id)),
     )
 
 
@@ -305,8 +291,8 @@ def fetch_posts_for_sentiment(
 ) -> list[tuple[int, str]]:
     _ensure_posts_table(conn)
     rows = conn.execute(
-        "SELECT id, COALESCE(comment, '') FROM posts WHERE bert_sentiment_score IS NULL ORDER BY id LIMIT ?",
-        (int(limit),),
+        "SELECT id, COALESCE(comment, '') FROM posts WHERE bert_status = ? AND comment IS NOT NULL AND TRIM(comment) != '' ORDER BY id LIMIT ?",
+        (STATUS_PENDING, int(limit)),
     ).fetchall()
     return [(int(r[0]), str(r[1])) for r in rows]
 
@@ -334,8 +320,8 @@ def update_bert_sentiment(
     """Write Bert sentiment result independently."""
     _ensure_posts_table(conn)
     conn.execute(
-        "UPDATE posts SET bert_sentiment_score = ?, bert_sentiment_label = ? WHERE id = ?",
-        (float(score), label, int(post_id)),
+        "UPDATE posts SET bert_sentiment_score = ?, bert_sentiment_label = ?, bert_status = ?, bert_processing_started_at = NULL, bert_error = NULL WHERE id = ?",
+        (float(score), label, STATUS_READY, int(post_id)),
     )
 
 
@@ -348,9 +334,202 @@ def update_qwen_sentiment(
     """Write Qwen sentiment result independently."""
     _ensure_posts_table(conn)
     conn.execute(
-        "UPDATE posts SET qwen_sentiment_score = ? WHERE id = ?",
-        (float(score), int(post_id)),
+        "UPDATE posts SET qwen_sentiment_score = ?, qwen_status = ?, qwen_processing_started_at = NULL, qwen_error = NULL WHERE id = ?",
+        (float(score), STATUS_READY, int(post_id)),
     )
+
+
+def reset_stale_processing_statuses(conn: sqlite3.Connection, timeout_seconds: int = 3600) -> None:
+    _ensure_posts_table(conn)
+    _ensure_images_table(conn)
+    timeout_seconds = int(timeout_seconds)
+    conn.execute(
+        """
+        UPDATE posts
+        SET bert_status = ?, bert_processing_started_at = NULL
+        WHERE bert_status = ?
+          AND bert_processing_started_at IS NOT NULL
+          AND (strftime('%s','now') - strftime('%s', bert_processing_started_at)) > ?
+        """,
+        (STATUS_PENDING, STATUS_PROCESSING, timeout_seconds),
+    )
+    conn.execute(
+        """
+        UPDATE posts
+        SET qwen_status = ?, qwen_processing_started_at = NULL
+        WHERE qwen_status = ?
+          AND qwen_processing_started_at IS NOT NULL
+          AND (strftime('%s','now') - strftime('%s', qwen_processing_started_at)) > ?
+        """,
+        (STATUS_PENDING, STATUS_PROCESSING, timeout_seconds),
+    )
+    conn.execute(
+        """
+        UPDATE images
+        SET bioclip_status = ?, bioclip_processing_started_at = NULL
+        WHERE bioclip_status = ?
+          AND bioclip_processing_started_at IS NOT NULL
+          AND (strftime('%s','now') - strftime('%s', bioclip_processing_started_at)) > ?
+        """,
+        (STATUS_PENDING, STATUS_PROCESSING, timeout_seconds),
+    )
+    conn.execute(
+        """
+        UPDATE images
+        SET qwen_status = ?, qwen_processing_started_at = NULL
+        WHERE qwen_status = ?
+          AND qwen_processing_started_at IS NOT NULL
+          AND (strftime('%s','now') - strftime('%s', qwen_processing_started_at)) > ?
+        """,
+        (STATUS_PENDING, STATUS_PROCESSING, timeout_seconds),
+    )
+    conn.commit()
+
+
+def claim_posts_for_bert(conn: sqlite3.Connection, limit: int, timeout_seconds: int = 3600) -> list[tuple[int, str]]:
+    _ensure_posts_table(conn)
+    reset_stale_processing_statuses(conn, timeout_seconds=timeout_seconds)
+    rows = conn.execute(
+        """
+        SELECT id, COALESCE(comment, '')
+        FROM posts
+        WHERE bert_status = ? AND comment IS NOT NULL AND TRIM(comment) != ''
+        ORDER BY id
+        LIMIT ?
+        """,
+        (STATUS_PENDING, int(limit)),
+    ).fetchall()
+    ids = [int(r[0]) for r in rows]
+    for post_id in ids:
+        conn.execute(
+            "UPDATE posts SET bert_status = ?, bert_processing_started_at = CURRENT_TIMESTAMP, bert_error = NULL WHERE id = ?",
+            (STATUS_PROCESSING, post_id),
+        )
+    conn.commit()
+    return [(int(r[0]), str(r[1])) for r in rows]
+
+
+def claim_posts_for_qwen(conn: sqlite3.Connection, limit: int, timeout_seconds: int = 3600) -> list[tuple[int, str]]:
+    _ensure_posts_table(conn)
+    reset_stale_processing_statuses(conn, timeout_seconds=timeout_seconds)
+    rows = conn.execute(
+        """
+        SELECT id, COALESCE(comment, '')
+        FROM posts
+        WHERE qwen_status = ? AND comment IS NOT NULL AND TRIM(comment) != ''
+        ORDER BY id
+        LIMIT ?
+        """,
+        (STATUS_PENDING, int(limit)),
+    ).fetchall()
+    ids = [int(r[0]) for r in rows]
+    for post_id in ids:
+        conn.execute(
+            "UPDATE posts SET qwen_status = ?, qwen_processing_started_at = CURRENT_TIMESTAMP, qwen_error = NULL WHERE id = ?",
+            (STATUS_PROCESSING, post_id),
+        )
+    conn.commit()
+    return [(int(r[0]), str(r[1])) for r in rows]
+
+
+def claim_images_for_bioclip(conn: sqlite3.Connection, limit: int, timeout_seconds: int = 3600) -> list[tuple[int, str | None]]:
+    _ensure_images_table(conn)
+    reset_stale_processing_statuses(conn, timeout_seconds=timeout_seconds)
+    rows = conn.execute(
+        """
+        SELECT id, path
+        FROM images
+        WHERE bioclip_status = ?
+        ORDER BY id
+        LIMIT ?
+        """,
+        (STATUS_PENDING, int(limit)),
+    ).fetchall()
+    ids = [int(r[0]) for r in rows]
+    for image_id in ids:
+        conn.execute(
+            "UPDATE images SET bioclip_status = ?, bioclip_processing_started_at = CURRENT_TIMESTAMP, bioclip_error = NULL WHERE id = ?",
+            (STATUS_PROCESSING, image_id),
+        )
+    conn.commit()
+    return [(int(r[0]), r[1]) for r in rows]
+
+
+def claim_images_for_qwen(conn: sqlite3.Connection, limit: int, timeout_seconds: int = 3600) -> list[tuple[int, str | None]]:
+    _ensure_images_table(conn)
+    reset_stale_processing_statuses(conn, timeout_seconds=timeout_seconds)
+    rows = conn.execute(
+        """
+        SELECT id, path
+        FROM images
+        WHERE qwen_status = ?
+        ORDER BY id
+        LIMIT ?
+        """,
+        (STATUS_PENDING, int(limit)),
+    ).fetchall()
+    ids = [int(r[0]) for r in rows]
+    for image_id in ids:
+        conn.execute(
+            "UPDATE images SET qwen_status = ?, qwen_processing_started_at = CURRENT_TIMESTAMP, qwen_error = NULL WHERE id = ?",
+            (STATUS_PROCESSING, image_id),
+        )
+    conn.commit()
+    return [(int(r[0]), r[1]) for r in rows]
+
+
+def mark_post_bert_failed(conn: sqlite3.Connection, *, post_id: int, error: str) -> None:
+    _ensure_posts_table(conn)
+    conn.execute(
+        "UPDATE posts SET bert_status = ?, bert_processing_started_at = NULL, bert_error = ? WHERE id = ?",
+        (STATUS_FAILED, error[:1000], int(post_id)),
+    )
+    conn.commit()
+
+
+def mark_post_qwen_failed(conn: sqlite3.Connection, *, post_id: int, error: str) -> None:
+    _ensure_posts_table(conn)
+    conn.execute(
+        "UPDATE posts SET qwen_status = ?, qwen_processing_started_at = NULL, qwen_error = ? WHERE id = ?",
+        (STATUS_FAILED, error[:1000], int(post_id)),
+    )
+    conn.commit()
+
+
+def mark_image_bioclip_failed(conn: sqlite3.Connection, *, image_id: int, error: str) -> None:
+    _ensure_images_table(conn)
+    conn.execute(
+        "UPDATE images SET bioclip_status = ?, bioclip_processing_started_at = NULL, bioclip_error = ? WHERE id = ?",
+        (STATUS_FAILED, error[:1000], int(image_id)),
+    )
+    conn.commit()
+
+
+def mark_image_qwen_ready(conn: sqlite3.Connection, *, image_id: int) -> None:
+    _ensure_images_table(conn)
+    conn.execute(
+        "UPDATE images SET qwen_status = ?, qwen_processing_started_at = NULL, qwen_error = NULL WHERE id = ?",
+        (STATUS_READY, int(image_id)),
+    )
+    conn.commit()
+
+
+def mark_image_qwen_failed(conn: sqlite3.Connection, *, image_id: int, error: str) -> None:
+    _ensure_images_table(conn)
+    conn.execute(
+        "UPDATE images SET qwen_status = ?, qwen_processing_started_at = NULL, qwen_error = ? WHERE id = ?",
+        (STATUS_FAILED, error[:1000], int(image_id)),
+    )
+    conn.commit()
+
+
+def mark_post_qwen_ready(conn: sqlite3.Connection, *, post_id: int) -> None:
+    _ensure_posts_table(conn)
+    conn.execute(
+        "UPDATE posts SET qwen_status = ?, qwen_processing_started_at = NULL, qwen_error = NULL WHERE id = ?",
+        (STATUS_READY, int(post_id)),
+    )
+    conn.commit()
 
 
 def update_image_activity(

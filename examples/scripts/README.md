@@ -36,6 +36,8 @@ Bash helper for submitting pipeline jobs to HPC clusters (SLURM or PBS).
 - Auto-detects SLURM (sbatch) or PBS (qsub)
 - Generates job scripts with appropriate directives
 - Supports all pipeline options
+- Loads `python` via environment modules in job scripts
+- Optional Singularity execution via `--singularity-image`
 - Can do dry-run (--dry-run) to preview without submitting
 
 **Quick start:**
@@ -44,6 +46,7 @@ Bash helper for submitting pipeline jobs to HPC clusters (SLURM or PBS).
   --csv-folder data/split_1/park_name \
   --image-folder data/split_1/park_name/images \
   --output results.json \
+  --singularity-image /path/to/pipeline.sif \
   --time 04:00:00 \
   --cpus 4 \
   --memory 32G
@@ -57,11 +60,12 @@ Lightweight helper for quick testing with images and optional service calls. Wor
 
 ### `run_pipeline_on_node.sh`
 
-Example script for running the pipeline on a single HPC node using Apptainer instances. Starts BioClip, BERT, and Qwen as isolated containers and points the orchestrator to them.
+Example script for running the pipeline on a single HPC node using Singularity instances. Starts BioClip, BERT, and Qwen as isolated containers and points the orchestrator to them.
 
 ### `install_apptainer_runner.sh`
 
-Helper to install Apptainer/Singularity runtime (if available on your system).
+No-install policy helper. It intentionally does not install anything and prints
+guidance to use only `module load python` plus `singularity` with prebuilt SIF images.
 
 ### `watch_qwen_progress.sh`
 
@@ -72,6 +76,11 @@ Monitors Qwen model progress in real-time by watching log files.
 Exports/converts pipeline results from one format to another.
 
 ## Recommended Workflow for HPC
+
+No-install policy for this environment:
+- Use only `module load python`
+- Use only `singularity` commands with prebuilt `.sif` images
+- Do not use `pip install`, `apt-get`, or container build steps on cluster nodes
 
 1. **Test locally first:**
    ```bash
@@ -131,9 +140,8 @@ python examples/scripts/run_json_pipeline.py --csv-folder ... --output ...
 ## Troubleshooting
 
 **"ModuleNotFoundError: No module named..."**
-- Install dependencies: `pip install -r requirements.txt`
-- OR use `--skip-*` flags to use services instead of local models
-- OR run inside a container
+- In this HPC environment, do not install dependencies.
+- Use `--skip-*` flags and service URLs, or run with `--singularity-image`.
 
 **Service connection errors**
 - Ensure services are running and ports are accessible
@@ -152,7 +160,7 @@ python examples/scripts/run_json_pipeline.py --csv-folder ... --output ...
 
 ## Documentation
 
-- [JSON Pipeline HPC Guide](../documentation/json_pipeline_hpc.md) - Detailed guide for HPC
-- [Pipeline Architecture](../documentation/pipeline.md) - Overall pipeline design
-- [Apptainer Setup](../documentation/apptainer.md) - Building containers for HPC
-- [Database Setup](../documentation/database.md) - For loading results into PostgreSQL (optional)
+- [JSON Pipeline HPC Guide](../../documentation/json_pipeline_hpc.md) - Detailed guide for HPC
+- [Pipeline Architecture](../../documentation/pipeline.md) - Overall pipeline design
+- [Apptainer Setup](../../documentation/apptainer.md) - Building containers for HPC
+- [Database Setup](../../documentation/database.md) - For loading results into PostgreSQL (optional)

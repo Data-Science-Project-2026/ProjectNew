@@ -69,7 +69,7 @@ sudo docker compose run --rm --no-deps orchestrator \
   --qwen-image-model "Qwen/Qwen3.5-4B" \
   --qwen-text-model "Qwen/Qwen3.5-4B" \
   --skip-bio --skip-bert \
-  upload-posts --city-folder /data/3Tianjin
+  upload --csv-folder /data/3Tianjin --image-folder /data/3Tianjin --city Tianjin
 ```
 
 #### 2.3 Run analysis (Bert + Qwen; skip BioClip)

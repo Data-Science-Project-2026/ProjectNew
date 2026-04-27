@@ -12,15 +12,19 @@ from models.BioClip.model import BioClipModel
 
 app = Flask(__name__)
 
+SRC_ROOT = Path(__file__).resolve().parents[2]
+BIOCLIP_DIR = SRC_ROOT / "models" / "BioClip"
+TOKENIZE_SCRIPT = BIOCLIP_DIR / "tokenize_excel_species.py"
+
 @app.route("/", methods=["GET"])
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"})
 
 # configuration from environment variables
-SPECIES_TOKENS = os.environ.get("SPECIES_TOKENS_PATH", "src/models/BioClip/species_tokens_latin.pt")
-SPECIES_NAMES = os.environ.get("SPECIES_NAMES_PATH", "src/models/BioClip/species_names_latin.txt")
-SPECIES_SOURCE_XLSX = os.environ.get("SPECIES_SOURCE_XLSX", "src/models/BioClip/Species_China.xlsx")
+SPECIES_TOKENS = os.environ.get("SPECIES_TOKENS_PATH", str(BIOCLIP_DIR / "species_tokens_latin.pt"))
+SPECIES_NAMES = os.environ.get("SPECIES_NAMES_PATH", str(BIOCLIP_DIR / "species_names_latin.txt"))
+SPECIES_SOURCE_XLSX = os.environ.get("SPECIES_SOURCE_XLSX", str(BIOCLIP_DIR / "Species_China.xlsx"))
 USE_HALF = bool(os.environ.get("USE_HALF", "False").lower() in ("1", "true"))
 TEXT_BATCH_SIZE = int(os.environ.get("TEXT_BATCH_SIZE", 4048))
 
@@ -44,7 +48,7 @@ def _ensure_species_assets() -> None:
     subprocess.run(
         [
             sys.executable,
-            "src/models/BioClip/tokenize_excel_species.py",
+            str(TOKENIZE_SCRIPT),
             str(xlsx_path),
             str(names_path),
             str(tokens_path),

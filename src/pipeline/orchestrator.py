@@ -237,18 +237,18 @@ class Pipeline:
         csv_folder: Path,
         images_root: Optional[Path] = None,
         max_posts: Optional[int] = None,
+        city_name: Optional[str] = None,
         debug: bool = False,
     ) -> int:
         """Delegate post ingestion to the ingestion helper."""
-        return ingest_posts_impl(self, csv_folder, images_root=images_root, max_posts=max_posts, debug=debug)
-
-    def ingest_images(
-        self,
-        folders: Iterable[Path],
-        image_storage: Optional[Path] = None,
-    ) -> int:
-        """Delegate image ingestion to the ingestion helper."""
-        return ingest_images_impl(self, folders, image_storage=image_storage)
+        return ingest_posts_impl(
+            self,
+            csv_folder,
+            images_root=images_root,
+            max_posts=max_posts,
+            city_name=city_name,
+            debug=debug,
+        )
 
     # model execution helpers
     def analyze_images(
@@ -277,168 +277,7 @@ class Pipeline:
 
     def run_qwen_image_analysis(self, max_images: Optional[int] = None) -> int:
         """Run Qwen over unanalyzed images individually."""
-        instruction = ""
-        if self.qwen_image_instruction_file:
-            p = Path(self.qwen_image_instruction_file)
-            if p.is_file():
-                instruction = p.read_text(encoding="utf-8").strip()
-                logger.info("loaded qwen image instruction from %s (%d chars)", p, len(instruction))
-
-        config = {
-            "instruction": instruction,
-            "model": self.qwen_image_model,
-        }
-        
-        use_json = bool(self.output_json)
-
-        # Gather images to process
-        if use_json:
-            limit = max_images if max_images else 1000000
-            all_images = list(self._json_store.get("images", []))
-            existing = {d.get("image_id") for d in self._json_store.get("image_qwen_detail", [])}
-            rows = [(img["id"], img.get("path")) for img in all_images if img["id"] not in existing][:limit]
-        else:
-            with db.connect(self.dsn) as conn:
-                # Reusing unanalyzed fetch, or better just fetch all without image_qwen_detail
-                limit = max_images if max_images else 1000000
-                try:
-                    import sqlite3  # type: ignore
-                except Exception:
-                    sqlite3 = None  # type: ignore
-
-                if sqlite3 is not None and isinstance(conn, sqlite3.Connection):
-                    cur = conn.cursor()
-                    try:
-                        # if image_qwen_detail doesn't exist (sqlite tests), select all images
-                        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='image_qwen_detail'")
-                        if cur.fetchone() is None:
-                            cur.execute(
-                                "SELECT id, path FROM images ORDER BY id LIMIT ?",
-                                (limit,),
-                            )
-                        else:
-                            cur.execute(
-                                """
-                                SELECT i.id, i.path
-                                FROM images i
-                                LEFT JOIN image_qwen_detail d ON i.id = d.image_id
-                                WHERE d.id IS NULL
-                                ORDER BY i.id
-                                LIMIT ?
-                                """,
-                                (limit,)
-                            )
-                        rows = cur.fetchall()
-                    finally:
-                        try:
-                            cur.close()
-                        except Exception:
-                            pass
-                else:
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            """
-                            SELECT i.id, i.path
-                            FROM images i
-                            LEFT JOIN image_qwen_detail d ON i.id = d.image_id
-                            WHERE d.id IS NULL
-                            ORDER BY i.id
-                            LIMIT %s
-                            """,
-                            (limit,)
-                        )
-                        rows = cur.fetchall()
-
-        if not rows:
-            logger.info("no unanalyzed images found for Qwen")
-            return 0
-
-        success = 0
-        
-        # Here we perform inference via the service only.
-        if self.qwen_service_url:
-            def _normalize_qwen_image_payload(parsed: dict) -> dict:
-                if not isinstance(parsed, dict):
-                    return {}
-                nested = parsed.get("image_analysis_per_image")
-                if isinstance(nested, list) and nested:
-                    first = nested[0]
-                    if isinstance(first, dict):
-                        return first
-                return parsed
-
-            for img_id, img_path in rows:
-                if not img_path:
-                    continue
-                p = Path(img_path)
-                if not p.is_file():
-                    continue
-
-                try:
-                    with open(p, "rb") as f:
-                        b64 = base64.b64encode(f.read()).decode("ascii")
-                        
-                    payload = {
-                        "images": [b64],
-                        "config": config,
-                    }
-                    
-                    r = requests.post(
-                        f"{self.qwen_service_url.rstrip('/')}/analyze_images",
-                        json=payload,
-                        timeout=300,
-                    )
-                    r.raise_for_status()
-                    results = r.json().get("results", [])
-                    if results:
-                        parsed_raw = results[0]
-                        if isinstance(parsed_raw, dict) and "error" in parsed_raw:
-                            logger.warning("qwen image %d returned error: %s", img_id, parsed_raw["error"])
-                        else:
-                            parsed = _normalize_qwen_image_payload(parsed_raw)
-                            vis_species = parsed.get("visible_species_in_image")
-                            landscape = parsed.get("landscape_elements")
-                            human_acts = parsed.get("human_activities_in_image")
-                            plants_detected = parsed.get("plants_detected")
-                            animals_detected = parsed.get("animals_detected")
-                            human_acts_detected = parsed.get("human_activities_detected")
-                            
-                            if use_json:
-                                self._json_store.setdefault("image_qwen_detail", []).append({
-                                    "image_id": img_id,
-                                    "image_summary": parsed.get("image_summary"),
-                                    "visible_species": vis_species if isinstance(vis_species, list) else None,
-                                    "landscape_elements": landscape if isinstance(landscape, list) else None,
-                                    "human_activities": human_acts if isinstance(human_acts, list) else None,
-                                    "plants_detected": plants_detected if isinstance(plants_detected, list) else None,
-                                    "animals_detected": animals_detected if isinstance(animals_detected, list) else None,
-                                    "human_activities_detected": human_acts_detected if isinstance(human_acts_detected, list) else None,
-                                    "raw_response": json.dumps(parsed_raw, ensure_ascii=False),
-                                })
-                            else:
-                                with db.connect(self.dsn) as conn:
-                                    db.insert_image_qwen_detail(
-                                        conn,
-                                        image_id=img_id,
-                                        image_summary=parsed.get("image_summary"),
-                                        visible_species=vis_species if isinstance(vis_species, list) else None,
-                                        landscape_elements=landscape if isinstance(landscape, list) else None,
-                                        human_activities=human_acts if isinstance(human_acts, list) else None,
-                                        plants_detected=plants_detected if isinstance(plants_detected, list) else None,
-                                        animals_detected=animals_detected if isinstance(animals_detected, list) else None,
-                                        human_activities_detected=human_acts_detected if isinstance(human_acts_detected, list) else None,
-                                        raw_response=json.dumps(parsed_raw, ensure_ascii=False)
-                                    )
-
-                            success += 1
-                except Exception as exc:
-                    logger.error("qwen image %d failed: %s", img_id, exc)
-
-            logger.info("qwen image service: %d/%d images succeeded", success, len(rows))
-            return success
-        else:
-             logger.warning("No qwen_service_url provided for run_qwen_image_analysis")
-             return 0
+        return run_qwen_image_analysis_impl(self, max_images=max_images)
 
     def run_qwen_comment_analysis(self, max_posts: Optional[int] = None) -> int:
         """Run Qwen over unanalyzed comments individually."""
@@ -452,13 +291,10 @@ class Pipeline:
         """Walk one or more folders (including subdirectories) and ingest images.
 
         ``username_hash`` is assumed to be the first component of each file's
-        stem (split on underscore).  Each image is copied into
-        ``image_storage`` using its database id as the filename; the copy path
-        is stored in Postgres so analyzers can load the blob directly.
+        stem (split on underscore). Original image file paths are stored in the
+        database and analyzers always read from those original paths.
         Progress for each top-level folder is recorded in ``ingestion_status``
         by name.
-        
-        ``image_storage`` defaults to ``data/images`` relative to the repo root.
         """
         return ingest_images_impl(self, folders, image_storage=image_storage)
 
@@ -483,15 +319,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Manage pipeline ingestion and analysis")
     sub = parser.add_subparsers(dest="command")
 
-    up_csv = sub.add_parser("upload-posts", help="Ingest posts from a folder containing CSV files")
-    up_csv.add_argument("--csv-folder", required=True, help="folder containing CSV files")
-    up_csv.add_argument("--image-folder", required=False, help="root folder where park image folders live")
-    up_csv.add_argument("--max-posts", type=int, default=None)
-    up_csv.add_argument("--debug", action="store_true", help="log sample posts and images for debugging")
-
-    up_img = sub.add_parser("upload-images", help="Ingest folders of images")
-    up_img.add_argument("--folders", nargs="+", required=True, help="folders to scan for images")
-    up_img.add_argument("--image-root", required=False, help="directory where images will be copied (default data/images)")
+    upload = sub.add_parser("upload", help="Ingest all posts and all images in one step")
+    upload.add_argument("--csv-folder", required=True, help="folder containing CSV files")
+    upload.add_argument("--image-folder", required=False, help="root folder where park image folders live")
+    upload.add_argument("--image-folders", nargs="*", default=[], help="additional image folders to scan")
+    upload.add_argument("--city", required=False, help="explicit city name override for ingestion")
+    upload.add_argument("--max-posts", type=int, default=None)
+    upload.add_argument("--debug", action="store_true", help="log sample posts and images for debugging")
 
     analyze = sub.add_parser("analyze", help="Run BioCLIP/QL models on ingested data")
     analyze.add_argument("--batch-size", type=int, default=1000)
@@ -521,7 +355,6 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    image_root_arg = getattr(args, "image_root", None)
     dsn = args.db_dsn or os.environ.get("PIPELINE_DATABASE_DSN", "")
     pipeline = Pipeline(
         dsn=dsn,
@@ -548,31 +381,53 @@ def main() -> None:
 
     logging.basicConfig(level=logging.INFO)
 
-    if args.command == "upload-posts":
+    if args.command == "upload":
         csv_folder = Path(args.csv_folder)
         images_root = Path(args.image_folder) if getattr(args, "image_folder", None) else None
         t0 = time.perf_counter()
-        n = pipeline.ingest_posts(csv_folder, images_root=images_root, max_posts=args.max_posts, debug=args.debug)
+        n = pipeline.ingest_posts(
+            csv_folder,
+            images_root=images_root,
+            max_posts=args.max_posts,
+            city_name=args.city,
+            debug=args.debug,
+        )
+
+        image_scan_folders: list[Path] = []
+        if images_root:
+            image_scan_folders.append(images_root)
+        image_scan_folders.extend(Path(p) for p in (args.image_folders or []))
+        seen = set()
+        unique_folders = []
+        for p in image_scan_folders:
+            sp = str(p.resolve())
+            if sp not in seen:
+                seen.add(sp)
+                unique_folders.append(p)
+
+        n_images = 0
+        if unique_folders:
+            n_images = pipeline.ingest_images(unique_folders)
+
         dt = time.perf_counter() - t0
         logger.info("ingested %d posts from %s", n, csv_folder)
-        logger.info("ingest_posts duration: %.3f seconds", dt)
-        # analyze with Qwen is split now, calling it via `analyze` step ensures separation.
-    elif args.command == "upload-images":
-        folders = [Path(p) for p in args.folders]
-        storage = Path(image_root_arg) if image_root_arg else None
-        t0 = time.perf_counter()
-        n = pipeline.ingest_images(folders, image_storage=storage)
-        dt = time.perf_counter() - t0
-        logger.info("ingested %d images", n)
-        logger.info("ingest_images duration: %.3f seconds", dt)
+        logger.info("ingested %d images from %d folder(s)", n_images, len(unique_folders))
+        logger.info("upload duration: %.3f seconds", dt)
     elif args.command == "analyze":
         images_root = getattr(args, "images_root", None)
         if pipeline.output_json and images_root:
             pipeline.load_images_from_folder(Path(images_root))
-        nimg = pipeline.analyze_images(batch_size=args.batch_size, max_batches=args.max_batches, workers=args.workers)
-        logger.info("processed %d images with BioClip", nimg)
-        npost = pipeline.analyze_posts(batch_size=args.batch_size, workers=args.workers)
-        logger.info("scored %d posts with Bert", npost)
+        if args.skip_bio:
+            logger.info("skipping BioClip image analysis (--skip-bio)")
+        else:
+            nimg = pipeline.analyze_images(batch_size=args.batch_size, max_batches=args.max_batches, workers=args.workers)
+            logger.info("processed %d images with BioClip", nimg)
+
+        if args.skip_bert:
+            logger.info("skipping BERT post analysis (--skip-bert)")
+        else:
+            npost = pipeline.analyze_posts(batch_size=args.batch_size, workers=args.workers)
+            logger.info("scored %d posts with Bert", npost)
         
         if not args.skip_qwen:
             nqwen_img = pipeline.run_qwen_image_analysis()

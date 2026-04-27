@@ -51,15 +51,19 @@ def test_species_and_activity_tables(tmp_path: Path):
 
         # add species data
         pgmod.update_image_analysis(conn, image_id=img_id, species=["cat", "dog"], confidence=[0.5, 0.8])
-        cur = conn.execute("SELECT species, confidence FROM image_species WHERE image_id=? ORDER BY id", (img_id,))
-        assert cur.fetchall() == [("cat", 0.5), ("dog", 0.8)]
+        cur = conn.execute("SELECT species, confidence, bioclip_status FROM images WHERE id=?", (img_id,))
+        row = cur.fetchone()
+        assert row is not None
+        assert row[0] == '["cat", "dog"]'
+        assert row[1] == '[0.5, 0.8]'
+        assert row[2] == "ready"
 
         # after insertion, fetch_unanalyzed_images should skip the image
         assert pgmod.fetch_unanalyzed_images(conn, 10) == []
 
         # adding activity should insert a row
         pgmod.update_image_activity(conn, image_id=img_id, activity="walking")
-        act_rows = conn.execute("SELECT activity FROM image_activity WHERE image_id=?", (img_id,)).fetchall()
-        assert act_rows == [("walking",)]
+        act_row = conn.execute("SELECT activity FROM images WHERE id=?", (img_id,)).fetchone()
+        assert act_row == ("walking",)
 
     pgmod.connect = real_connect

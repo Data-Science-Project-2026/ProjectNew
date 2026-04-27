@@ -24,8 +24,6 @@ services:
     image: bioclip-service
     ports:
       - "5000:5000"
-    volumes:
-      - ./src/models/BioClip:/app/src/models/BioClip
     environment:
       USE_HALF: "true"
       TEXT_BATCH_SIZE: "512"
@@ -64,22 +62,57 @@ services:
       retries: 5
       start_period: 30s
 
+  local-llm:
+    image: vllm/vllm-openai:cu130-nightly
+    ports:
+      - "8000:8000"
+    volumes:
+      - ${HF_CACHE_DIR:-~/.cache/huggingface}:/root/.cache/huggingface
+      - ${LOCAL_LLM_MODEL_DIR:-./models}:/models:ro
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+      HF_HUB_OFFLINE: ${HF_HUB_OFFLINE:-1}
+      TRANSFORMERS_OFFLINE: ${TRANSFORMERS_OFFLINE:-1}
+      VLLM_NO_USAGE_STATS: ${VLLM_NO_USAGE_STATS:-1}
+    command: >
+      ${LOCAL_LLM_MODEL:-/models/Qwen3.5-4B}
+      --max-model-len ${LOCAL_LLM_MAX_MODEL_LEN:-8192}
+      --gpu-memory-utilization ${LOCAL_LLM_GPU_MEMORY_UTILIZATION:-0.7}
+      --kv-cache-dtype ${LOCAL_LLM_KV_CACHE_DTYPE:-fp8}
+      --max-num-batched-tokens ${LOCAL_LLM_MAX_BATCHED_TOKENS:-2048}
+      ${LOCAL_LLM_EXTRA_ARGS:-}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/v1/models || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
   qwen:
     build:
       context: .
       dockerfile: src/models/Qwen-Container/Dockerfile
     image: qwen-service
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    depends_on:
+      local-llm:
+        condition: service_healthy
     ports:
       - "5002:5000"
     volumes:
       - ./src/models/Qwen-Container/images.md:/app/images.md:ro
       - ./src/models/Qwen-Container/comment.md:/app/comment.md:ro
     environment:
-      OPENAI_API_KEY: "EMPTY"
-      OPENAI_BASE_URL: "http://host.docker.internal:8000/v1"
-      MODEL: "Qwen/Qwen3.5-4B"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-local}"
+      OPENAI_BASE_URL: "${OPENAI_BASE_URL:-http://local-llm:8000/v1}"
+      QWEN_STUB_MODE: "${QWEN_STUB_MODE:-false}"
+      MODEL: "${QWEN_MODEL:-/models/Qwen3.5-4B}"
       QWEN_IMAGE_INSTRUCTION: "/app/images.md"
       QWEN_COMMENT_INSTRUCTION: "/app/comment.md"
     healthcheck:

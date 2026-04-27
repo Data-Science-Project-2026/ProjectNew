@@ -16,27 +16,22 @@
 
 The orchestrator imports CSV files and images into PostgreSQL. The CSV files must contain columns like `city`, `park`, `username`, `comment`, `timestamp`, `rating`, and optionally `image` (relative path).
 
-#### 1. Upload CSV files with posts
+#### Upload posts and images in one command
 
-Place CSV files in `data/csvs/` on the host and run:
-
-```bash
-docker-compose run --rm orchestrator \
-  --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
-  upload-posts --city-folder /data/6Shenzhen
-```
-
-#### 2. Upload image folders separately
-
-Place images in `data/images/` or another folder and run:
+Place CSV files in `data/csvs/` and images in `data/images/` on the host and run:
 
 ```bash
 docker-compose run --rm orchestrator \
   --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
-  upload-images --folders /data/images --image-root /data/images
+    upload --csv-folder /data/csvs --image-folder /data/images
 ```
 
-Images are copied into a managed directory (default `data/images/`) when using `upload-images`, and PostgreSQL stores metadata only (including the source path in `images.path`), not image binary blobs.
+If the input is mounted under a generic container folder such as `/input`, pass
+`--city` explicitly so the stored `posts.city` value does not fall back to the
+mount name.
+
+The pipeline stores original file locations in `images.path` and analyzes those
+original files directly. PostgreSQL stores metadata only, not image binary blobs.
 
 ### Schema
 
@@ -57,6 +52,12 @@ PostgreSQL stores post/image/Qwen metadata in normalized tables. Image binaries 
 | `bert_sentiment_score` | REAL      |                 | Bert sentiment score |
 | `bert_sentiment_label` | TEXT      |                 | Bert label |
 | `qwen_sentiment_score` | REAL      |                 | Qwen sentiment score |
+| `bert_status`          | TEXT      | NOT NULL, DEFAULT `pending` | Bert model row status |
+| `bert_processing_started_at` | TIMESTAMP |          | Bert processing start time |
+| `bert_error`           | TEXT      |                 | Last Bert failure message |
+| `qwen_status`          | TEXT      | NOT NULL, DEFAULT `pending` | Qwen text model row status |
+| `qwen_processing_started_at` | TIMESTAMP |          | Qwen text processing start time |
+| `qwen_error`           | TEXT      |                 | Last Qwen text failure message |
 
 #### `images`
 
@@ -67,6 +68,16 @@ PostgreSQL stores post/image/Qwen metadata in normalized tables. Image binaries 
 | `username_hash` | TEXT    |                                | Optional hash parsed from image/file context |
 | `path`          | TEXT    |                                | Stored source/relative image path metadata |
 | `analyzed_bio`  | BOOLEAN | NOT NULL, DEFAULT `FALSE`      | Marker to avoid repeated BioCLIP reprocessing |
+| `bioclip_status` | TEXT   | NOT NULL, DEFAULT `pending`    | BioClip model row status |
+| `bioclip_processing_started_at` | TIMESTAMP |               | BioClip processing start time |
+| `bioclip_error` | TEXT    |                                | Last BioClip failure message |
+| `qwen_status`   | TEXT    | NOT NULL, DEFAULT `pending`    | Qwen image model row status |
+| `qwen_processing_started_at` | TIMESTAMP |                  | Qwen image processing start time |
+| `qwen_error`    | TEXT    |                                | Last Qwen image failure message |
+
+Model status lifecycle is `pending -> processing -> ready`, or `failed` on
+error. Rows that remain in `processing` for more than 1 hour are reset to
+`pending` before the next claim.
 
 #### `image_species`
 
@@ -293,14 +304,13 @@ FONT_PATH = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 From the project root:
 
 ```bash
-python -m src.database.render_post_with_id 42 --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" --image-root ./data/images
+python -m src.database.render_post_with_id 42 --db src/database/data.db
 ```
 
 Where:
 
 - `42` is the `posts.id` you want to inspect  
-- `--db-dsn` points to your PostgreSQL instance
-- `--image-root` points to the directory where images are stored (default: `./data/images`)
+- `--db` points to a local SQLite database file
 
 This will:
 

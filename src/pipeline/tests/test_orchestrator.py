@@ -6,6 +6,7 @@ from pathlib import Path
 import sqlite3
 import pytest
 from pipeline.orchestrator import Pipeline
+from pipeline.ingestion import _normalize_ingestion_status_key
 
 def _make_dummy_csv(tmpdir: Path) -> Path:
     path = tmpdir / "data.csv"
@@ -122,6 +123,33 @@ def test_ingest_and_analysis(tmp_path: Path):
         bcmod.BioClipModel.__init__ = real_bioclip_init
 
 
+def test_ingest_posts_uses_city_from_csv_when_root_is_generic(tmp_path: Path):
+    csv_root = tmp_path / "input"
+    csv_root.mkdir()
+    csv_path = csv_root / "36_19_Grand_Park_Qingyang_District_Chengdu.csv"
+    csv_path.write_text("用户名,评论\nalice,hello\n", encoding="utf-8")
+
+    pipeline = Pipeline(
+        dsn="",
+        bio_clip_args={},
+        bert_args={},
+        output_json=str(tmp_path / "results.json"),
+        skip_bio=True,
+        skip_bert=True,
+        skip_qwen=True,
+    )
+
+    n = pipeline.ingest_posts(csv_root)
+
+    assert n == 1
+    assert pipeline._json_store["posts"][0]["city"] == "Chengdu"
+
+
+def test_ingestion_status_key_strips_input_prefix():
+    assert _normalize_ingestion_status_key("/input/36Chengdu/park.csv") == "/36Chengdu/park.csv"
+    assert _normalize_ingestion_status_key("input/36Chengdu") == "/36Chengdu"
+
+
 def test_ingest_images_folder(tmp_path: Path):
     # prepare a directory tree with some fake images
     root = tmp_path / "pics"
@@ -210,15 +238,10 @@ def test_ingest_images_folder(tmp_path: Path):
         },
     )
 
-    storage = tmp_path / "store"
-    n = pipeline2.ingest_images([root], image_storage=storage)
+    n = pipeline2.ingest_images([root])
     assert n == 2
     # we expected the first filename to yield "abc123" and the second None
     assert observed_hashes == ["abc123", None]
-    # ensure files were copied into the storage directory named by id
-    stored = sorted(storage.iterdir())
-    assert len(stored) == 2
-    assert all(f.stem.isdigit() for f in stored)
 
     with sqlite3.connect(str(dbfile)) as conn:
         rows = conn.execute("SELECT filename, status FROM ingestion_status").fetchall()
@@ -226,7 +249,7 @@ def test_ingest_images_folder(tmp_path: Path):
         assert rows[0][1] == "done"
         imgs = conn.execute("SELECT username_hash FROM images").fetchall()
         assert len(imgs) == 2
-    # verify model receives the two blobs from the stored files
+    # verify model receives the two blobs from the original file paths
     orig_analyze = bcmod2.BioClipModel.analyze_image_blobs
     seen: list = []
     def fake_analyze(self, blobs, threshold=0.05):
@@ -262,10 +285,12 @@ def test_service_urls(tmp_path: Path):
     pgmod3.update_image_activity = sqlmod3.update_image_activity
 
     # insert minimal records
+    img_on_disk = tmp_path / "service-image.jpg"
+    img_on_disk.write_bytes(b"imagedata")
     with sqlite3.connect(str(dbfile)) as conn:
         sqlmod3.ensure_schema(conn)
         post_id = sqlmod3.insert_post(conn, city="c", park="p", username="u", username_hash="h", comment="hi", time=None, rating=None)
-        sqlmod3.insert_image(conn, post_id=post_id, path="/no/thing.jpg", username_hash=None)
+        sqlmod3.insert_image(conn, post_id=post_id, path=str(img_on_disk), username_hash=None)
 
     # monkeypatch requests.post
     import requests

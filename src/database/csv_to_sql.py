@@ -12,6 +12,31 @@ import re
 
 from src.database import sql
 
+
+def _normalize_path(path_like: Path | str) -> str:
+    """Normalize path key, stripping generic mount roots like /input."""
+    original = str(path_like)
+    s = original.strip().replace("\\", "/")
+    if not s:
+        return s
+    
+    # Keep Windows absolute paths untouched.
+    if re.match(r"^[A-Za-z]:/", s):
+        return original
+    
+    generic_roots = {"input", "inputs", "data", "datasets", "dataset", "csv", "csvs", "mount", "mnt"}
+    parts = [p for p in s.split("/") if p and p != "."]
+    if not parts:
+        return "/" if s.startswith("/") else s
+    
+    if parts[0].lower() in generic_roots and len(parts) > 1:
+        parts = parts[1:]
+    
+    if "/" not in s and len(parts) == 1 and parts[0] == s:
+        return s
+    
+    return "/" + "/".join(parts)
+
 _FILENAME_COLUMN = "图像文件名列表"
 # Columns: "Username", "Comment", "Timestamp", "Rating", "Image Filename List"
 _REQUIRED_COLUMNS: Sequence[str] = ("用户名", "评论", "时间", "评分", _FILENAME_COLUMN)
@@ -163,8 +188,9 @@ def import_posts_and_images_from_folder(folder_path: str, city: str, db_path: st
                 if image_path is None:
                     continue
 
-                # store the relative/absolute path; blob is not persisted
-                sql.insert_image(conn, post_id=post_id, path=str(image_path))
+                # store the normalized path; blob is not persisted
+                normalized_path = _normalize_path(image_path)
+                sql.insert_image(conn, post_id=post_id, path=normalized_path)
                 image_count += 1
 
         conn.commit()

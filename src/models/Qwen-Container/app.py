@@ -20,8 +20,11 @@ def health():
 API_KEY = os.environ.get("OPENAI_API_KEY", "EMPTY")
 BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:8000/v1")
 
-DEFAULT_IMAGE_MODEL = os.environ.get("IMAGE_MODEL", "Qwen/Qwen3.5-4B")
-DEFAULT_TEXT_MODEL = os.environ.get("TEXT_MODEL", "Qwen/Qwen3.5-4B")
+DEFAULT_MODEL = os.environ.get("MODEL", "Qwen/Qwen3.5-4B")
+DEFAULT_IMAGE_MODEL = os.environ.get("IMAGE_MODEL", DEFAULT_MODEL)
+DEFAULT_TEXT_MODEL = os.environ.get("TEXT_MODEL", DEFAULT_MODEL)
+DEFAULT_MAX_TOKENS = int(os.environ.get("QWEN_MAX_TOKENS", "512"))
+MAX_COMMENT_CHARS = int(os.environ.get("QWEN_MAX_COMMENT_CHARS", "800"))
 
 _IMAGE_INSTRUCTION = ""
 _COMMENT_INSTRUCTION = ""
@@ -41,11 +44,60 @@ for var_name, md_file, target_var in [
 
 client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
-# If no real API key is provided (local testing), run in stub mode that
-# returns deterministic JSON without calling the remote API. This avoids
-# connection errors when the orchestrator runs in a local compose setup
-# without an OpenAI-compatible mock server.
-STUB_MODE = (API_KEY in (None, "", "EMPTY")) or ("host.docker.internal" in BASE_URL)
+# Stub mode is explicitly controlled by QWEN_STUB_MODE.
+# If not set, we keep backward-compatible behavior and enable stubs when
+# no API key is provided.
+_stub_mode_raw = os.environ.get("QWEN_STUB_MODE")
+if _stub_mode_raw is None:
+    STUB_MODE = API_KEY in (None, "", "EMPTY")
+else:
+    STUB_MODE = _stub_mode_raw.strip().lower() in ("1", "true", "yes", "on")
+
+logger.info("Qwen stub mode: %s (QWEN_STUB_MODE=%s, OPENAI_BASE_URL=%s)", STUB_MODE, _stub_mode_raw, BASE_URL)
+
+_low_context_raw = os.environ.get("QWEN_LOW_CONTEXT_MODE")
+if _low_context_raw is None:
+    LOW_CONTEXT_MODE = DEFAULT_MAX_TOKENS <= 512
+else:
+    LOW_CONTEXT_MODE = _low_context_raw.strip().lower() in ("1", "true", "yes", "on")
+
+COMPACT_COMMENT_INSTRUCTION = (
+    "Return JSON only with key text_analysis. "
+    "Inside text_analysis return only these keys: emotions, influence_of_emotions, text_species_mentions, "
+    "feeling_correlated_to_text_species, text_activities_or_facilities, "
+    "feeling_correlated_to_text_activities_or_facilities, comment_sentiment. "
+    "Keep output compact: max 3 items per list, short phrases only, and influence_of_emotions must be one short sentence under 16 words. "
+    "English only. Use [] for empty lists. comment_sentiment must be an object with score_0_to_1 only."
+)
+
+COMPACT_IMAGE_INSTRUCTION = (
+    "Return JSON only with key image_analysis_per_image (array). "
+    "For each image include: image_summary, visible_species_in_image, landscape_elements, "
+    "human_activities_in_image, plants_detected, animals_detected, human_activities_detected. "
+    "Output English only. Use [] for empty lists."
+)
+
+
+def _effective_instruction(instruction: str, compact_instruction: str) -> str:
+    if LOW_CONTEXT_MODE:
+        return compact_instruction
+    return instruction
+
+
+def _compact_comment_text(comment: str) -> str:
+    text = str(comment).strip()
+    if LOW_CONTEXT_MODE and len(text) > MAX_COMMENT_CHARS:
+        return text[:MAX_COMMENT_CHARS]
+    return text
+
+
+logger.info(
+    "Qwen low-context mode: %s (QWEN_LOW_CONTEXT_MODE=%s, DEFAULT_MAX_TOKENS=%s, MAX_COMMENT_CHARS=%s)",
+    LOW_CONTEXT_MODE,
+    _low_context_raw,
+    DEFAULT_MAX_TOKENS,
+    MAX_COMMENT_CHARS,
+)
 
 def extract_json_text(raw_text: str) -> str:
     cleaned = raw_text.strip()
@@ -84,9 +136,19 @@ def extract_json_text(raw_text: str) -> str:
     json.loads(candidate)
     return candidate
 
+
+def _looks_truncated_json(text: str) -> bool:
+    cleaned = (text or "").strip()
+    if not cleaned:
+        return False
+    if cleaned.endswith("}") or cleaned.endswith("]") or cleaned.endswith("```"):
+        return False
+    return "{" in cleaned or "[" in cleaned
+
 def _run_qwen_inference(messages: list, config: dict):
     model = config.get("model")
-    max_tokens = config.get("max_tokens", 4096)
+    # Keep generation bounded for low-memory local backends with small max_model_len.
+    base_max_tokens = min(int(config.get("max_tokens", DEFAULT_MAX_TOKENS)), DEFAULT_MAX_TOKENS)
     temperature = config.get("temperature", 0.7)
     
     max_retries = 3
@@ -136,13 +198,15 @@ def _run_qwen_inference(messages: list, config: dict):
             }
     for attempt in range(1, max_retries + 1):
         try:
+            attempt_max_tokens = min(base_max_tokens + (attempt - 1) * 64, DEFAULT_MAX_TOKENS)
             resp = client.chat.completions.create(
                 model=model,
                 messages=messages,
-                max_tokens=max_tokens,
+                max_tokens=attempt_max_tokens,
                 temperature=temperature,
                 top_p=0.8,
                 presence_penalty=1.5,
+                response_format={"type": "json_object"},
                 extra_body={
                     "top_k": 20,
                     "chat_template_kwargs": {"enable_thinking": False},
@@ -168,8 +232,17 @@ def _run_qwen_inference(messages: list, config: dict):
                 return parsed
             except Exception as e:
                 parsed = {"error": f"JSON parse error: {e}", "raw": raw_response}
-            
-            break  # Break out of retry loop if it executed without API error but had JSON error
+                if attempt < max_retries and _looks_truncated_json(raw_response):
+                    logger.warning(
+                        "JSON parse failed on attempt %d/%d and output looks truncated; retrying with max_tokens=%d",
+                        attempt,
+                        max_retries,
+                        min(base_max_tokens + attempt * 64, DEFAULT_MAX_TOKENS),
+                    )
+                    time.sleep(attempt)
+                    continue
+
+            break
         except Exception as exc:
             logger.warning("inference attempt %d/%d failed: %s", attempt, max_retries, exc)
             if attempt < max_retries:
@@ -186,6 +259,7 @@ def analyze_images():
     config = payload.get("config", {})
     
     instruction = config.get("instruction") or _IMAGE_INSTRUCTION
+    instruction = _effective_instruction(instruction, COMPACT_IMAGE_INSTRUCTION)
     config["model"] = config.get("model") or DEFAULT_IMAGE_MODEL
     
     results = []
@@ -202,12 +276,7 @@ def analyze_images():
                 "content": [
                     {
                         "type": "text",
-                        "text": (
-                            "All output text must be in English only.\n"
-                            "Never output Chinese text.\n"
-                            "For any list or detection module with no result, return [] exactly.\n"
-                            "Output only the required JSON."
-                        ),
+                        "text": "Return JSON only. English only. Use [] for empty lists.",
                     },
                     {
                         "type": "image_url",
@@ -230,24 +299,35 @@ def analyze_comments():
     config = payload.get("config", {})
     
     instruction = config.get("instruction") or _COMMENT_INSTRUCTION
+    instruction = _effective_instruction(instruction, COMPACT_COMMENT_INSTRUCTION)
     config["model"] = config.get("model") or DEFAULT_TEXT_MODEL
     
     results = []
     
     for comment in comments:
-        messages = [
-            {"role": "system", "content": instruction},
-            {
-                "role": "user",
-                "content": (
-                    "Analyze the following comment.\n"
-                    "All output text must be in English only.\n"
-                    "Never copy Chinese text from the source comment.\n"
-                    "For any list with no result, return [] exactly.\n\n"
-                    f"Comment:\n{comment}"
-                )
-            }
-        ]
+        compact_comment = _compact_comment_text(comment)
+        if LOW_CONTEXT_MODE:
+            messages = [
+                {
+                    "role": "user",
+                    "content": (
+                        "JSON only. English only. Use [] for empty lists. Keep the answer compact. "
+                        "Return: text_analysis{emotions,influence_of_emotions,text_species_mentions,"
+                        "feeling_correlated_to_text_species,text_activities_or_facilities,"
+                        "feeling_correlated_to_text_activities_or_facilities,"
+                        "comment_sentiment:{score_0_to_1}}. Max 3 items per list. influence_of_emotions must be one short sentence under 16 words. "
+                        f"Comment: {compact_comment}"
+                    ),
+                }
+            ]
+        else:
+            messages = [
+                {"role": "system", "content": instruction},
+                {
+                    "role": "user",
+                    "content": f"Analyze this comment and return JSON only. Comment: {compact_comment}",
+                }
+            ]
         
         parsed = _run_qwen_inference(messages, config)
         results.append(parsed)

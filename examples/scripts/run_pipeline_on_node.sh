@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run the pipeline on a single allocated node using Apptainer instances.
+# Run the pipeline on a single allocated node using Singularity instances.
 # Usage (inside an allocation):
 #   bash examples/scripts/run_pipeline_on_node.sh
 # or submit with srun/sbatch as a single-node job.
+
+module load python
+
+SINGULARITY_BIN=${SINGULARITY_BIN:-singularity}
+if ! command -v "$SINGULARITY_BIN" >/dev/null 2>&1; then
+  echo "singularity command not found. Load your site singularity module first."
+  exit 1
+fi
 
 export NO_PROXY=127.0.0.1,localhost
 export no_proxy=127.0.0.1,localhost
@@ -33,34 +41,37 @@ done
 
 # Start instances
 echo "Starting BioClip instance..."
-apptainer instance start --nv --bind "${REPO_DIR}:/app" --pwd /app "$BIO_SIF" bioclip || { echo "failed to start bioclip"; exit 1; }
+SINGULARITYENV_PORT="${BIO_PORT}" \
+  "$SINGULARITY_BIN" instance start --nv --bind "${REPO_DIR}:/app" --pwd /app "$BIO_SIF" bioclip || { echo "failed to start bioclip"; exit 1; }
 
 echo "Starting Bert instance..."
-apptainer instance start --nv --bind "${REPO_DIR}:/app" --pwd /app "$BERT_SIF" bert || { echo "failed to start bert"; exit 1; }
+SINGULARITYENV_PORT="${BERT_PORT}" \
+  "$SINGULARITY_BIN" instance start --nv --bind "${REPO_DIR}:/app" --pwd /app "$BERT_SIF" bert || { echo "failed to start bert"; exit 1; }
 
 echo "Starting Qwen instance..."
-apptainer instance start --bind "${REPO_DIR}:/app" --pwd /app "$QWEN_SIF" qwen || { echo "failed to start qwen"; exit 1; }
+SINGULARITYENV_PORT="${QWEN_PORT}" \
+  "$SINGULARITY_BIN" instance start --bind "${REPO_DIR}:/app" --pwd /app "$QWEN_SIF" qwen || { echo "failed to start qwen"; exit 1; }
 
 # Give services time to initialize
 sleep 5
 
 # Sanity checks
 echo "Health checks:"
-apptainer exec --no-home instance://bioclip curl --noproxy 127.0.0.1 -sS "http://127.0.0.1:${BIO_PORT}/health" || { echo "bioclip health failed"; }
-apptainer exec --no-home instance://bert curl --noproxy 127.0.0.1 -sS "http://127.0.0.1:${BERT_PORT}/health" || { echo "bert health failed"; }
-apptainer exec --no-home instance://qwen curl --noproxy 127.0.0.1 -sS "http://127.0.0.1:${QWEN_PORT}/health" || { echo "qwen health failed"; }
+"$SINGULARITY_BIN" exec --no-home instance://bioclip curl --noproxy 127.0.0.1 -sS "http://127.0.0.1:${BIO_PORT}/health" || { echo "bioclip health failed"; }
+"$SINGULARITY_BIN" exec --no-home instance://bert curl --noproxy 127.0.0.1 -sS "http://127.0.0.1:${BERT_PORT}/health" || { echo "bert health failed"; }
+"$SINGULARITY_BIN" exec --no-home instance://qwen curl --noproxy 127.0.0.1 -sS "http://127.0.0.1:${QWEN_PORT}/health" || { echo "qwen health failed"; }
 
 # Run orchestrator pointing at local services
 echo "Running orchestrator against local services..."
-apptainer exec --bind "${REPO_DIR}:/app" --pwd /app "$ORCH_SIF" python -m pipeline.orchestrator \
+"$SINGULARITY_BIN" exec --bind "${REPO_DIR}:/app" --pwd /app "$ORCH_SIF" python -m pipeline.orchestrator \
   --bio-service-url "http://127.0.0.1:${BIO_PORT}" \
   --bert-service-url "http://127.0.0.1:${BERT_PORT}" \
   --qwen-service-url "http://127.0.0.1:${QWEN_PORT}"
 
 # Tear down instances
 echo "Stopping instances..."
-apptainer instance stop bioclip || true
-apptainer instance stop bert || true
-apptainer instance stop qwen || true
+"$SINGULARITY_BIN" instance stop bioclip || true
+"$SINGULARITY_BIN" instance stop bert || true
+"$SINGULARITY_BIN" instance stop qwen || true
 
 echo "Done."

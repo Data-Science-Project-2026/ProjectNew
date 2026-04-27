@@ -42,8 +42,8 @@ is capable of:
 * ingesting arbitrary image folders (recursively), storing only the file path
   and an optional username hash derived from the filename;
 * calling the `BioClipModel` in batches by re-opening the files from disk and
-  updating the `images` table with species/confidence;
-* invoking the sentiment analyzer on text and writing a `sentiment_score` into
+  writing species/confidence to `image_species`;
+* invoking the sentiment analyzer on text and writing Bert outputs into
   `posts`; posts also record a `username_hash` for privacy along with city,
   park, rating, timestamp, and original text;
 * invoking the Qwen service on individual images and comments independently; the
@@ -53,6 +53,16 @@ is capable of:
 The database schema now reflects both hashed usernames and the ingestion status
 mechanism described earlier.
 
+In addition, each model path has per-row execution status tracking:
+
+* posts/Bert: `bert_status` (`pending` -> `processing` -> `ready` or `failed`)
+* posts/Qwen: `qwen_status` (`pending` -> `processing` -> `ready` or `failed`)
+* images/BioClip: `bioclip_status` (`pending` -> `processing` -> `ready` or `failed`)
+* images/Qwen: `qwen_status` (`pending` -> `processing` -> `ready` or `failed`)
+
+If any row remains in `processing` for over 1 hour, it is returned to `pending`
+before the next analyzer claim.
+
 ### Dockerized model services
 
 To decouple analysis from the orchestrator we also provide lightweight HTTP
@@ -61,7 +71,7 @@ live in sibling subdirectories of the model code:
 
 * `src/models/BioClip-Container` – exposes `/analyze_images`
 * `src/models/Bert-Container` (sentiment/BERT) – exposes `/analyze_posts`
-* `src/models/Qwen-Container` – exposes `/analyze_images` and `/analyze_comments`
+* `src/models/Qwen-Container` – exposes `/analyze_images` and `/analyze_users`
 
 Each service wraps the existing Python classes, accepts a JSON payload, and
 returns results in the same format used by the orchestrator's ``service_url``
@@ -100,47 +110,59 @@ container's ``app.py`` (e.g. `SPECIES_TOKENS_PATH`, `SENTIMENT_MODEL`,
 Once the services are running you can invoke the orchestrator like this:
 
 ```sh
-python -m pipeline.orchestrator analyze \
-    --city-folder /data/6Shenzhen --db-dsn "dbname=mydb" \
-    --bio-service-url http://localhost:5000 \
-    --sentiment-service-url http://localhost:5001 \
-    --qwen-service-url http://localhost:5002
+python -m pipeline.orchestrator --db-dsn "dbname=mydb" \
+  upload --csv-folder /data/csvs --image-folder /data/images
+
+python -m pipeline.orchestrator --db-dsn "dbname=mydb" \
+  analyze \
+  --bio-service-url http://localhost:5000 \
+  --bert-service-url http://localhost:5001 \
+  --qwen-service-url http://localhost:5002
 ```
 
 Alternatively you can run the entire orchestrator inside its own container
 (which already bundles all Python dependencies):
 
 ```sh
-cd src/pipeline/Orchestrator-Container
-docker build -t pipeline-orchestrator .
+cd /path/to/repo
+docker build -f src/pipeline/Orchestrator-Container/Dockerfile -t pipeline-orchestrator .
 
-docker run --rm -v /data:/data pipeline-orchestrator upload-posts \
-    --city-folder /data/6Shenzhen \
-    --db-dsn "dbname=mydb" \
-    --bio-service-url http://bio:5000 \
-    --sentiment-service-url http://bert:5000 \
-    --qwen-service-url http://qwen:5000
+docker run --rm -v /data:/data pipeline-orchestrator \
+  --db-dsn "dbname=mydb" \
+  upload --csv-folder /data/csvs --image-folder /data/images \
+  --image-folders /data/extra-images
+
+# when the mounted folder name is generic (for example /input), pass the city explicitly
+docker run --rm -v /input:/input pipeline-orchestrator \
+  --db-dsn "dbname=mydb" \
+  upload --csv-folder /input/36Chengdu --image-folder /input/36Chengdu --city Chengdu
+
+docker run --rm -v /data:/data pipeline-orchestrator \
+  --db-dsn "dbname=mydb" \
+  analyze \
+  --bio-service-url http://bio:5000 \
+  --bert-service-url http://bert:5000 \
+  --qwen-service-url http://qwen:5000
 ```
 
 The orchestrator will batch inputs, POST them to the appropriate service, and
 persist the returned results back into Postgres exactly as it would with the
 local model implementations.
 
-You can interact with the orchestrator via a small CLI that supports three
-subcommands:
+You can interact with the orchestrator via CLI subcommands:
 
 ```sh
-# ingest posts from CSVs (optional image root for relative paths)
-python -m pipeline.orchestrator upload-posts --city-folder /data/6Shenzhen --db-dsn "dbname=..."
-
-# ingest raw image folders
-python -m pipeline.orchestrator upload-images --folders /path/one /path/two \
-    [--image-root /path/to/store] --db-dsn "dbname=..."
+# ingest posts and images in one step
+python -m pipeline.orchestrator --db-dsn "dbname=..." \
+  upload --csv-folder /data/csvs --image-folder /data/images \
+  [--image-folders /extra/one /extra/two] [--city CITY]
 
 # run analysis on whatever data has been imported
-python -m pipeline.orchestrator analyze \
+python -m pipeline.orchestrator --db-dsn "dbname=..." analyze \
     [--batch-size 1000] [--max-batches 10] [--workers 4] \
-    [--image-root /path/to/images] --db-dsn "dbname=..."
+  --bio-service-url http://localhost:5000 \
+  --bert-service-url http://localhost:5001 \
+  --qwen-service-url http://localhost:5002
 ```
 
 Each command updates `ingestion_status` automatically so you can safely
@@ -160,10 +182,11 @@ Example:
 
 ```sh
 # ingest posts into results.json (no DB used)
-python -m pipeline.orchestrator upload-posts --csv-folder /data/6Shenzhen --output-json /tmp/results.json
+python -m pipeline.orchestrator --output-json /tmp/results.json \
+  upload --csv-folder /data/csvs --image-folder /data/images
 
 # run analysis and store model outputs in the same (or a new) JSON file
-python -m pipeline.orchestrator analyze --output-json /tmp/results.json \
+python -m pipeline.orchestrator --output-json /tmp/results.json analyze \
   --bio-service-url http://localhost:5000 --bert-service-url http://localhost:5001 --qwen-service-url http://localhost:5002
 ```
 
@@ -176,9 +199,7 @@ The same module may also be imported and driven programmatically, allowing for
 more advanced concurrency strategies (e.g. multiple workers each fetching the
 next unprocessed batch).
 
-> **Storage details:**  the database no longer contains binary image data or
-> file paths.  During ingestion the orchestrator copies each image into a
-> user-specified ``image_root`` (default ``data/images``) and stores only the
-> numeric id and optional username hash.  When analyzing it looks up files by
-> id under the same directory.  This keeps the Postgres instance lean and
-> avoids persisting any sensitive paths or blobs.
+> **Storage details:** the database does not store image binaries. During
+> ingestion the orchestrator stores original file locations in `images.path`.
+> Analysis re-opens those original files directly, so no image-copy stage is
+> required.

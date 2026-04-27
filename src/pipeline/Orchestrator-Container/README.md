@@ -7,9 +7,12 @@ import the models and database helpers directly.
 ## Build
 
 ```sh
-cd src/pipeline/Orchestrator-Container
-docker build -t pipeline-orchestrator .
+cd /path/to/repo
+docker build -f src/pipeline/Orchestrator-Container/Dockerfile -t pipeline-orchestrator .
 ```
+
+The Dockerfile copies `src/` from the repository root, so the build context
+must be the repository root rather than `src/pipeline/Orchestrator-Container`.
 
 ## Run
 
@@ -17,11 +20,21 @@ The container supports the same CLI options as the standalone script; for
 example, to ingest CSVs and images you might run:
 
 ```sh
-docker run --rm -v /data:/data pipeline-orchestrator upload-posts \
-    --city-folder /mnt/f/data/6Shenzhen \
+docker run --rm -v /data:/data pipeline-orchestrator \
     --db-dsn "dbname=mydb" \
+    upload --csv-folder /data/csvs --image-folder /data/images \
+    --image-folders /data/extra-images
+
+# if the mounted folder name is generic (for example /input), pass the city explicitly
+docker run --rm -v /input:/input pipeline-orchestrator \
+    --db-dsn "dbname=mydb" \
+    upload --csv-folder /input/36Chengdu --image-folder /input/36Chengdu --city Chengdu
+
+docker run --rm -v /data:/data pipeline-orchestrator \
+    --db-dsn "dbname=mydb" \
+    analyze \
     --bio-service-url http://bio:5000 \
-    --sentiment-service-url http://bert:5000 \
+    --bert-service-url http://bert:5000 \
     --qwen-service-url http://qwen:5000
 ```
 

@@ -34,6 +34,7 @@ QWEN_URL=""
 MAX_POSTS=""
 MAX_IMAGES=""
 BATCH_SIZE="1000"
+SINGULARITY_IMAGE=""
 
 # Colors
 RED='\033[0;31m'
@@ -80,6 +81,7 @@ OPTIONAL:
   --max-images N             Max images to process
   
   --dry-run                  Show job script without submitting
+    --singularity-image PATH   Optional .sif image to run pipeline inside singularity
   --help                     Show this help
 
 EXAMPLES:
@@ -204,6 +206,10 @@ while [[ $# -gt 0 ]]; do
             DRY_RUN=1
             shift
             ;;
+        --singularity-image)
+            SINGULARITY_IMAGE="$2"
+            shift 2
+            ;;
         --help)
             usage
             ;;
@@ -260,6 +266,11 @@ PYTHON_ARGS="$PYTHON_ARGS --workers $WORKER_THREADS"
 [[ -n "$BERT_URL" ]] && PYTHON_ARGS="$PYTHON_ARGS --bert-service-url $BERT_URL"
 [[ -n "$QWEN_URL" ]] && PYTHON_ARGS="$PYTHON_ARGS --qwen-service-url $QWEN_URL"
 
+RUN_COMMAND="$PYTHON_ARGS"
+if [[ -n "$SINGULARITY_IMAGE" ]]; then
+    RUN_COMMAND="singularity exec --bind $REPO_DIR:/app --pwd /app $SINGULARITY_IMAGE $PYTHON_ARGS"
+fi
+
 # Detect job scheduler
 if command -v sbatch &> /dev/null; then
     SCHEDULER="slurm"
@@ -290,8 +301,20 @@ SLURM_SCRIPT
 # Load modules
 module load python
 
+if ! command -v python >/dev/null 2>&1; then
+    echo "python command not found after module load python"
+    exit 2
+fi
+
+if [[ -n "SINGULARITY_IMAGE_PLACEHOLDER" ]]; then
+    if ! command -v singularity >/dev/null 2>&1; then
+        echo "singularity command not found"
+        exit 3
+    fi
+fi
+
 cd REPO_DIR_PLACEHOLDER
-$PYTHON_ARGS_PLACEHOLDER
+$RUN_COMMAND_PLACEHOLDER
 SLURM_SCRIPT_BODY
 }
 
@@ -311,8 +334,22 @@ PBS_SCRIPT
     
     cat << 'PBS_SCRIPT_BODY'
 
+    module load python
+
+    if ! command -v python >/dev/null 2>&1; then
+        echo "python command not found after module load python"
+        exit 2
+    fi
+
+    if [[ -n "SINGULARITY_IMAGE_PLACEHOLDER" ]]; then
+        if ! command -v singularity >/dev/null 2>&1; then
+            echo "singularity command not found"
+            exit 3
+        fi
+    fi
+
 cd $PBS_O_WORKDIR
-$PYTHON_ARGS_PLACEHOLDER
+    $RUN_COMMAND_PLACEHOLDER
 PBS_SCRIPT_BODY
 }
 
@@ -328,7 +365,8 @@ fi
 
 # Replace placeholders
 sed -i "s|REPO_DIR_PLACEHOLDER|$REPO_DIR|g" "$SCRIPT_FILE"
-sed -i "s|\$PYTHON_ARGS_PLACEHOLDER|$PYTHON_ARGS|g" "$SCRIPT_FILE"
+sed -i "s|\$RUN_COMMAND_PLACEHOLDER|$RUN_COMMAND|g" "$SCRIPT_FILE"
+sed -i "s|SINGULARITY_IMAGE_PLACEHOLDER|$SINGULARITY_IMAGE|g" "$SCRIPT_FILE"
 
 # Show script
 echo -e "${BLUE}=== Job Script ===${NC}"

@@ -60,8 +60,8 @@ mechanism described earlier.
 Inside the orchestrator, the planned `analyze` flow is:
 
 1. **Ingestion**
-   * `upload-posts` writes post metadata and image links.
-   * `upload-images` writes standalone image metadata.
+  * `upload` writes post metadata and image links in one pass.
+  * Image rows store original source paths and are analyzed in place.
 
 2. **BioCLIP first pass on images**
    * `Pipeline.analyze_images()` fetches unprocessed images.
@@ -144,7 +144,7 @@ Under the target architecture, the Qwen service exposes two logical inference mo
   * prompt contract: `examples/images.md`;
   * used for object/scene understanding, species verification, and human activity.
 
-* `/analyze_comments`
+* `/analyze_users`
   * input: one or more comments;
   * prompt contract: `examples/comment.md`;
   * used for text analysis and Qwen sentiment.
@@ -212,47 +212,57 @@ container's ``app.py`` (e.g. `SPECIES_TOKENS_PATH`, `SENTIMENT_MODEL`,
 Once the services are running you can invoke the orchestrator like this:
 
 ```sh
-python -m pipeline.orchestrator analyze \
-    --city-folder /data/6Shenzhen --db-dsn "dbname=mydb" \
-    --bio-service-url http://localhost:5000 \
-    --sentiment-service-url http://localhost:5001 \
-    --qwen-service-url http://localhost:5002
+python -m pipeline.orchestrator --db-dsn "dbname=mydb" \
+  upload --csv-folder /data/csvs --image-folder /data/images
+
+python -m pipeline.orchestrator --db-dsn "dbname=mydb" analyze \
+  --bio-service-url http://localhost:5000 \
+  --bert-service-url http://localhost:5001 \
+  --qwen-service-url http://localhost:5002
 ```
 
 Alternatively you can run the entire orchestrator inside its own container
 (which already bundles all Python dependencies):
 
 ```sh
-cd src/pipeline/Orchestrator-Container
-docker build -t pipeline-orchestrator .
+cd /path/to/repo
+docker build -f src/pipeline/Orchestrator-Container/Dockerfile -t pipeline-orchestrator .
 
-docker run --rm -v /data:/data pipeline-orchestrator upload-posts \
-    --city-folder /data/6Shenzhen \
-    --db-dsn "dbname=mydb" \
-    --bio-service-url http://bio:5000 \
-    --sentiment-service-url http://bert:5000 \
-    --qwen-service-url http://qwen:5000
+docker run --rm -v /data:/data pipeline-orchestrator \
+  --db-dsn "dbname=mydb" \
+  upload --csv-folder /data/csvs --image-folder /data/images \
+  --image-folders /data/extra-images
+
+docker run --rm -v /input:/input pipeline-orchestrator \
+  --db-dsn "dbname=mydb" \
+  upload --csv-folder /input/36Chengdu --image-folder /input/36Chengdu --city Chengdu
+
+docker run --rm -v /data:/data pipeline-orchestrator \
+  --db-dsn "dbname=mydb" \
+  analyze \
+  --bio-service-url http://bio:5000 \
+  --bert-service-url http://bert:5000 \
+  --qwen-service-url http://qwen:5000
 ```
 
 The orchestrator will batch inputs, POST them to the appropriate service, and
 persist the returned results back into Postgres exactly as it would with the
 local model implementations.
 
-You can interact with the orchestrator via a small CLI that supports three
-subcommands:
+You can interact with the orchestrator via CLI subcommands:
 
 ```sh
-# ingest posts from CSVs (optional image root for relative paths)
-python -m pipeline.orchestrator upload-posts --city-folder /data/6Shenzhen --db-dsn "dbname=..."
-
-# ingest raw image folders
-python -m pipeline.orchestrator upload-images --folders /path/one /path/two \
-    [--image-root /path/to/store] --db-dsn "dbname=..."
+# ingest posts and images in one step
+python -m pipeline.orchestrator --db-dsn "dbname=..." \
+  upload --csv-folder /data/csvs --image-folder /data/images \
+  [--image-folders /extra/one /extra/two] [--city CITY]
 
 # run analysis on whatever data has been imported
-python -m pipeline.orchestrator analyze \
+python -m pipeline.orchestrator --db-dsn "dbname=..." analyze \
     [--batch-size 1000] [--max-batches 10] [--workers 4] \
-    [--image-root /path/to/images] --db-dsn "dbname=..."
+  --bio-service-url http://localhost:5000 \
+  --bert-service-url http://localhost:5001 \
+  --qwen-service-url http://localhost:5002
 ```
 
 Each command updates `ingestion_status` automatically so you can safely
@@ -262,9 +272,7 @@ The same module may also be imported and driven programmatically, allowing for
 more advanced concurrency strategies (e.g. multiple workers each fetching the
 next unprocessed batch).
 
-> **Storage details:**  the database no longer contains binary image data or
-> file paths.  During ingestion the orchestrator copies each image into a
-> user-specified ``image_root`` (default ``data/images``) and stores only the
-> numeric id and optional username hash.  When analyzing it looks up files by
-> id under the same directory.  This keeps the Postgres instance lean and
-> avoids persisting any sensitive paths or blobs.
+> **Storage details:** the database does not store image binaries. During
+> ingestion the orchestrator stores original file locations in `images.path`.
+> Analysis re-opens those original files directly, so no image-copy stage is
+> required.

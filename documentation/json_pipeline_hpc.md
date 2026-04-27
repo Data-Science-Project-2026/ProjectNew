@@ -10,6 +10,11 @@ The pipeline now supports **JSON mode** which:
 - ✅ Works with **local models** or **remote services**
 - ✅ Suitable for **batch HPC jobs** (SLURM, PBS, etc.)
 
+HPC policy used in this project:
+- Only `module load python`
+- Only `singularity` runtime commands with prebuilt `.sif` images
+- No installation commands on cluster nodes (`pip`, `apt`, `conda`, build steps)
+
 ## Quick Start
 
 ### 1. Basic Ingestion Only (Fastest)
@@ -104,7 +109,7 @@ python examples/scripts/run_json_pipeline.py \
 
 ## Example HPC Job Scripts
 
-### SLURM (Singularity/Apptainer)
+### SLURM (Singularity)
 
 Save as `submit_pipeline.slurm`:
 
@@ -119,11 +124,11 @@ Save as `submit_pipeline.slurm`:
 
 # Load required modules
 module load python
-module load singularity  # or apptainer
+module load singularity
 
 cd /path/to/ProjectNew
 
-# Option 1: Run with local Python (if all deps installed)
+# Option 1: Run with local Python from module environment
 python examples/scripts/run_json_pipeline.py \
   --csv-folder data/split_1/53深圳市宝安区西乡公园 \
   --image-folder data/split_1/53深圳市宝安区西乡公园/images \
@@ -280,10 +285,10 @@ The output JSON contains all ingested and analyzed data:
 
 ### "ModuleNotFoundError: No module named 'pytorch_lightning'" or similar
 
-You're missing model dependencies. Either:
-1. Install them: `pip install torch transformers pytorch_lightning`
-2. Use `--skip-*` flags and service URLs instead
-3. Run inside a container where deps are pre-installed
+In this HPC environment, do not install dependencies on cluster nodes.
+Use one of these approaches:
+1. Run in Singularity with a prebuilt `.sif` image that already contains deps
+2. Use `--skip-*` flags and service URLs
 
 ### Service connection errors
 
