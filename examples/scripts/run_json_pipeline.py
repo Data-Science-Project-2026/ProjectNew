@@ -17,7 +17,7 @@ Usage examples:
   python examples/scripts/run_json_pipeline.py \\
     --csv-folder data/split_1/... \\
     --image-folder data/split_1/.../images \\
-    --qwen-service-url http://localhost:5002 \\
+    --qwen-service-url http://localhost:8000/v1 \\
     --output results.json \\
     --run-qwen
 
@@ -641,7 +641,7 @@ def main() -> int:
         "--qwen-service-url",
         type=str,
         default=None,
-        help="Qwen service URL (e.g. http://localhost:5002); overrides local model",
+        help="Qwen service URL (e.g. http://localhost:8000/v1); overrides local model",
     )
     
     # Qwen configuration

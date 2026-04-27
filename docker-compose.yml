@@ -95,32 +95,6 @@ services:
       retries: 20
       start_period: 40s
 
-  qwen:
-    build:
-      context: .
-      dockerfile: src/models/Qwen-Container/Dockerfile
-    image: qwen-service
-    depends_on:
-      local-llm:
-        condition: service_healthy
-    ports:
-      - "5002:5000"
-    volumes:
-      - ./src/models/Qwen-Container/images.md:/app/images.md:ro
-      - ./src/models/Qwen-Container/comment.md:/app/comment.md:ro
-    environment:
-      OPENAI_API_KEY: "${OPENAI_API_KEY:-local}"
-      OPENAI_BASE_URL: "${OPENAI_BASE_URL:-http://local-llm:8000/v1}"
-      QWEN_STUB_MODE: "${QWEN_STUB_MODE:-false}"
-      MODEL: "${QWEN_MODEL:-/models/Qwen3.5-4B}"
-      QWEN_IMAGE_INSTRUCTION: "/app/images.md"
-      QWEN_COMMENT_INSTRUCTION: "/app/comment.md"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:5000/ || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
 
   # ── Orchestrator instances ─────────────────────────────────────────
   # Each orchestrator processes its own data split (no file overlap).
@@ -140,8 +114,6 @@ services:
         condition: service_healthy
       bert:
         condition: service_healthy
-      qwen:
-        condition: service_healthy
     volumes:
       - ./data/split_1:/data
       - ./src/models/Qwen-Container/images.md:/app/images.md:ro
@@ -152,7 +124,7 @@ services:
       --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432"
       --bio-service-url http://bioclip:5000
       --bert-service-url http://bert:5000
-      --qwen-service-url http://qwen:5000
+      --qwen-service-url http://local-llm:8000/v1
       --qwen-image-instruction-file /app/images.md
       --qwen-comment-instruction-file /app/comment.md
       --qwen-image-model "Qwen/Qwen3.5-4B"
@@ -172,8 +144,6 @@ services:
         condition: service_healthy
       bert:
         condition: service_healthy
-      qwen:
-        condition: service_healthy
     volumes:
       - ./data/split_2:/data
       - ./src/models/Qwen-Container/images.md:/app/images.md:ro
@@ -184,7 +154,7 @@ services:
       --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432"
       --bio-service-url http://bioclip:5000
       --bert-service-url http://bert:5000
-      --qwen-service-url http://qwen:5000
+      --qwen-service-url http://local-llm:8000/v1
       --qwen-image-instruction-file /app/images.md
       --qwen-comment-instruction-file /app/comment.md
       --qwen-image-model "Qwen/Qwen3.5-4B"
