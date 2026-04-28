@@ -80,6 +80,9 @@ def process_comments(conn, comments_file: Path):
                     continue
                 
                 parsed = record.get("parsed_json", {})
+                if isinstance(parsed, dict) and "text_analysis" in parsed:
+                    parsed = parsed["text_analysis"]
+                    
                 emotions = parsed.get("emotions")
                 influence = parsed.get("influence_of_emotions")
                 if isinstance(emotions, list):
@@ -139,6 +142,13 @@ def process_images(conn, images_file: Path):
                     continue
                 
                 parsed = record.get("parsed_json", {})
+                if isinstance(parsed, dict) and "image_analysis" in parsed:
+                    parsed = parsed["image_analysis"]
+                elif isinstance(parsed, dict) and "image_summary" not in parsed and len(parsed) == 1:
+                    # just in case it wraps it in some other key like "result"
+                    first_key = list(parsed.keys())[0]
+                    if isinstance(parsed[first_key], dict):
+                        parsed = parsed[first_key]
                 
                 def list_to_str(val):
                     if isinstance(val, list): return ",".join(str(e) for e in val)
