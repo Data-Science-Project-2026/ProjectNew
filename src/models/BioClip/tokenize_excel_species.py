@@ -141,17 +141,25 @@ def extract_and_tokenize_from_txt(txt_path: Path, names_out: Path, tokens_out: P
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tokenize species names from XLSX or TXT and save tokens + names")
-    parser.add_argument("input_path", help="Path to input .xlsx or .txt file")
-    parser.add_argument("names_output", help="Path to output .txt file with names")
-    parser.add_argument("tokens_output", help="Path to output .pt file with tokens")
+    parser.add_argument("input_path", help="Path to input .xlsx/.xls or .txt/.tsv file")
+    parser.add_argument(
+        "output1",
+        help=(
+            "For .txt/.tsv input: output .pt path. "
+            "For .xlsx/.xls input: output .txt path for names"
+        ),
+    )
+    parser.add_argument(
+        "output2",
+        nargs="?",
+        help="For .xlsx/.xls input only: output .pt path for tokens",
+    )
     parser.add_argument("--model", default="hf-hub:imageomics/bioclip-2", help="OpenCLIP model identifier")
     parser.add_argument("--name-col", default="scientificName", help="Column name to use for species names in TXT file")
     parser.add_argument("--kingdoms", default=None, help="Comma-separated list of kingdoms to include (e.g. Animalia,Plantae,Insecta)")
     args = parser.parse_args()
 
     inp = Path(args.input_path)
-    names_out = Path(args.names_output)
-    tokens_out = Path(args.tokens_output)
     model_identifier = args.model
 
     # parse kingdoms list if provided
@@ -162,9 +170,20 @@ if __name__ == "__main__":
 
     exclude_phyla = None  # could add CLI arg for this if needed
 
-    if inp.suffix.lower() in (".xlsx", ".xls"):
+    suffix = inp.suffix.lower()
+
+    if suffix in (".xlsx", ".xls"):
+        if args.output2 is None:
+            parser.error("Excel input requires 3 positional arguments: input_path names_output tokens_output")
+        names_out = Path(args.output1)
+        tokens_out = Path(args.output2)
         extract_and_tokenize(inp, names_out, tokens_out, model_identifier, include_kingdoms=kingdoms, exclude_phyla=exclude_phyla, name_col=args.name_col)
-    elif inp.suffix.lower() in (".txt", ".tsv"):
+    elif suffix in (".txt", ".tsv"):
+        if args.output2 is not None:
+            parser.error("TXT/TSV input requires 2 positional arguments: input_path tokens_output")
+        # Keep original text file untouched and only emit token tensor for TXT/TSV mode.
+        names_out = inp
+        tokens_out = Path(args.output1)
         # attach kingdoms to function so it can access the filter
         setattr(extract_and_tokenize_from_txt, "include_kingdoms", kingdoms)
         # attach exclude phyla list to function as well
