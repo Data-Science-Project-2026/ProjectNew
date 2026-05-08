@@ -22,7 +22,7 @@ MODEL_NAME = "Qwen/Qwen3.6-35B-A3B"
 TEMPERATURE = 0.6
 TOP_P = 0.95
 TOP_K = 20
-MAX_TOKENS = 12288
+MAX_TOKENS = 5500
 
 # -----------------------
 # Helper Functions

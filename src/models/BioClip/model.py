@@ -46,6 +46,12 @@ class BioClipModel:
         if isinstance(tok, dict):
             names = tok.get("names")
             tokens = tok.get("tokens")
+            # Allow explicit names-file override so callers can keep output labels
+            # as plain species names even when token prompts include full taxonomy.
+            if species_names_path is not None:
+                if not species_names_path.exists():
+                    raise RuntimeError(f"Names file not found: {species_names_path}")
+                names = species_names_path.read_text(encoding="utf-8").splitlines()
         else:
             tokens = tok
             names_file = species_names_path or tokens_path.with_name("species_names.txt")
@@ -59,6 +65,12 @@ class BioClipModel:
         if names is None or tokens is None:
             raise RuntimeError(
                 f"Token file {tokens_path} missing 'names' or 'tokens' entries"
+            )
+
+        if species_names_path is not None and hasattr(tokens, "shape") and len(names) != tokens.shape[0]:
+            raise RuntimeError(
+                "Names/tokens length mismatch after override "
+                f"({len(names)} vs {tokens.shape[0]}) for {species_names_path}"
             )
 
         if hasattr(tokens, "shape") and len(names) != tokens.shape[0]:
