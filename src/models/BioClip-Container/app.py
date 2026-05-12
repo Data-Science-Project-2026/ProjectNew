@@ -62,8 +62,8 @@ def _ensure_species_assets() -> None:
 try:
     _ensure_species_assets()
     model = BioClipModel(
-        species_tokens_path=SPECIES_TOKENS,
-        species_names_path=SPECIES_NAMES,
+        species_tokens_path=Path(SPECIES_TOKENS),
+        species_names_path=Path(SPECIES_NAMES),
         use_half=USE_HALF,
         text_batch_size=TEXT_BATCH_SIZE,
     )

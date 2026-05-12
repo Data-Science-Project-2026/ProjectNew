@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from contextlib import nullcontext
 from io import BytesIO
 from pathlib import Path
@@ -27,7 +28,18 @@ class BioClipModel:
         self.use_half = use_half
         self.text_batch_size = int(text_batch_size)
 
-        model, _, preprocess = open_clip.create_model_and_transforms(model_name)
+        os.environ.setdefault("HF_HUB_OFFLINE", "1")
+        os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+
+        try:
+            model, _, preprocess = open_clip.create_model_and_transforms(model_name)
+        except Exception as exc:
+            raise RuntimeError(
+                f"Failed to load BioClip model '{model_name}'. "
+                "Ensure the model is available locally and that offline "
+                "model caching is configured (HF_HUB_OFFLINE=1, TRANSFORMERS_OFFLINE=1)."
+            ) from exc
+
         model = model.to(self.device)
         if self.device == "cuda" and self.use_half:
             model.half()

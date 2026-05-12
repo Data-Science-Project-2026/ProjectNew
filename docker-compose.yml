@@ -97,6 +97,17 @@ services:
       start_period: 40s
 
 
+  # ── Orchestrator images ───────────────────────────────────────────
+  # Add a dedicated build target so `docker compose build pipeline-orchestrator`
+  # works even though runtime orchestrator instances are named
+  # orchestrator-1 / orchestrator-2.
+
+  pipeline-orchestrator:
+    build:
+      context: .
+      dockerfile: src/pipeline/Orchestrator-Container/Dockerfile
+    image: pipeline-orchestrator
+
   # ── Orchestrator instances ─────────────────────────────────────────
   # Each orchestrator processes its own data split (no file overlap).
   # Scale by adding more services (orchestrator-3, orchestrator-4, …)

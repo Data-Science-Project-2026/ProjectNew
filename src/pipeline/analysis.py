@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Optional
@@ -54,6 +55,24 @@ def _log_progress_milestone(current: int, total: int, *, label: str, step: int =
         logger.info("%s progress: %d/%d ready", label, current, total)
 
 
+def _resolve_image_path(img_path: str) -> Path | None:
+    p = Path(img_path)
+    if p.is_file():
+        return p
+
+    prefixes = [Path.cwd(), Path("/data"), Path("/input"), Path("/mnt")]
+    env_prefixes = os.environ.get("PIPELINE_IMAGE_PATH_PREFIXES", "")
+    for prefix in [Path(p) for p in env_prefixes.split(os.pathsep) if p.strip()]:
+        if prefix not in prefixes:
+            prefixes.append(prefix)
+
+    for prefix in prefixes:
+        candidate = prefix / img_path.lstrip("/")
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def analyze_images_impl(self, batch_size: int = 1000, max_batches: Optional[int] = None, workers: int = 1) -> int:
     total_processed = 0
     use_json = bool(self.output_json)
@@ -73,8 +92,8 @@ def analyze_images_impl(self, batch_size: int = 1000, max_batches: Optional[int]
                 if not img_path:
                     blobs.append(b"")
                     continue
-                p = Path(img_path)
-                if not p.is_file():
+                p = _resolve_image_path(img_path)
+                if p is None:
                     logger.warning("image file for id %s path %s not found", _, img_path)
                     blobs.append(b"")
                     continue
@@ -87,7 +106,7 @@ def analyze_images_impl(self, batch_size: int = 1000, max_batches: Optional[int]
 
             if self.bio_service_url:
                 payload = {"images": [base64.b64encode(b).decode("ascii") for b in blobs]}
-                r = _post_json_with_retry(f"{self.bio_service_url.rstrip('/')}/analyze_images", payload, timeout_seconds=240)
+                r = _post_json_with_retry(f"{self.bio_service_url.rstrip('/')}/analyze_images", payload, timeout_seconds=600)
                 results = r.json().get("results", [])
             elif self._get_bio_model() is not None:
                 results = self.bio.analyze_image_blobs(blobs, threshold=0.05)
@@ -119,8 +138,8 @@ def analyze_images_impl(self, batch_size: int = 1000, max_batches: Optional[int]
                         db.mark_image_bioclip_failed(conn, image_id=img_id, error="image path is missing")
                         blobs.append(None)
                         continue
-                    p = Path(img_path)
-                    if not p.is_file():
+                    p = _resolve_image_path(img_path)
+                    if p is None:
                         logger.warning("image file for id %s path %s not found", img_id, img_path)
                         db.mark_image_bioclip_failed(conn, image_id=img_id, error=f"image file not found: {img_path}")
                         blobs.append(None)
@@ -143,7 +162,7 @@ def analyze_images_impl(self, batch_size: int = 1000, max_batches: Optional[int]
                 try:
                     if self.bio_service_url:
                         payload = {"images": [base64.b64encode(b).decode("ascii") for b in valid_blobs]}
-                        r = _post_json_with_retry(f"{self.bio_service_url.rstrip('/')}/analyze_images", payload, timeout_seconds=240)
+                        r = _post_json_with_retry(f"{self.bio_service_url.rstrip('/')}/analyze_images", payload, timeout_seconds=600)
                         results = r.json().get("results", [])
                     elif self._get_bio_model() is not None:
                         results = self.bio.analyze_image_blobs(valid_blobs, threshold=0.05)

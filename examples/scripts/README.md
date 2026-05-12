@@ -1,166 +1,194 @@
-# Scripts for Pipeline Execution
+# Pipeline Execution Scripts
 
-This directory contains helper scripts for running the pipeline in various environments.
+Production-ready scripts for running the data science pipeline in HPC (SLURM) environments.
 
-## JSON Pipeline (No PostgreSQL)
+## Overview
 
-For HPC environments without PostgreSQL access, use the JSON pipeline scripts:
+All scripts in this directory are SLURM job submission scripts designed for cluster execution. They use Singularity containers and PostgreSQL for data management. Before running any script, edit the following placeholders:
 
-### `run_json_pipeline.py`
+- `<path>` – absolute path to your project directory
+- `<email>` – email for job notifications
+- `<node>` – specific node name (if required)
+- `<username>` – database username
 
-Main Python script that runs the complete pipeline with JSON output (no database required).
+## Scripts
+
+### Database Setup
+
+#### `start_postgres.sh`
+Starts a PostgreSQL instance in a dedicated SLURM job. Required before any analysis.
+
+**SLURM Config:**
+- Partition: `long`
+- CPUs: 1
+- Memory: 1GB
+- Time: 24 hours (long-running)
+
+**Usage:**
+```bash
+sbatch start_postgres.sh
+```
+
+#### `db_dump.sh`
+Creates a PostgreSQL database dump (backup) for disaster recovery and snapshots.
 
 **Features:**
-- ✅ No PostgreSQL dependency
-- ✅ Supports local models or remote services
-- ✅ Ingests CSV posts and images
-- ✅ Runs optional analysis (BioClip, BERT, Qwen)
-- ✅ Outputs all results to single JSON file
-- ✅ HPC-friendly with batch/parallel processing
+- Full database backup via `pg_dump`
+- Supports remote PostgreSQL connections
+- Output file: `mydb.dump`
 
-**Quick start:**
+**Usage:**
 ```bash
-python examples/scripts/run_json_pipeline.py \
-  --csv-folder data/split_1/park_name \
-  --image-folder data/split_1/park_name/images \
-  --output results.json
+sbatch db_dump.sh
 ```
 
-See `--help` for all options or read [json_pipeline_hpc.md](../documentation/json_pipeline_hpc.md) for detailed guide.
+#### `restore_dump.sh`
+Restores a PostgreSQL database from a dump file.
 
-### `submit_json_pipeline.sh`
+**Usage:**
+```bash
+sbatch restore_dump.sh
+```
 
-Bash helper for submitting pipeline jobs to HPC clusters (SLURM or PBS).
+#### `load_material_postgres.sh`
+Loads initial CSV data and images into PostgreSQL. Run this after `start_postgres.sh` and before analysis scripts.
+
+**Usage:**
+```bash
+sbatch load_material_postgres.sh
+```
+
+---
+
+### Analysis Services
+
+These scripts start model analysis services on compute nodes (GPU or CPU) and interface with the orchestrator.
+
+#### `bioclip_analyze.sh`
+Species identification using BioClip (OpenCLIP-based). Runs on GPU nodes.
+
+**SLURM Config:**
+- Partition: `gpu`
+- GPUs: 1 (V100)
+- CPUs per GPU: 8
+- Memory per CPU: 4GB
+- Time: 24 hours
 
 **Features:**
-- Auto-detects SLURM (sbatch) or PBS (qsub)
-- Generates job scripts with appropriate directives
-- Supports all pipeline options
-- Loads `python` via environment modules in job scripts
-- Optional Singularity execution via `--singularity-image`
-- Can do dry-run (--dry-run) to preview without submitting
+- Analyzes images for species presence/detection
+- Stores results in PostgreSQL
+- Suitable for biodiversity monitoring
 
-**Quick start:**
+**Usage:**
 ```bash
-./examples/scripts/submit_json_pipeline.sh \
-  --csv-folder data/split_1/park_name \
-  --image-folder data/split_1/park_name/images \
-  --output results.json \
-  --singularity-image /path/to/pipeline.sif \
-  --time 04:00:00 \
-  --cpus 4 \
-  --memory 32G
+sbatch bioclip_analyze.sh
 ```
 
-## Other Scripts
+#### `bert_analyze.sh`
+Sentiment and psychological state analysis using BERT. Runs on CPU nodes.
 
-### `pipeline_to_json.py`
+**SLURM Config:**
+- Partition: `long`
+- CPUs: 4
+- Memory: 8GB
+- Time: varies
 
-Lightweight helper for quick testing with images and optional service calls. Works directly with image and comment files without CSV ingestion.
+**Features:**
+- Analyzes text comments for sentiment/emotions
+- Scores posts with psychological state indicators
+- Results stored in PostgreSQL
 
-### `run_pipeline_on_node.sh`
-
-Example script for running the pipeline on a single HPC node using Singularity instances. Starts BioClip, BERT, and Qwen as isolated containers and points the orchestrator to them.
-
-### `install_apptainer_runner.sh`
-
-No-install policy helper. It intentionally does not install anything and prints
-guidance to use only `module load python` plus `singularity` with prebuilt SIF images.
-
-### `watch_qwen_progress.sh`
-
-Monitors Qwen model progress in real-time by watching log files.
-
-### `export_results_snapshot.py`
-
-Exports/converts pipeline results from one format to another.
-
-## Recommended Workflow for HPC
-
-No-install policy for this environment:
-- Use only `module load python`
-- Use only `singularity` commands with prebuilt `.sif` images
-- Do not use `pip install`, `apt-get`, or container build steps on cluster nodes
-
-1. **Test locally first:**
-   ```bash
-   python examples/scripts/run_json_pipeline.py \
-     --csv-folder data/... \
-     --image-folder data/.../images \
-     --output test_results.json \
-     --max-posts 20 \
-     --max-images 50
-   ```
-
-2. **Check the output:**
-   ```bash
-   python -c "import json; data=json.load(open('test_results.json')); print(f'Posts: {len(data[\"posts\"])}, Images: {len(data[\"images\"])}')"
-   ```
-
-3. **Submit to cluster:**
-   ```bash
-   ./submit_json_pipeline.sh \
-     --csv-folder data/split_1/... \
-     --image-folder data/split_1/.../images \
-     --output results.json \
-     --cpus 8 \
-     --memory 64G
-   ```
-
-4. **Monitor job:**
-   ```bash
-   # SLURM
-   squeue -u $USER
-   tail -f results_*.log
-   
-   # PBS
-   qstat -u $USER
-   tail -f results_*.log
-   ```
-
-## Environment Variables
-
-These can be set to change pipeline behavior:
-
+**Usage:**
 ```bash
-# Skip local model loading (use services instead)
-export SKIP_BIO=1
-export SKIP_BERT=1
-export SKIP_QWEN=1
-
-# Set batch size
-export BATCH_SIZE=500
-
-# Set worker threads
-export WORKERS=4
-
-python examples/scripts/run_json_pipeline.py --csv-folder ... --output ...
+sbatch bert_analyze.sh
 ```
 
-## Troubleshooting
+#### `qwen_analyze.sh`
+Advanced multimodal analysis using Qwen LLM (images + text).
 
-**"ModuleNotFoundError: No module named..."**
-- In this HPC environment, do not install dependencies.
-- Use `--skip-*` flags and service URLs, or run with `--singularity-image`.
+**Features:**
+- Detailed image descriptions
+- Comment understanding and summarization
+- Hybrid analysis combining vision and language
+- Results stored in PostgreSQL
 
-**Service connection errors**
-- Ensure services are running and ports are accessible
-- Check firewall rules on HPC cluster
-- Use `--bio-service-url http://localhost:5000` for local containers
+**Usage:**
+```bash
+sbatch qwen_analyze.sh
+```
 
-**Out of memory**
-- Reduce `--batch-size` (try 100 or 500)
-- Reduce `--max-images` or `--max-posts`
-- Use `--workers 1` to reduce parallelism
+---
 
-**Slow processing**
-- Increase `--workers` for more threads
-- Increase `--cpus` in job submission
-- Use `--batch-size` appropriate for your hardware
+## Workflow Example
 
-## Documentation
+1. **Start PostgreSQL (required once per session):**
+   ```bash
+   sbatch start_postgres.sh
+   watch squeue  # wait for job to complete
+   ```
 
-- [JSON Pipeline HPC Guide](../../documentation/json_pipeline_hpc.md) - Detailed guide for HPC
-- [Pipeline Architecture](../../documentation/pipeline.md) - Overall pipeline design
-- [Apptainer Setup](../../documentation/apptainer.md) - Building containers for HPC
-- [Database Setup](../../documentation/database.md) - For loading results into PostgreSQL (optional)
+2. **Load data:**
+   ```bash
+   sbatch load_material_postgres.sh
+   ```
+
+3. **Run analysis (parallel or sequential):**
+   ```bash
+   sbatch bioclip_analyze.sh
+   sbatch bert_analyze.sh
+   sbatch qwen_analyze.sh
+   ```
+
+4. **Backup results:**
+   ```bash
+   sbatch db_dump.sh
+   ```
+
+---
+
+## Environment Configuration
+
+Edit the following in each script before submission:
+
+- `module load Python cuDNN` – required modules for your cluster
+- `source ../venv/bin/activate` – path to virtual environment
+- `PGDATA`, `SOCKETDIR` – PostgreSQL data directories
+- `--nodelist=<node>` – specific node allocation (optional)
+- `--mail-user=<email>` – notification email
+
+---
+
+## Monitoring
+
+Check job status:
+```bash
+squeue -u $USER
+```
+
+View logs:
+```bash
+tail -f logs/dsp2026-*.txt
+```
+
+---
+
+## Database Troubleshooting
+
+**PostgreSQL won't start:**
+- Check `postmaster.pid` for stale processes
+- Verify `$PGDATA` directory exists and is writable
+- Check PostgreSQL logs in `$PGDATA/pg_log`
+
+**Connection issues:**
+- Ensure `start_postgres.sh` completed successfully
+- Verify socket directory: `$SOCKETDIR`
+- Check firewall/networking between nodes
+
+---
+
+## Performance Notes
+
+- **BioClip** (GPU) is the longest-running analysis (~hours for large datasets)
+- **BERT** (CPU) completes faster (~minutes to hours)
+- **Qwen** (LLM) depends on model size and response time
+- Run in parallel (sbatch multiple scripts) for fastest throughput
