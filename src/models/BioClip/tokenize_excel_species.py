@@ -6,6 +6,10 @@ import torch
 import open_clip
 
 
+DEFAULT_MODEL_NAME = "ViT-L-14"
+DEFAULT_MODEL_CHECKPOINT = Path("open_clip_pytorch_model.bin")
+
+
 def _write_names_file(names_out: Path, names: list[str], source_path: Path | None = None) -> None:
     # If caller points names output at the same input file, keep the file untouched.
     if source_path is not None:
@@ -139,9 +143,28 @@ def extract_and_tokenize_from_txt(txt_path: Path, names_out: Path, tokens_out: P
 
     torch.save({"names": names, "tokens": token_tensor}, tokens_out)
 
+
+def validate_local_model_weights(model_name: str, checkpoint_path: Path, allow_remote_model: bool) -> None:
+    if model_name.startswith("hf-hub:") and not allow_remote_model:
+        raise RuntimeError(
+            "Remote hf-hub model loading is disabled. "
+            "Use --model ViT-L-14 (or another local architecture) with --model-checkpoint."
+        )
+
+    if not checkpoint_path.exists():
+        raise FileNotFoundError(
+            f"Local checkpoint not found: {checkpoint_path}"
+        )
+
+    # Validate model/checkpoint compatibility once up-front.
+    open_clip.create_model_and_transforms(
+        model_name,
+        pretrained=str(checkpoint_path),
+    )
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tokenize species names from XLSX or TXT and save tokens + names")
-    parser.add_argument("input_path", help="Path to input .xlsx/.xls or .txt/.tsv file")
+    parser.add_argument("input_path", help="Path to input .xlsx or .txt file")
     parser.add_argument(
         "output1",
         help=(
@@ -154,13 +177,30 @@ if __name__ == "__main__":
         nargs="?",
         help="For .xlsx/.xls input only: output .pt path for tokens",
     )
-    parser.add_argument("--model", default="hf-hub:imageomics/bioclip-2", help="OpenCLIP model identifier")
+    parser.add_argument("--model", default=DEFAULT_MODEL_NAME, help="OpenCLIP model identifier")
+    parser.add_argument(
+        "--model-checkpoint",
+        default=str(DEFAULT_MODEL_CHECKPOINT),
+        help="Path to local OpenCLIP checkpoint (used to validate architecture compatibility)",
+    )
+    parser.add_argument(
+        "--allow-remote-model",
+        action="store_true",
+        help="Allow hf-hub model identifiers. Disabled by default.",
+    )
     parser.add_argument("--name-col", default="scientificName", help="Column name to use for species names in TXT file")
     parser.add_argument("--kingdoms", default=None, help="Comma-separated list of kingdoms to include (e.g. Animalia,Plantae,Insecta)")
     args = parser.parse_args()
 
     inp = Path(args.input_path)
     model_identifier = args.model
+    model_checkpoint = Path(args.model_checkpoint)
+
+    validate_local_model_weights(
+        model_name=model_identifier,
+        checkpoint_path=model_checkpoint,
+        allow_remote_model=args.allow_remote_model,
+    )
 
     # parse kingdoms list if provided
     if args.kingdoms:
@@ -170,20 +210,20 @@ if __name__ == "__main__":
 
     exclude_phyla = None  # could add CLI arg for this if needed
 
-    suffix = inp.suffix.lower()
-
-    if suffix in (".xlsx", ".xls"):
+    if inp.suffix.lower() in (".xlsx", ".xls"):
         if args.output2 is None:
             parser.error("Excel input requires 3 positional arguments: input_path names_output tokens_output")
         names_out = Path(args.output1)
         tokens_out = Path(args.output2)
         extract_and_tokenize(inp, names_out, tokens_out, model_identifier, include_kingdoms=kingdoms, exclude_phyla=exclude_phyla, name_col=args.name_col)
-    elif suffix in (".txt", ".tsv"):
+    elif inp.suffix.lower() in (".txt", ".tsv"):
         if args.output2 is not None:
-            parser.error("TXT/TSV input requires 2 positional arguments: input_path tokens_output")
-        # Keep original text file untouched and only emit token tensor for TXT/TSV mode.
-        names_out = inp
-        tokens_out = Path(args.output1)
+            names_out = Path(args.output1)
+            tokens_out = Path(args.output2)
+        else:
+            # Simple TXT/TSV mode: keep input names file unchanged and only write tokens.
+            names_out = inp
+            tokens_out = Path(args.output1)
         # attach kingdoms to function so it can access the filter
         setattr(extract_and_tokenize_from_txt, "include_kingdoms", kingdoms)
         # attach exclude phyla list to function as well

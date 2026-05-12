@@ -188,6 +188,16 @@ Important runtime notes:
   local testing (see `docker-compose.yml`). If you have larger GPUs you
   can omit `USE_HALF` for best accuracy.
 
+- BioClip offline loading: the orchestrator supports loading a local
+  OpenCLIP checkpoint file so no Hugging Face access is required at runtime.
+  Use (without flag, default path = "src/models/BioClip/open_clip_pytorch_model.bin")
+
+```powershell
+python src/pipeline/orchestrator.py \
+  --bio-model-checkpoint /path/to/bioclip_checkpoint.pt \
+  analyze --batch-size 10 --workers 1
+```
+
 [Species indentification documentation](./documentation/species_identification.md)
 
 [Sentiment analysis documentation](./documentation/sentiment_analysis.md)

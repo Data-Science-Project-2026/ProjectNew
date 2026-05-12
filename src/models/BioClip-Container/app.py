@@ -25,6 +25,14 @@ def health():
 SPECIES_TOKENS = os.environ.get("SPECIES_TOKENS_PATH", str(BIOCLIP_DIR / "species_tokens_latin.pt"))
 SPECIES_NAMES = os.environ.get("SPECIES_NAMES_PATH", str(BIOCLIP_DIR / "species_names_latin.txt"))
 SPECIES_SOURCE_XLSX = os.environ.get("SPECIES_SOURCE_XLSX", str(BIOCLIP_DIR / "Species_China.xlsx"))
+BIO_MODEL_NAME = os.environ.get("BIO_MODEL_NAME", "ViT-L-14")
+BIO_MODEL_CHECKPOINT_PATH = os.environ.get(
+    "BIO_MODEL_CHECKPOINT_PATH",
+    str(BIOCLIP_DIR / "open_clip_pytorch_model.bin"),
+)
+BIO_ALLOW_REMOTE_MODEL = bool(
+    os.environ.get("BIO_ALLOW_REMOTE_MODEL", "0").lower() in ("1", "true", "yes")
+)
 USE_HALF = bool(os.environ.get("USE_HALF", "False").lower() in ("1", "true"))
 TEXT_BATCH_SIZE = int(os.environ.get("TEXT_BATCH_SIZE", 4048))
 
@@ -64,6 +72,9 @@ try:
     model = BioClipModel(
         species_tokens_path=Path(SPECIES_TOKENS),
         species_names_path=Path(SPECIES_NAMES),
+        model_name=BIO_MODEL_NAME,
+        model_checkpoint_path=BIO_MODEL_CHECKPOINT_PATH,
+        allow_remote_model=BIO_ALLOW_REMOTE_MODEL,
         use_half=USE_HALF,
         text_batch_size=TEXT_BATCH_SIZE,
     )

@@ -27,6 +27,11 @@ services:
     environment:
       USE_HALF: "true"
       TEXT_BATCH_SIZE: "512"
+      BIO_MODEL_NAME: "ViT-L-14"
+      BIO_MODEL_CHECKPOINT_PATH: "/app/src/models/BioClip/open_clip_pytorch_model.bin"
+      BIO_ALLOW_REMOTE_MODEL: "0"
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
     deploy:
       resources:
         reservations:

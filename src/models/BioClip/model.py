@@ -17,9 +17,11 @@ class BioClipModel:
     def __init__(
         self,
         *,
-        species_tokens_path: Path,
-        species_names_path: Path | None = None,
-        model_name: str = "hf-hub:imageomics/bioclip-2",
+        species_tokens_path: Path | str,
+        species_names_path: Path | str | None = None,
+        model_name: str = "ViT-L-14",
+        model_checkpoint_path: Path | str | None = None,
+        allow_remote_model: bool = False,
         device: str | None = None,
         use_half: bool = False,
         text_batch_size: int = 2024,
@@ -30,26 +32,56 @@ class BioClipModel:
 
         os.environ.setdefault("HF_HUB_OFFLINE", "1")
         os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+        
+        tokens_path = Path(species_tokens_path)
+        names_path = Path(species_names_path) if species_names_path is not None else None
+        checkpoint_path = Path(model_checkpoint_path) if model_checkpoint_path is not None else None
 
-        try:
-            model, _, preprocess = open_clip.create_model_and_transforms(model_name)
-        except Exception as exc:
+        if model_name.startswith("hf-hub:") and not allow_remote_model:
             raise RuntimeError(
-                f"Failed to load BioClip model '{model_name}'. "
-                "Ensure the model is available locally and that offline "
-                "model caching is configured (HF_HUB_OFFLINE=1, TRANSFORMERS_OFFLINE=1)."
-            ) from exc
+                "Remote hf-hub model loading is disabled by default. "
+                "Use a local model name (for example ViT-L-14) with model_checkpoint_path, "
+                "or set allow_remote_model=True explicitly."
+            )
 
+        model, _, preprocess = self._load_open_clip_model(
+            model_name=model_name,
+            model_checkpoint_path=checkpoint_path,
+        )
         model = model.to(self.device)
         if self.device == "cuda" and self.use_half:
             model.half()
         model.eval()
 
-        names, tokens = self._load_tokens(species_tokens_path, species_names_path)
+        names, tokens = self._load_tokens(tokens_path, names_path)
         self.model = model
         self.preprocess = preprocess
         self.names = names
         self.tokens = tokens
+
+    def _load_open_clip_model(
+        self, *, model_name: str, model_checkpoint_path: Path | None
+    ):
+        if model_checkpoint_path is not None:
+            if not model_checkpoint_path.exists():
+                raise RuntimeError(
+                    f"Local BioCLIP checkpoint not found: {model_checkpoint_path}"
+                )
+            return open_clip.create_model_and_transforms(
+                model_name,
+                pretrained=str(model_checkpoint_path),
+            )
+
+        try:
+            return open_clip.create_model_and_transforms(model_name)
+        except Exception as exc:
+            if model_name.startswith("hf-hub:"):
+                raise RuntimeError(
+                    "Failed to load BioCLIP from Hugging Face. "
+                    "In offline environments, use a local model name and pass model_checkpoint_path "
+                    "to a local checkpoint file."
+                ) from exc
+            raise
 
     def _load_tokens(
         self, tokens_path: Path, species_names_path: Path | None

@@ -339,6 +339,18 @@ def main() -> None:
     qwen_arg.add_argument("--qwen-image-instruction-file", default=None)
     qwen_arg.add_argument("--qwen-comment-instruction-file", default=None)
 
+    bio_arg = parser.add_argument_group("bioclip configuration")
+    bio_arg.add_argument(
+        "--bio-model-name",
+        default="ViT-L-14",
+        help="OpenCLIP model architecture name used with a local checkpoint",
+    )
+    bio_arg.add_argument(
+        "--bio-model-checkpoint",
+        default="src/models/BioClip/open_clip_pytorch_model.bin",
+        help="Path to a local BioCLIP checkpoint file for offline loading",
+    )
+
     db_arg = parser.add_argument_group("database")
     db_arg.add_argument("--db-dsn", default=None, help="Postgres DSN or use PIPELINE_DATABASE_DSN env var")
     db_arg.add_argument("--output-json", default=None, help="path to write JSON results; disables DB usage")
@@ -364,6 +376,8 @@ def main() -> None:
         bio_clip_args={
             "species_tokens_path": Path("src/models/BioClip/species_tokens_latin.pt"),
             "species_names_path": Path("src/models/BioClip/species_names_latin.txt"),
+            "model_name": args.bio_model_name,
+            "model_checkpoint_path": Path(args.bio_model_checkpoint) if args.bio_model_checkpoint else None,
             "use_half": False,
             "text_batch_size": 4048,
         },
