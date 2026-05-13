@@ -55,8 +55,18 @@ Custom Heatmaps: High-fidelity species distribution maps served through a second
 ---
 
 ## Setup and Access
-Launch the System: Run docker-compose up -d in the project root.
 
+To restore the species data and Metabase dashboard configurations:
+
+1. Start the containers:
+   ```bash
+   docker-compose up -d
+   ```
+2. Import the binary dump file:
+   ```bash
+   docker exec -i my_web_project-db-1 pg_restore -U dashboard -d dashboard_database < init_dashboard.dump
+   ```
+*Note: We use the `.dump` format (PostgreSQL Custom Format) for better compression and faster restoration.*
 Access Dashboard: Open your browser and navigate to http://localhost:3000.
 
 Sync Data: Go to Admin Settings -> Databases and click "Sync database schema now" to ensure all imported data is visible.
