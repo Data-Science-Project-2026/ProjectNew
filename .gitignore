@@ -37,3 +37,4 @@ data/
 models/
 dumps/
 part_aa
+*.pkl

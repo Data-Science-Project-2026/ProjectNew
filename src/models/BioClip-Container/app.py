@@ -1,5 +1,6 @@
 import os
 import base64
+import logging
 import subprocess
 import sys
 from pathlib import Path
@@ -9,6 +10,12 @@ from flask import Flask, request, jsonify
 # image we will copy the entire workspace and set PYTHONPATH accordingly.
 
 from models.BioClip.model import BioClipModel
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -69,6 +76,14 @@ def _ensure_species_assets() -> None:
 # catch the FileNotFoundError and fall back to a dummy instance.
 try:
     _ensure_species_assets()
+    logger.info(
+        "Starting BioClip model with species_tokens=%s species_names=%s species_xlsx=%s checkpoint=%s allow_remote=%s",
+        SPECIES_TOKENS,
+        SPECIES_NAMES,
+        SPECIES_SOURCE_XLSX,
+        BIO_MODEL_CHECKPOINT_PATH,
+        BIO_ALLOW_REMOTE_MODEL,
+    )
     model = BioClipModel(
         species_tokens_path=Path(SPECIES_TOKENS),
         species_names_path=Path(SPECIES_NAMES),
@@ -81,13 +96,15 @@ try:
 except FileNotFoundError as e:
     # warn and create a stub object with minimal API so the service
     # can start (analysis endpoints will return empty results).
-    import logging
-    logging.warning("BioClip tokens not found: %s; starting stub model", e)
+    logger.warning("BioClip tokens not found: %s; starting stub model", e)
 
     class _Stub:
         def analyze_image_blobs(self, blobs, threshold=0.05):
             return [(None, 0.0) for _ in blobs]
     model = _Stub()
+except Exception as e:
+    logger.exception("BioClip initialization failed")
+    raise
 
 @app.route("/analyze_images", methods=["POST"])
 def analyze_images():

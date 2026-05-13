@@ -67,6 +67,12 @@ These scripts start model analysis services on compute nodes (GPU or CPU) and in
 #### `bioclip_analyze.sh`
 Species identification using BioClip (OpenCLIP-based). Runs on GPU nodes.
 
+Before running the script these environmental variables must be given:
+
+export SPECIES_TOKENS_PATH=/app/src/models/BioClip/species_tokens_latin.pt
+export SPECIES_NAMES_PATH=/app/src/models/BioClip/species_names_latin.txt
+export BIO_MODEL_CHECKPOINT_PATH=/app/src/models/BioClip/open_clip_pytorch_model.bin
+
 **SLURM Config:**
 - Partition: `gpu`
 - GPUs: 1 (V100)
