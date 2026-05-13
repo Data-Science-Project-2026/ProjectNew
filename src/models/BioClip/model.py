@@ -58,6 +58,23 @@ class BioClipModel:
         self.preprocess = preprocess
         self.names = names
         self.tokens = tokens
+        self.text_features = self._build_text_feature_cache()
+
+    def _build_text_feature_cache(self) -> torch.Tensor:
+        """Compute normalized text embeddings once at startup for fast inference."""
+        features_chunks: list[torch.Tensor] = []
+        total_text = self.tokens.shape[0]
+
+        with torch.no_grad():
+            for i in range(0, total_text, self.text_batch_size):
+                t_batch = self.tokens[i : i + self.text_batch_size].to(self.device)
+                chunk = self.model.encode_text(t_batch)
+                chunk = chunk / chunk.norm(dim=-1, keepdim=True)
+                features_chunks.append(chunk)
+
+            features = torch.cat(features_chunks, dim=0)
+
+        return features
 
     def _load_open_clip_model(
         self, *, model_name: str, model_checkpoint_path: Path | None
@@ -166,31 +183,7 @@ class BioClipModel:
         with torch.no_grad(), ctx:
             image_features = self.model.encode_image(image_batch)
             image_features = image_features / image_features.norm(dim=-1, keepdim=True)
-
-            logits_chunks = []
-            total_text = self.tokens.shape[0]
-            total_chunks = (total_text + self.text_batch_size - 1) // self.text_batch_size
-            next_report_pct = 10
-            for chunk_idx, i in enumerate(range(0, total_text, self.text_batch_size), start=1):
-                t_batch = self.tokens[i : i + self.text_batch_size].to(self.device)
-                text_features = self.model.encode_text(t_batch)
-                text_features = text_features / text_features.norm(dim=-1, keepdim=True)
-                logits_chunk = (100.0 * image_features @ text_features.T).cpu()
-                logits_chunks.append(logits_chunk)
-                del text_features, t_batch
-                if self.device == "cuda":
-                    torch.cuda.empty_cache()
-
-                if total_chunks:
-                    percent = int((chunk_idx / total_chunks) * 100)
-                    if percent >= next_report_pct:
-                        print(
-                            f"Token comparison progress: {percent}% "
-                        )
-                        while percent >= next_report_pct:
-                            next_report_pct += 10
-
-            logits = torch.cat(logits_chunks, dim=-1)
+            logits = (100.0 * image_features @ self.text_features.T).cpu()
             probs = logits.softmax(dim=-1)
 
         valid_results: list[tuple[list[str], list[float]]] = []
