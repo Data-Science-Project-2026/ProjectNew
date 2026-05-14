@@ -1,40 +1,44 @@
 # Pipeline
 
+
 ## Data Flow Diagram
 
 ```mermaid
 flowchart LR
- subgraph Databases
+ subgraph Inputs
   TextDB[(Texts)]
   ImageDB[(Image metadata)]
  end
 
- TextDB -->|texts| BERT[BeRT]
- BERT -->Postgres[(Postgres DB)]
+ TextDB --> BERT[BERT sentiment]
+ TextDB --> QwenText[Qwen3.5 text analysis]
 
- ImageDB --> YOLO[YOLO]
- ImageDB -->|plants/animals| BioCLIP[BioCLIP]
- YOLO -->|humans| Qwen[Qwen]
+ ImageDB --> BioCLIP[BioCLIP]
+ ImageDB --> QwenVision[Qwen3.5 image analysis]
 
- BioCLIP -->Postgres
- Qwen -->Postgres
+ BioCLIP --> SpeciesFusion[Species fusion]
+ QwenVision --> SpeciesFusion
 
- Postgres -->Dashboard[Dashboard]
+ QwenVision --> ActivityHead[Human activity]
+ QwenVision --> ImageContext[Scene metadata]
+
+ BERT --> SentimentFusion[Sentiment fusion]
+ QwenText --> SentimentFusion
+
+ SpeciesFusion --> Postgres[(Postgres DB)]
+ ActivityHead --> Postgres
+ ImageContext --> Postgres
+ SentimentFusion --> Postgres
+
+ Postgres --> Dashboard[Dashboard]
 
  classDef db fill:#f9f,stroke:#333,stroke-width:1px;
  class TextDB,ImageDB,Postgres db;
 ```
 
 ### Orchestrator
-
 A new Python module (`src/pipeline/orchestrator.py`) ties everything together.  It
 is capable of:
-
-> **Note:** the original project used a separate SQLite database for
-> ingestion.  That database is now obsolete; the orchestrator works exclusively
-> with the single PostgreSQL instance described below.  SQLite support remains
-> in the `database` package only for backwards-compatibility in tests and
-> import utilities.
 
 * ingesting CSV files and tracking their progress in a dedicated `ingestion_status`
   table; each filename is updated with `pending`/`processing`/`done`/`failed`
@@ -42,8 +46,8 @@ is capable of:
 * ingesting arbitrary image folders (recursively), storing only the file path
   and an optional username hash derived from the filename;
 * calling the `BioClipModel` in batches by re-opening the files from disk and
-  writing species/confidence to `image_species`;
-* invoking the sentiment analyzer on text and writing Bert outputs into
+  updating the `images` table with species/confidence;
+* invoking the sentiment analyzer on text and writing a `sentiment_score` into
   `posts`; posts also record a `username_hash` for privacy along with city,
   park, rating, timestamp, and original text;
 * invoking the Qwen service on individual images and comments independently; the
@@ -53,41 +57,135 @@ is capable of:
 The database schema now reflects both hashed usernames and the ingestion status
 mechanism described earlier.
 
-In addition, each model path has per-row execution status tracking:
+Inside the orchestrator, the planned `analyze` flow is:
 
-* posts/Bert: `bert_status` (`pending` -> `processing` -> `ready` or `failed`)
-* posts/Qwen: `qwen_status` (`pending` -> `processing` -> `ready` or `failed`)
-* images/BioClip: `bioclip_status` (`pending` -> `processing` -> `ready` or `failed`)
-* images/Qwen: `qwen_status` (`pending` -> `processing` -> `ready` or `failed`)
+1. **Ingestion**
+  * `upload` writes post metadata and image links in one pass.
+  * Image rows store original source paths and are analyzed in place.
 
-If any row remains in `processing` for over 1 hour, it is returned to `pending`
-before the next analyzer claim.
+2. **BioCLIP first pass on images**
+   * `Pipeline.analyze_images()` fetches unprocessed images.
+   * BioCLIP produces candidate plant/animal labels and confidence values.
+   * These outputs act as the structured species baseline.
 
-### Dockerized model services
+3. **Qwen3.5 image pass on the same images**
+   * The orchestrator sends each image to the Qwen image prompt contract from `examples/images.md`.
+   * Qwen returns:
+     * `image_summary`
+     * `visible_species_in_image`
+     * `landscape_elements`
+     * `human_activities_in_image`
+     * `plants_detected`
+     * `animals_detected`
+     * `human_activities_detected`
 
-To decouple analysis from the orchestrator we also provide lightweight HTTP
-services for each model.  These services are packaged as Docker images and
-live in sibling subdirectories of the model code:
+4. **Species fusion stage**
+   * BioCLIP and Qwen outputs are normalized to Latin scientific names where possible.
+   * Similarity between both model outputs is computed.
+   * Final fused species confidence is derived from:
+     * BioCLIP confidence,
+     * Qwen confidence,
+     * taxonomic / label similarity.
 
-* `src/models/BioClip-Container` – exposes `/analyze_images`
-* `src/models/Bert-Container` (sentiment/BERT) – exposes `/analyze_posts`
-* `src/models/Qwen-Container` – exposes `/analyze_images` and `/analyze_users`
+5. **Human activity stage**
+   * Human activity recognition relies on Qwen only.
+   * Final activity labels are written directly from the Qwen image response.
 
-Each service wraps the existing Python classes, accepts a JSON payload, and
-returns results in the same format used by the orchestrator's ``service_url``
-mechanism.  When running the orchestrator you may either run the models
-locally (the default) or point at one or more of these containers using the
-``bio_service_url``, ``sentiment_service_url`` and ``qwen_service_url``
-arguments.
+6. **BERT first pass on comments**
+   * `Pipeline.analyze_posts()` runs BERT over each comment.
+   * BERT provides a fast and stable sentiment baseline.
 
-Results are recorded in Postgres but not in the images table itself; BioCLIP
-species labels live in ``image_species`` while Qwen-image structured outputs
-are consolidated in ``image_qwen_detail`` (one row per image).
+7. **Qwen3.5 comment pass**
+   * The orchestrator sends each comment to the Qwen text prompt contract from `examples/comment.md`.
+   * Qwen returns:
+     * `emotions`
+     * `influence_of_emotions`
+     * `text_species_mentions`
+     * `feeling_correlated_to_text_species`
+     * `text_activities_or_facilities`
+     * `feeling_correlated_to_text_activities_or_facilities`
+     * `comment_sentiment`
 
-The BioClip container additionally ships a command‑line analyzer (``python -m
-models.BioClip.analyzer``) which can be used directly inside the image to poll
-a Postgres database and score pending images.  This allows the same
-container to function either as a web service or as a standalone worker.
+8. **Sentiment fusion stage**
+   * BERT and Qwen sentiment scores are compared.
+   * The final post-level sentiment score is a fused value.
+   * Agreement between the two models is used as confidence / consistency signal.
+
+## Orchestrator architecture
+
+To support the notebook-style logic in production, the orchestrator has the following responsibilities:
+
+### Image-side methods
+
+* `analyze_images()`
+  * produce BioCLIP species candidates;
+* `run_qwen_image_analysis()`
+  * run the `images.md` prompt per image;
+* `fuse_species_results()`
+  * merge BioCLIP + Qwen species outputs into final species records;
+* `persist_human_activity_results()`
+  * persist Qwen-only human activity labels.
+
+### Text-side methods
+
+* `analyze_posts()`
+  * produce BERT sentiment baseline;
+* `run_qwen_comment_analysis()`
+  * run the `comment.md` prompt per post/comment;
+* `fuse_sentiment_results()`
+  * merge BERT + Qwen sentiment into final post sentiment.
+
+## Service/API split
+
+Under the target architecture, the Qwen service exposes two logical inference modes:
+
+* `/analyze_images`
+  * input: one or more images;
+  * prompt contract: `examples/images.md`;
+  * used for object/scene understanding, species verification, and human activity.
+
+* `/analyze_users`
+  * input: one or more comments;
+  * prompt contract: `examples/comment.md`;
+  * used for text analysis and Qwen sentiment.
+
+## CLI Configuration
+
+The orchestrator supports separate configuration for image and text prompts, for example:
+
+* `--qwen-image-instruction-file`
+* `--qwen-comment-instruction-file`
+* `--qwen-image-model`
+* `--qwen-text-model`
+
+If the deployment uses one OpenAI-compatible endpoint for both tasks, the model names may still point to the same backend, but the prompt contracts remain separate.
+
+## Persistence strategy
+
+The database roles in the target design are:
+
+* `post_qwen_detail`
+  * stores structured text analysis, emotional influences, and identified textual entities directly to the post.
+* `image_qwen_detail`
+  * stores consolidated Qwen image-side structured outputs such as summary, visible species, landscape, human activities, and structured detections (`plants_detected`, `animals_detected`, `human_activities_detected`);
+* `image_species`
+  * stores BioCLIP/fused species result, not Qwen-only raw output;
+* `posts.bert_sentiment_score`
+  * stores BERT baseline;
+* `posts.qwen_sentiment_score`
+  * stores Qwen sentiment;
+* `posts.sentiment_score`
+  * stores the fused final sentiment score.
+
+## Dockerized model services
+
+To decouple analysis from the orchestrator we provide lightweight HTTP services for each model. These services are packaged as Docker images and live in sibling subdirectories of the model code:
+
+* `src/models/BioClip-Container` – species candidate generation
+* `src/models/Bert-Container` – baseline sentiment scoring
+* `src/models/Qwen-Container` – planned image/comment/user Qwen inference service
+
+Each service wraps the existing Python classes, accepts a JSON payload, and returns results in the same format used by the orchestrator service URL mechanism.
 
 #### Building and running
 
@@ -96,6 +194,10 @@ container to function either as a web service or as a standalone worker.
 cd src/models/BioClip-Container && docker build -t bioclip-service .
 cd ../Qwen-Container && docker build -t qwen-service .
 cd ../Bert-Container && docker build -t bert-service .
+
+# run Qwen3.5  background serve(need to customize)
+
+sudo docker run --runtime nvidia --gpus all     -e HF_TOKEN     -e LD_LIBRARY_PATH="/usr/local/nvidia/lib64:/usr/lib/x86_64-linux-gnu:/usr/local/cuda/lib64"     -v ~/.cache/huggingface:/root/.cache/huggingface     --ipc=host     -p 8000:8000     vllm/vllm-openai:cu130-nightly     Qwen/Qwen3.5-4B     --max-model-len 8192    --gpu-memory-utilization 0.7     --kv-cache-dtype fp8     --max-num-batched-tokens 2048
 
 # run them on the default ports
 docker run -p 5000:5000 bioclip-service
@@ -113,8 +215,7 @@ Once the services are running you can invoke the orchestrator like this:
 python -m pipeline.orchestrator --db-dsn "dbname=mydb" \
   upload --csv-folder /data/csvs --image-folder /data/images
 
-python -m pipeline.orchestrator --db-dsn "dbname=mydb" \
-  analyze \
+python -m pipeline.orchestrator --db-dsn "dbname=mydb" analyze \
   --bio-service-url http://localhost:5000 \
   --bert-service-url http://localhost:5001 \
   --qwen-service-url http://localhost:5002
@@ -132,7 +233,6 @@ docker run --rm -v /data:/data pipeline-orchestrator \
   upload --csv-folder /data/csvs --image-folder /data/images \
   --image-folders /data/extra-images
 
-# when the mounted folder name is generic (for example /input), pass the city explicitly
 docker run --rm -v /input:/input pipeline-orchestrator \
   --db-dsn "dbname=mydb" \
   upload --csv-folder /input/36Chengdu --image-folder /input/36Chengdu --city Chengdu
@@ -167,33 +267,6 @@ python -m pipeline.orchestrator --db-dsn "dbname=..." analyze \
 
 Each command updates `ingestion_status` automatically so you can safely
 re-run failed imports or continue a long job.
-
-### DB-less JSON mode
-
-For quick experiments or CI-friendly runs the orchestrator can run without a
-database and instead write a single JSON file containing the collected
-`posts`, `images` and analysis outputs. To enable this mode pass
-`--output-json /path/to/results.json` on the orchestrator command line. When
-`--output-json` is present the orchestrator will not open database
-connections; instead it accumulates results in-memory and writes the JSON at
-the end of the run.
-
-Example:
-
-```sh
-# ingest posts into results.json (no DB used)
-python -m pipeline.orchestrator --output-json /tmp/results.json \
-  upload --csv-folder /data/csvs --image-folder /data/images
-
-# run analysis and store model outputs in the same (or a new) JSON file
-python -m pipeline.orchestrator --output-json /tmp/results.json analyze \
-  --bio-service-url http://localhost:5000 --bert-service-url http://localhost:5001 --qwen-service-url http://localhost:5002
-```
-
-The JSON schema is intentionally simple and includes top-level keys such as
-`posts`, `images`, `image_analysis`, `post_sentiment`, `image_qwen_detail`
-and `post_qwen_detail` to mirror the data the pipeline would normally
-persist to Postgres.
 
 The same module may also be imported and driven programmatically, allowing for
 more advanced concurrency strategies (e.g. multiple workers each fetching the

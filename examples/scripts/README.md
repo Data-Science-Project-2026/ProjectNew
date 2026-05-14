@@ -69,9 +69,10 @@ Species identification using BioClip (OpenCLIP-based). Runs on GPU nodes.
 
 Before running the script these environmental variables must be given:
 
-export SPECIES_TOKENS_PATH=/app/src/models/BioClip/species_tokens_latin.pt
-export SPECIES_NAMES_PATH=/app/src/models/BioClip/species_names_latin.txt
-export BIO_MODEL_CHECKPOINT_PATH=/app/src/models/BioClip/open_clip_pytorch_model.bin
+- export SPECIES_TOKENS_PATH=/app/src/models/BioClip/species_tokens_latin.pt
+- export SPECIES_NAMES_PATH=/app/src/models/BioClip/species_names_latin.txt
+- export BIO_MODEL_CHECKPOINT_PATH=/app/src/models/BioClip/open_clip_pytorch_model.bin
+
 
 **SLURM Config:**
 - Partition: `gpu`

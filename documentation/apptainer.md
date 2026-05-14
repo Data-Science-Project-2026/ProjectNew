@@ -1,6 +1,8 @@
-Singularity build & run
+# Singularity build & run
 
 This document shows example `singularity` commands for the project containers and a simple Slurm orchestration example.
+
+There are ready made [scripts](../examples/scripts/README.md) to run the models in the University of Helsinki HPC environment.
 
 No-install policy for the target HPC environment:
 - Use prebuilt `.sif` images
@@ -17,13 +19,6 @@ singularity build src/models/Qwen-Container/Qwen.sif src/models/Qwen-Container/S
 singularity build src/pipeline/Orchestrator-Container/Orchestrator.sif src/pipeline/Orchestrator-Container/Singularity.def
 ```
 
-Build images remotely (outside restricted clusters):
-
-```bash
-singularity build --remote src/models/BioClip-Container/BioClip.sif src/models/BioClip-Container/Singularity.def
-# repeat for other .def files
-```
-
 Run a single container (GPU-aware):
 
 ```bash
@@ -38,7 +33,7 @@ Run as background processes (simple approach) — all on a single allocated node
 ```bash
 # start three services in background (adjust binds and --nv as needed)
 singularity exec --nv --bind $PWD:/app --pwd /app src/models/BioClip-Container/BioClip.sif bash -c "PORT=5000 python /app/src/models/BioClip-Container/app.py" &
-singularity exec --nv --bind $PWD:/app --pwd /app src/models/Bert-Container/Bert.sif bash -c "PORT=5001 python /app/src/models/Bert-Container/app.py" &
+singularity exec --bind $PWD:/app --pwd /app src/models/Bert-Container/Bert.sif bash -c "PORT=5001 python /app/src/models/Bert-Container/app.py" &
 singularity exec --bind $PWD:/app --pwd /app src/models/Qwen-Container/Qwen.sif bash -c "PORT=5002 python /app/src/models/Qwen-Container/app.py" &
 
 # wait a few seconds then verify
@@ -109,36 +104,3 @@ singularity exec --bind ${REPO_DIR}:/app --pwd /app ${ORCH_SIF} python -m pipeli
 kill ${BIO_PID} ${BERT_PID} ${QWEN_PID} || true
 wait || true
 ```
-
-Notes & tips
-
-- Proxy/no_proxy: set `NO_PROXY`/`no_proxy` for `127.0.0.1,localhost` to ensure `curl` and Python `requests` do not use the cluster proxy for intra-node calls.
-- Building images requiring GPU libs: base images using `nvidia/cuda` may be large — prefer building on a host with the same CUDA stack or use `docker://` bootstrap so remote builder pulls the base image.
-- If you cannot build SIF locally and `singularity build --remote` is not allowed, ask admins to provide the built SIF files.
-- Port binding: Singularity does not map host ports like Docker; run all services on the same node and use `127.0.0.1:<port>` to reach them from the orchestrator when they share the job allocation.
-- For generic bind targets such as `/input`, pass `--city` during `upload` so `posts.city` is populated from the actual dataset city rather than the mount name.
-- If Slurm isolates network namespaces between tasks, run all services and the orchestrator inside the same allocation/process (as above) or use a single job script to start them.
-
-Further help
-
-If you'd like, I can:
-- generate a `run_pipeline_on_node.sh` file in the repo (ready-to-run), or
-- create CI examples that use `apptainer build --remote` and upload SIF artifacts.
-
-Helper scripts
-
-We provide several helper scripts under `examples/scripts/` to simplify SIF usage and job execution:
-
-- `build_sifs_local.sh` — Build all images locally (root required). Usage:
-
-```bash
-sudo bash examples/scripts/build_sifs_local.sh
-```
-
-- `build_sifs_remote.sh` — Use `apptainer build --remote` to build SIFs without root.
-
-```bash
-bash examples/scripts/build_sifs_remote.sh
-```
-
-`install_apptainer_runner.sh` now serves as a no-install policy reminder and does not install anything.

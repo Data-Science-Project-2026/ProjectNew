@@ -32,6 +32,7 @@ database. For production provide a Postgres DSN via `--db-dsn` or the
 tests and import utilities.
 
 Model execution status is tracked per row in Postgres:
+
 - posts: Bert and Qwen status fields
 - images: BioClip and Qwen status fields
 
@@ -79,25 +80,16 @@ docker compose build bioclip
 docker compose up -d bioclip
 ```
 
-Note: the compose file shipped with the repo exposes model services on
-ports 5000–5002 and Postgres on 5432. The orchestrator service instances
-mount `./data/split_*` so each orchestrator can work on a separate data
-shard.
-
 ### Uploading Data into the Orchestrator
 
-The orchestrator expects input under `/data` inside the container. The
-compose file mounts host `./data/split_1` (and `split_2`) into the
-`orchestrator-1` service so a convenient test is to place files in
-`data/split_1` on the host and run the one‑off orchestrator container.
-
-Example (this repository used `data/split_1` during testing):
+The orchestrator loads csv files containing posts and images to database. It checks all
+the subfolders.
 
 ```powershell
 # ingest posts and images in one step
 docker compose run --rm orchestrator-1 \
   --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
-  upload --csv-folder /data/csvs --image-folder /data/images
+  upload --csv-folder /data --image-folder /data
 
 # run full analysis (BioClip, Bert, Qwen via services)
 docker compose run --rm orchestrator-1 \
@@ -114,10 +106,10 @@ If you want a single step-by-step script for a fresh local run, use:
 # 1) start required services
 docker compose up -d postgres bioclip bert qwen
 
-# 2) import CSV posts and images from mounted split_1 data
+# 2) import CSV posts and images
 docker compose run --rm orchestrator-1 \
   --db-dsn "dbname=mydb user=myuser password=mypass host=postgres port=5432" \
-  upload --csv-folder /data/csvs --image-folder /data/images
+  upload --csv-folder /data --image-folder /data
 
 # 3) run analysis using service containers
 docker compose run --rm orchestrator-1 \
@@ -129,6 +121,7 @@ docker compose run --rm orchestrator-1 \
 ```
 
 Notes:
+
 - Use `upload` for ingestion. It supports `--csv-folder`, optional
   `--image-folder`, and optional extra `--image-folders` values.
 - If the container mount path is generic, such as `/input`, pass `--city`
@@ -206,7 +199,7 @@ python src/pipeline/orchestrator.py \
 
 ## HPC / Apptainer
 
-If you run this project on an HPC cluster where Docker is unavailable, we provide Singularity/Apptainer support and example job scripts. See [documentation/apptainer.md](./documentation/apptainer.md) for build and run instructions and the `examples/scripts/run_pipeline_on_node.sh` helper to start model service instances on a single allocated node.
+If you run this project on an HPC cluster where Docker is unavailable, we provide Singularity support and example job scripts. See [documentation/apptainer.md](./documentation/apptainer.md) for build and run instructions and [example scripts](./examples/scripts/README.md).
 
 Key notes:
 
