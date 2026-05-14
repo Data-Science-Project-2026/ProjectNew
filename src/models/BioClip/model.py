@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import os
+import time
 from contextlib import nullcontext
 from io import BytesIO
 from pathlib import Path
 from typing import Sequence
+import logging
 
 import open_clip
 from PIL import Image, UnidentifiedImageError
 import torch
+
+
+logger = logging.getLogger(__name__)
 
 
 class BioClipModel:
@@ -26,6 +31,7 @@ class BioClipModel:
         use_half: bool = False,
         text_batch_size: int = 2024,
     ) -> None:
+        init_started = time.perf_counter()
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.use_half = use_half
         self.text_batch_size = int(text_batch_size)
@@ -44,35 +50,84 @@ class BioClipModel:
                 "or set allow_remote_model=True explicitly."
             )
 
+        logger.info(
+            "BioClip init started: device=%s use_half=%s text_batch_size=%d model=%s",
+            self.device,
+            self.use_half,
+            self.text_batch_size,
+            model_name,
+        )
+
+        t_model_load = time.perf_counter()
         model, _, preprocess = self._load_open_clip_model(
             model_name=model_name,
             model_checkpoint_path=checkpoint_path,
         )
+        logger.info("BioClip model loaded in %.2fs", time.perf_counter() - t_model_load)
+
+        t_model_move = time.perf_counter()
         model = model.to(self.device)
         if self.device == "cuda" and self.use_half:
             model.half()
         model.eval()
+        logger.info("BioClip model moved to device/eval in %.2fs", time.perf_counter() - t_model_move)
 
+        t_tokens = time.perf_counter()
         names, tokens = self._load_tokens(tokens_path, names_path)
+        logger.info(
+            "BioClip tokens loaded in %.2fs (token_count=%d)",
+            time.perf_counter() - t_tokens,
+            int(tokens.shape[0]),
+        )
         self.model = model
         self.preprocess = preprocess
         self.names = names
         self.tokens = tokens
+
+        t_cache = time.perf_counter()
         self.text_features = self._build_text_feature_cache()
+        logger.info(
+            "BioClip text cache ready in %.2fs (shape=%s)",
+            time.perf_counter() - t_cache,
+            tuple(self.text_features.shape),
+        )
+        logger.info("BioClip init complete in %.2fs", time.perf_counter() - init_started)
 
     def _build_text_feature_cache(self) -> torch.Tensor:
         """Compute normalized text embeddings once at startup for fast inference."""
+        cache_started = time.perf_counter()
         features_chunks: list[torch.Tensor] = []
         total_text = self.tokens.shape[0]
+        total_batches = (total_text + self.text_batch_size - 1) // self.text_batch_size
+
+        logger.info(
+            "Starting text cache build: total_tokens=%d batch_size=%d total_batches=%d",
+            total_text,
+            self.text_batch_size,
+            total_batches,
+        )
 
         with torch.no_grad():
-            for i in range(0, total_text, self.text_batch_size):
+            for batch_idx, i in enumerate(range(0, total_text, self.text_batch_size), start=1):
+                batch_started = time.perf_counter()
                 t_batch = self.tokens[i : i + self.text_batch_size].to(self.device)
                 chunk = self.model.encode_text(t_batch)
                 chunk = chunk / chunk.norm(dim=-1, keepdim=True)
                 features_chunks.append(chunk)
 
+                # Log every batch to make stalls explicit in startup logs.
+                logger.info(
+                    "Text cache batch %d/%d encoded in %.2fs (size=%d, elapsed=%.2fs)",
+                    batch_idx,
+                    total_batches,
+                    time.perf_counter() - batch_started,
+                    int(t_batch.shape[0]),
+                    time.perf_counter() - cache_started,
+                )
+
             features = torch.cat(features_chunks, dim=0)
+
+        logger.info("Text cache build finished in %.2fs", time.perf_counter() - cache_started)
 
         return features
 
