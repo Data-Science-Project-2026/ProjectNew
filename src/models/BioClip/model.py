@@ -32,9 +32,17 @@ class BioClipModel:
         text_batch_size: int = 2024,
     ) -> None:
         init_started = time.perf_counter()
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        cuda_available = torch.cuda.is_available()
+        self.device = device or ("cuda" if cuda_available else "cpu")
         self.use_half = use_half
         self.text_batch_size = int(text_batch_size)
+
+        if self.device != "cuda":
+            raise RuntimeError(
+                "BioClipModel requires a CUDA GPU but torch.cuda.is_available() returned False. "
+                "Ensure the container is started with GPU access (--gpus all for Docker, "
+                "--nv for Singularity) and the NVIDIA runtime is installed."
+            )
 
         os.environ.setdefault("HF_HUB_OFFLINE", "1")
         os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
