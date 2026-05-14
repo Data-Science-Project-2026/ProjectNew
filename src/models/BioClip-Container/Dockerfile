@@ -1,5 +1,5 @@
 # BioClip service container
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
+FROM nvidia/cuda:12.0.1-runtime-ubuntu22.04
 
 # Install Python 3.12
 RUN apt-get update && apt-get install -y --no-install-recommends \

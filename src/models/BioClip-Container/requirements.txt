@@ -1,9 +1,10 @@
---extra-index-url https://download.pytorch.org/whl/cu120
+--index-url https://download.pytorch.org/whl/cu118
+--extra-index-url https://pypi.org/simple
 flask
 gunicorn
 requests
 open_clip_torch
-torch
+torch==2.5.1+cu118
 transformers
 pandas
 openpyxl
