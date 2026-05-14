@@ -58,9 +58,18 @@ Custom Heatmaps: High-fidelity species distribution maps served through a second
 
 To restore the species data and Metabase dashboard configurations:
 
-1. Start the containers:
+1. Navigate to the dashboard folder
    ```bash
-   docker-compose up -d
+      cd src/dashboard
+   ```
+2. Start the containers
+   ```bash 
+      docker-compose up -d
+   ```
+3. Access Dashboard
+Open your browser and navigate to:
+   ```bash
+      http://localhost:3000
    ```
 *Note: We use the `.dump` format (PostgreSQL Custom Format) for better compression and faster restoration.*
 Access Dashboard: Open your browser and navigate to http://localhost:3000.
