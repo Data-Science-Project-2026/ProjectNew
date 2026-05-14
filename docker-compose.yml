@@ -26,7 +26,8 @@ services:
       - "5000:5000"
     environment:
       USE_HALF: "true"
-      TEXT_BATCH_SIZE: "512"
+      TEXT_BATCH_SIZE: "2048"
+      IMAGE_BATCH_SIZE: "256"
       BIO_MODEL_NAME: "ViT-L-14"
       BIO_MODEL_CHECKPOINT_PATH: "/app/src/models/BioClip/open_clip_pytorch_model.bin"
       BIO_ALLOW_REMOTE_MODEL: "0"

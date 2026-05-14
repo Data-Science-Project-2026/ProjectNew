@@ -1,4 +1,5 @@
 import argparse
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -156,10 +157,49 @@ def validate_local_model_weights(model_name: str, checkpoint_path: Path, allow_r
             f"Local checkpoint not found: {checkpoint_path}"
         )
 
-    # Validate model/checkpoint compatibility once up-front.
-    open_clip.create_model_and_transforms(
+
+def compute_and_save_text_features(
+    model_name: str,
+    checkpoint_path: Path,
+    token_tensor: torch.Tensor,
+    features_out: Path,
+    batch_size: int = 512,
+) -> None:
+    """Encode all token sequences with the CLIP model and save the normalized float32
+    feature tensor to *features_out*.  Loading this file at runtime eliminates the
+    encode_text computation on every container start.
+    """
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(
+        f"Computing text features on {device} "
+        f"(tokens={token_tensor.shape[0]}, batch_size={batch_size})..."
+    )
+
+    model, _, _ = open_clip.create_model_and_transforms(
         model_name,
         pretrained=str(checkpoint_path),
+    )
+    model = model.to(device).eval()
+
+    started = time.perf_counter()
+    chunks: list[torch.Tensor] = []
+    total = token_tensor.shape[0]
+    total_batches = (total + batch_size - 1) // batch_size
+
+    with torch.no_grad():
+        for i, batch_start in enumerate(range(0, total, batch_size), start=1):
+            batch = token_tensor[batch_start : batch_start + batch_size].to(device)
+            chunk = model.encode_text(batch)
+            chunk = chunk / chunk.norm(dim=-1, keepdim=True)
+            # keep on CPU as float32 so the file is device-agnostic
+            chunks.append(chunk.cpu().float())
+            print(f"  batch {i}/{total_batches} ({time.perf_counter() - started:.1f}s elapsed)")
+
+    features = torch.cat(chunks, dim=0)
+    torch.save(features, features_out)
+    print(
+        f"Saved text features to {features_out} "
+        f"(shape={tuple(features.shape)}, {time.perf_counter() - started:.1f}s total)"
     )
 
 if __name__ == "__main__":
@@ -231,3 +271,10 @@ if __name__ == "__main__":
         extract_and_tokenize_from_txt(inp, names_out, tokens_out, model_identifier, name_col=args.name_col)
     else:
         raise ValueError("Unsupported input file type. Provide .xlsx or .txt/.tsv")
+
+    # Pre-compute and save text features alongside the tokens file so that
+    # model.py can load them directly at startup without any GPU encoding.
+    features_out = tokens_out.with_name(tokens_out.stem + "_features.pt")
+    tok_data = torch.load(tokens_out, map_location="cpu")
+    token_tensor = tok_data["tokens"] if isinstance(tok_data, dict) else tok_data
+    compute_and_save_text_features(model_identifier, model_checkpoint, token_tensor, features_out)

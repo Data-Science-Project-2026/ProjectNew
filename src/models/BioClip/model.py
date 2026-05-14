@@ -29,13 +29,15 @@ class BioClipModel:
         allow_remote_model: bool = False,
         device: str | None = None,
         use_half: bool = False,
-        text_batch_size: int = 2024,
+        text_batch_size: int = 512,
+        image_batch_size: int = 64,
     ) -> None:
         init_started = time.perf_counter()
         cuda_available = torch.cuda.is_available()
         self.device = device or ("cuda" if cuda_available else "cpu")
         self.use_half = use_half
         self.text_batch_size = int(text_batch_size)
+        self.image_batch_size = int(image_batch_size)
 
         if self.device != "cuda":
             raise RuntimeError(
@@ -92,13 +94,33 @@ class BioClipModel:
         self.names = names
         self.tokens = tokens
 
+        # Derive the pre-computed features file produced by tokenize_excel_species.py.
+        # e.g. species_tokens_latin.pt  ->  species_tokens_latin_features.pt
+        features_path = tokens_path.with_name(tokens_path.stem + "_features.pt")
+
         t_cache = time.perf_counter()
-        self.text_features = self._build_text_feature_cache()
-        logger.info(
-            "BioClip text cache ready in %.2fs (shape=%s)",
-            time.perf_counter() - t_cache,
-            tuple(self.text_features.shape),
-        )
+        if features_path.exists():
+            self.text_features = torch.load(features_path, map_location=self.device)
+            if self.device == "cuda" and self.use_half:
+                self.text_features = self.text_features.half()
+            logger.info(
+                "Text features loaded from %s in %.2fs (shape=%s)",
+                features_path,
+                time.perf_counter() - t_cache,
+                tuple(self.text_features.shape),
+            )
+        else:
+            logger.warning(
+                "Pre-computed features file not found: %s. "
+                "Run tokenize_excel_species.py to pre-compute features and avoid this slow path.",
+                features_path,
+            )
+            self.text_features = self._build_text_feature_cache()
+            logger.info(
+                "BioClip text cache ready in %.2fs (shape=%s)",
+                time.perf_counter() - t_cache,
+                tuple(self.text_features.shape),
+            )
 
         # Force CUDA context initialization now so the first real inference
         # request is not delayed by 30-120 s of lazy GPU setup.
@@ -248,20 +270,26 @@ class BioClipModel:
         if invalid_count:
             print(f"Skipped {invalid_count} invalid image blob(s) in batch")
 
-        image_batch = torch.stack(tensors, dim=0).to(self.device)
-        if self.device == "cuda" and self.use_half:
-            image_batch = image_batch.half()
-
         amp_ctx = (
             torch.cuda.amp.autocast if (self.device == "cuda" and self.use_half) else None
         )
         ctx = amp_ctx() if amp_ctx is not None else nullcontext()
 
+        # Encode in sub-batches to avoid OOM when the caller passes large batches.
+        feature_chunks: list[torch.Tensor] = []
         with torch.no_grad(), ctx:
-            image_features = self.model.encode_image(image_batch)
-            image_features = image_features / image_features.norm(dim=-1, keepdim=True)
-            logits = (100.0 * image_features @ self.text_features.T).cpu()
-            probs = logits.softmax(dim=-1)
+            for chunk_start in range(0, len(tensors), self.image_batch_size):
+                chunk = tensors[chunk_start : chunk_start + self.image_batch_size]
+                chunk_batch = torch.stack(chunk, dim=0).to(self.device)
+                if self.device == "cuda" and self.use_half:
+                    chunk_batch = chunk_batch.half()
+                chunk_features = self.model.encode_image(chunk_batch)
+                chunk_features = chunk_features / chunk_features.norm(dim=-1, keepdim=True)
+                feature_chunks.append(chunk_features)
+
+        image_features = torch.cat(feature_chunks, dim=0)
+        logits = (100.0 * image_features @ self.text_features.T).cpu()
+        probs = logits.softmax(dim=-1)
 
         valid_results: list[tuple[list[str], list[float]]] = []
         cutoff = float(threshold)

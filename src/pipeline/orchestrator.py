@@ -379,7 +379,8 @@ def main() -> None:
             "model_name": args.bio_model_name,
             "model_checkpoint_path": Path(args.bio_model_checkpoint) if args.bio_model_checkpoint else None,
             "use_half": False,
-            "text_batch_size": 4048,
+            "text_batch_size": 512,
+            "image_batch_size": 128,
         },
         qwen_args={
             "image_model": args.qwen_image_model,

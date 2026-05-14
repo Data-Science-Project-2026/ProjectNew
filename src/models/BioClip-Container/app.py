@@ -46,7 +46,8 @@ BIO_ALLOW_REMOTE_MODEL = bool(
     os.environ.get("BIO_ALLOW_REMOTE_MODEL", "0").lower() in ("1", "true", "yes")
 )
 USE_HALF = bool(os.environ.get("USE_HALF", "False").lower() in ("1", "true"))
-TEXT_BATCH_SIZE = int(os.environ.get("TEXT_BATCH_SIZE", 4048))
+TEXT_BATCH_SIZE = int(os.environ.get("TEXT_BATCH_SIZE", 512))
+IMAGE_BATCH_SIZE = int(os.environ.get("IMAGE_BATCH_SIZE", 64))
 
 
 def _ensure_species_assets() -> None:
@@ -119,6 +120,7 @@ try:
         allow_remote_model=BIO_ALLOW_REMOTE_MODEL,
         use_half=USE_HALF,
         text_batch_size=TEXT_BATCH_SIZE,
+        image_batch_size=IMAGE_BATCH_SIZE,
     )
     _log_stage("BioClipModel init", model_init_started)
     _log_stage("container startup init block", boot_started)
