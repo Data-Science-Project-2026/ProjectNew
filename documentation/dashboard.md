@@ -19,18 +19,21 @@ The dashboard is fully containerized using **Docker**, ensuring a consistent env
 The Metabase service is managed via `docker-compose.yml`. The following environment variables link Metabase to the project's central database:
 
 ```yaml
-metabase:
-  image: metabase/metabase:latest
-  container_name: metabase_app
-  depends_on:
-    - db
-  environment:
-    - MB_DB_TYPE=postgres
-    - MB_DB_DBNAME=dashboard_database
-    - MB_DB_PORT=5432
-    - MB_DB_USER=dashboard
-    - MB_DB_PASS=dashboard
-    - MB_DB_HOST=db
+ metabase:
+    image: metabase/metabase:v0.58.1
+    container_name: metabase_app
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase_app_db
+      MB_DB_PORT: 5432
+      MB_DB_USER: dashboard
+      MB_DB_PASS: dashboard
+      MB_DB_HOST: db
 ```
 
 ---
