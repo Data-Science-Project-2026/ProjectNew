@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Graph</title>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --panel:#f4f9ff;
+      --line:#cfe6ff;
+      --blue:#4aa3ff;
+      --blue2:#88c7ff;
+      --text:#1f2a37;
+      --muted:#6b7280;
+      --shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
+      --radius: 14px;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
+    .topbar{
+      position: sticky; top:0; z-index:10;
+      display:flex; justify-content:flex-end; align-items:center;
+      gap:10px;
+      padding:14px 18px;
+      background: linear-gradient(180deg, rgba(244,249,255,0.95), rgba(244,249,255,0.70));
+      backdrop-filter: blur(8px);
+      border-bottom:1px solid rgba(207,230,255,0.8);
+    }
+    .pill{
+      display:flex; align-items:center; gap:10px;
+      background:#fff;
+      border:1px solid rgba(207,230,255,0.95);
+      border-radius: 999px;
+      padding:10px 12px;
+      box-shadow: var(--shadow);
+    }
+    label{font-size:13px;color:var(--muted);}
+    select{
+      border:none; outline:none;
+      font-size:14px; color:var(--text);
+      padding:6px 8px;
+      background:transparent;
+      min-width: 220px;
+      cursor:pointer;
+    }
+    .stage{
+      height: calc(100vh - 62px);
+      padding: 14px;
+      box-sizing:border-box;
+    }
+    .card{
+      height: 100%;
+      border-radius: var(--radius);
+      border: 1px solid rgba(207,230,255,0.95);
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(136,199,255,0.22), rgba(255,255,255,0) 60%),
+                  radial-gradient(900px 600px at 90% 20%, rgba(74,163,255,0.12), rgba(255,255,255,0) 55%),
+                  #ffffff;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    svg{width:100%;height:100%;display:block;}
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="pill">
+      <label for="animalSelect">animal</label>
+      <select id="animalSelect"></select>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="card" id="card">
+      <svg id="svg"></svg>
+    </div>
+  </div>
+
+<script>
+/** ====== 配置区 ====== */
+const API_BASE = "http://localhost:8001";
+// 你后端返回的 weight 基本都是 0~1，所以这里用 0 最保险
+const DEFAULT_MIN_WEIGHT = 0;
+
+/** ====== D3 初始化 ====== */
+const svg = d3.select("#svg");
+const rootG = svg.append("g");
+const linkG = rootG.append("g");
+const nodeG = rootG.append("g");
+
+let width = 800, height = 600;
+let simulation = null;
+
+const zoom = d3.zoom()
+  .scaleExtent([0.2, 6])
+  .on("zoom", (event) => rootG.attr("transform", event.transform));
+
+svg.call(zoom);
+svg.on("dblclick.zoom", null);
+svg.on("dblclick", (event) => {
+  if (event.target.tagName.toLowerCase() === "svg") {
+    svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+  }
+});
+
+function resize() {
+  const card = document.getElementById("card");
+  const rect = card.getBoundingClientRect();
+  width = Math.max(300, rect.width);
+  height = Math.max(300, rect.height);
+  svg.attr("viewBox", `0 0 ${width} ${height}`);
+  if (simulation) {
+    simulation.force("center", d3.forceCenter(width/2, height/2));
+    simulation.alpha(0.6).restart();
+  }
+}
+window.addEventListener("resize", resize);
+resize();
+
+/** ====== 渲染 ====== */
+function colorForType(type){
+  if (type === "animal") return "#4aa3ff";
+  if (type === "plant") return "#88c7ff";
+  if (type === "emotion") return "#cfe6ff";
+  return "#bcdcff";
+}
+function radiusFor(node){
+  const v = Number(node.value ?? 0.5);
+  return 10 + Math.max(0, Math.min(1.2, v)) * 14;
+}
+function strokeFor(node){
+  if (node.type === "animal") return "#2f7fd9";
+  return "#8fc9ff";
+}
+function clearGraph(){
+  linkG.selectAll("*").remove();
+  nodeG.selectAll("*").remove();
+  if (simulation) simulation.stop();
+  simulation = null;
+}
+function fitToView(nodes){
+  const xs = nodes.map(d => d.x).filter(Number.isFinite);
+  const ys = nodes.map(d => d.y).filter(Number.isFinite);
+  if (!xs.length || !ys.length) return;
+
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+
+  const pad = 60;
+  const graphW = (maxX - minX) + pad*2;
+  const graphH = (maxY - minY) + pad*2;
+
+  const scale = Math.min(width / graphW, height / graphH);
+  const tx = (width/2) - scale * ((minX + maxX)/2);
+  const ty = (height/2) - scale * ((minY + maxY)/2);
+
+  svg.transition().duration(350)
+    .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+}
+
+function renderGraph(data){
+  clearGraph();
+
+  const nodes = (data.nodes || []).map(d => ({...d}));
+  const links = (data.links || []).map(d => ({...d}));
+  const id = d => d.id;
+
+  if (!nodes.length) return;
+
+  const link = linkG
+    .selectAll("line")
+    .data(links)
+    .enter()
+    .append("line")
+    .attr("stroke", "#cfe6ff")
+    .attr("stroke-opacity", 0.85)
+    .attr("stroke-width", d => 1 + Math.sqrt(Math.max(0.01, Number(d.value ?? 1))) * 1.8)
+    .attr("stroke-linecap","round");
+
+  const node = nodeG
+    .selectAll("g")
+    .data(nodes, id)
+    .enter()
+    .append("g")
+    .call(
+      d3.drag()
+        .on("start", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0.2).restart();
+          d.fx = d.x; d.fy = d.y;
+        })
+        .on("drag", (event, d) => { d.fx = event.x; d.fy = event.y; })
+        .on("end", (event, d) => {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null; d.fy = null;
+        })
+    );
+
+  node.append("circle")
+    .attr("r", d => radiusFor(d))
+    .attr("fill", d => colorForType(d.type))
+    .attr("fill-opacity", 0.95)
+    .attr("stroke", d => strokeFor(d))
+    .attr("stroke-width", 2);
+
+  node.append("text")
+    .text(d => d.id)
+    .attr("text-anchor","middle")
+    .attr("dy", d => radiusFor(d) + 14)
+    .attr("font-size", 12)
+    .attr("fill", "#1f2a37")
+    .attr("opacity", 0.9);
+
+  simulation = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(links).id(id).distance(d => {
+      const v = Number(d.value ?? 1);
+      return 140 - Math.min(110, v*90);
+    }).strength(0.35))
+    .force("charge", d3.forceManyBody().strength(-520))
+    .force("collide", d3.forceCollide().radius(d => radiusFor(d) + 14).strength(0.9))
+    .force("center", d3.forceCenter(width/2, height/2));
+
+  const centerId = data.center;
+  const centerNode = nodes.find(n => n.id === centerId);
+  if (centerNode) {
+    centerNode.x = width/2; centerNode.y = height/2;
+  }
+
+  simulation.on("tick", () => {
+    link
+      .attr("x1", d => d.source.x)
+      .attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x)
+      .attr("y2", d => d.target.y);
+
+    node.attr("transform", d => `translate(${d.x},${d.y})`);
+  });
+
+  let fitted = false;
+  simulation.on("end", () => {
+    if (!fitted) { fitToView(nodes); fitted = true; }
+  });
+  setTimeout(() => {
+    if (!fitted) { fitToView(nodes); fitted = true; }
+  }, 900);
+}
+
+/** ====== 数据加载（关键：防竞态） ====== */
+let currentAbort = null;
+let currentReqId = 0;
+
+async function fetchJSON(url, signal){
+  const res = await fetch(url, { headers:{'Accept':'application/json'}, signal, cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return await res.json();
+}
+
+async function loadAnimals(){
+  const animals = await fetchJSON(`${API_BASE}/animals`);
+  const sel = document.getElementById("animalSelect");
+  sel.innerHTML = "";
+  animals.forEach(a => {
+    const opt = document.createElement("option");
+    opt.value = a;
+    opt.textContent = a;
+    sel.appendChild(opt);
+  });
+  const prefer = animals.includes("panda") ? "panda" : (animals[0] ?? "");
+  sel.value = prefer;
+  return sel.value;
+}
+
+async function loadGraph(animal){
+  // 1) 终止上一次请求
+  if (currentAbort) currentAbort.abort();
+  currentAbort = new AbortController();
+
+  // 2) 请求 id 递增，只允许最新一次渲染
+  const reqId = ++currentReqId;
+
+  const url = `${API_BASE}/graph?animal=${encodeURIComponent(animal)}&min_weight=${DEFAULT_MIN_WEIGHT}`;
+  const data = await fetchJSON(url, currentAbort.signal);
+
+  // 如果这不是最新请求，直接丢弃
+  if (reqId !== currentReqId) return;
+
+  console.log("graph data:", data); // 你确认用的就是这个 animal 的返回
+  renderGraph(data);
+}
+
+(async function main(){
+  try{
+    const a = await loadAnimals();
+    await loadGraph(a);
+
+    const sel = document.getElementById("animalSelect");
+    sel.addEventListener("change", async (e) => {
+      try{
+        await loadGraph(e.target.value);
+      }catch(err){
+        if (err.name === "AbortError") return; // 正常：被下一次切换取消了
+        clearGraph();
+        console.error(err);
+      }
+    });
+  }catch(err){
+    clearGraph();
+    console.error(err);
+  }
+})();
+</script>
+</body>
+</html>

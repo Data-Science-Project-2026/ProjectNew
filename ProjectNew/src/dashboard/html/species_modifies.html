@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.heat/dist/leaflet-heat.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+
+<style>
+html, body { height:100%; margin:0; }
+
+#map {
+    position:absolute;
+    top:0; bottom:0; left:0; right:0;
+}
+
+/* 保留你的UI */
+.custom-panel {
+    position: fixed;
+    z-index: 10000;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    font-family: sans-serif;
+}
+
+.left-panel { top:20px; left:20px; width:140px; }
+.right-panel { top:20px; right:20px; width:260px; max-height:80vh; overflow-y:auto; }
+
+.panel-title {
+    font-weight:bold;
+    font-size:14px;
+    margin-bottom:10px;
+    border-bottom:1px solid #eee;
+    padding-bottom:5px;
+}
+
+.item {
+    display:flex;
+    align-items:center;
+    margin:6px 0;
+    font-size:13px;
+}
+.item input { margin-right:8px; }
+
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<!-- 左侧：城市 -->
+<div class="custom-panel left-panel">
+    <div class="panel-title">City Selection</div>
+    <div id="city-panel"></div>
+</div>
+
+<!-- 右侧：物种 -->
+<div class="custom-panel right-panel">
+<div class="panel-title">Species Filter</div>
+
+<div class="item">
+    <select id="kingdom-select" style="width:100%"></select>
+</div>
+
+<div class="item">
+    <select id="category-select" style="width:100%"></select>
+</div>
+
+<div class="item">
+    <select id="genus-select" style="width:100%"></select>
+</div>
+
+<hr>
+
+</div> 
+
+<script>
+
+// 初始化地图
+// 初始化地图
+const map = L.map('map').setView([35, 110], 5);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png').addTo(map);
+
+// 全局变量
+let allData = [];            // 存储原始后端数据
+let activeCities = new Set(); // 存储选中的城市名称
+let mainHeatLayer = null;    // 全局唯一的热力图层
+
+// UI 元素
+const cityPanel = document.getElementById('city-panel');
+const kSelect = document.getElementById('kingdom-select');
+const cSelect = document.getElementById('category-select');
+const gSelect = document.getElementById('genus-select');
+
+// 加载数据
+fetch('http://' + window.location.hostname + ':8001/api/species')
+    .then(res => res.json())
+    .then(data => {
+        allData = data;
+        const hierarchy = {};
+        const cities = new Set();
+
+        // 1. 构建层级结构和城市列表
+        data.forEach(d => {
+            cities.add(d.city);
+            if (!hierarchy[d.kingdom]) hierarchy[d.kingdom] = {};
+            if (!hierarchy[d.kingdom][d.category]) hierarchy[d.kingdom][d.category] = {};
+            if (!hierarchy[d.kingdom][d.category][d.genus]) hierarchy[d.kingdom][d.category][d.genus] = [];
+        });
+
+        // 2. 初始化城市 UI
+        Array.from(cities).sort().forEach(city => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<input type="checkbox" onchange="toggleCity('${city}', this.checked)"> ${city}`;
+            cityPanel.appendChild(div);
+        });
+
+        // 3. 初始化物种下拉框
+        kSelect.innerHTML = '<option value="">-- Select Kingdom --</option>';
+        Object.keys(hierarchy).sort().forEach(k => {
+            kSelect.innerHTML += `<option value="${k}">${k}</option>`;
+        });
+
+        // Kingdom 联动
+        kSelect.onchange = () => {
+            cSelect.innerHTML = '<option value="">-- Select Category --</option>';
+            gSelect.innerHTML = '<option value="">-- Select Genus --</option>';
+            if (kSelect.value) {
+                Object.keys(hierarchy[kSelect.value]).sort().forEach(c => {
+                    cSelect.innerHTML += `<option value="${c}">${c}</option>`;
+                });
+            }
+            updateMap(); 
+        };
+
+        // Category 联动
+        cSelect.onchange = () => {
+            gSelect.innerHTML = '<option value="">-- Select Genus --</option>';
+            if (cSelect.value) {
+                Object.keys(hierarchy[kSelect.value][cSelect.value]).sort().forEach(g => {
+                    gSelect.innerHTML += `<option value="${g}">${g}</option>`;
+                });
+            }
+            updateMap();
+        };
+
+        // Genus 联动
+        gSelect.onchange = updateMap;
+    });
+
+// ===== 核心控制逻辑 =====
+
+// 城市勾选切换
+function toggleCity(city, isChecked) {
+    if (isChecked) activeCities.add(city);
+    else activeCities.delete(city);
+    updateMap();
+}
+
+// 核心：过滤数据并更新地图
+function updateMap() {
+    // 1. 如果有旧图层，先移除
+    if (mainHeatLayer) {
+        map.removeLayer(mainHeatLayer);
+    }
+
+    // 2. 根据 UI 状态过滤数据
+    const filteredPoints = allData.filter(d => {
+        const cityMatch = activeCities.has(d.city);
+        const kMatch = kSelect.value ? d.kingdom === kSelect.value : true;
+        const cMatch = cSelect.value ? d.category === cSelect.value : true;
+        const gMatch = gSelect.value ? d.genus === gSelect.value : true;
+        
+        return cityMatch && kMatch && cMatch && gMatch;
+    }).map(d => [d.lat, d.lng]); // 只提取坐标
+
+    // 3. 绘制新热力图 (如果有数据)
+    if (filteredPoints.length > 0) {
+        mainHeatLayer = L.heatLayer(filteredPoints, {
+            radius: 20,
+            blur: 15,
+            maxZoom: 10,
+            gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1: 'red'}
+        }).addTo(map);
+
+        // 可选：自动缩放地图以适应点
+        // const bounds = L.latLngBounds(filteredPoints);
+        // map.fitBounds(bounds);
+    }
+}
+
+
+</script>
+
+</body>
+</html>
