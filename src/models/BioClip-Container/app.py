@@ -146,4 +146,6 @@ def analyze_images():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     logger.info("Starting Flask server on 0.0.0.0:%d", port)
-    app.run(host="0.0.0.0", port=port)
+    # threaded=True lets health probes be answered while a long inference
+    # request is in flight (Flask dev server is single-threaded by default).
+    app.run(host="0.0.0.0", port=port, threaded=True)

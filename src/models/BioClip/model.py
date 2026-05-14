@@ -91,6 +91,20 @@ class BioClipModel:
             time.perf_counter() - t_cache,
             tuple(self.text_features.shape),
         )
+
+        # Force CUDA context initialization now so the first real inference
+        # request is not delayed by 30-120 s of lazy GPU setup.
+        if self.device == "cuda":
+            t_warmup = time.perf_counter()
+            logger.info("Running CUDA warmup pass to pre-initialize GPU context...")
+            with torch.no_grad():
+                dummy = torch.zeros(1, 3, 224, 224, device=self.device)
+                if self.use_half:
+                    dummy = dummy.half()
+                _ = self.model.encode_image(dummy)
+                torch.cuda.synchronize()
+            logger.info("CUDA warmup complete in %.2fs", time.perf_counter() - t_warmup)
+
         logger.info("BioClip init complete in %.2fs", time.perf_counter() - init_started)
 
     def _build_text_feature_cache(self) -> torch.Tensor:
