@@ -1,10 +1,14 @@
---index-url https://download.pytorch.org/whl/cu118
+--index-url https://download.pytorch.org/whl/cu121
 --extra-index-url https://pypi.org/simple
+
 flask
 gunicorn
 requests
 open_clip_torch
-torch==2.5.1+cu118
+torch==2.2.2+cu121
+torchvision==0.17.2+cu121
+torchaudio==2.2.2+cu121
 transformers
 pandas
 openpyxl
+numpy<2
