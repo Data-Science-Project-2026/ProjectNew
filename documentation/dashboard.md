@@ -75,6 +75,8 @@ Open your browser and navigate to:
       http://localhost:3000
    ```
 *Note: We use the `.dump` format (PostgreSQL Custom Format) for better compression and faster restoration.*
-Access Dashboard: Open your browser and navigate to http://localhost:3000.
+Metabase may ask you to enter your username and password: 
+username: zhou_ruijia1119@163.com,
+password: datascience5
 
 Sync Data: Go to Admin Settings -> Databases and click "Sync database schema now" to ensure all imported data is visible.
