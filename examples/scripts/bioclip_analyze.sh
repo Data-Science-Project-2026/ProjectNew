@@ -15,9 +15,6 @@ set -euxo pipefail
 echo "Running in node: $(hostname)"
 echo "Running in: $(pwd)"
 
-module load Python cuDNN
-source ../venv/bin/activate
-
 DATA=/home/group/grp-dsp2026-hpc-group5/ProjectNew
 USER=pehuvio
 
@@ -54,7 +51,7 @@ POSTGRES_READY=false
 
 for i in {1..90}; do
   if singularity exec \
-      --bind "$DATA:/data" \
+      --bind "$PGDATA:/data" \
       --bind "$SOCKETDIR:/var/run/postgresql" \
       postgres.sif \
       pg_isready -h 127.0.0.1 -p 5432
@@ -91,18 +88,7 @@ singularity exec --nv \
 
 BIO_PID=$!
 
-sleep 25
-
-echo "=== BIOCLIP PROCESS ==="
-ps -fp $BIO_PID
-
-echo "=== CHILDREN ==="
-pgrep -af python || true
-pgrep -af uvicorn || true
-pgrep -af gunicorn || true
-
-echo "=== PORTS ==="
-ss -ltnp | grep 5000 || echo "Port 5000 not listening"
+sleep 15
 
 BIOCLIP_READY=false
 

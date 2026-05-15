@@ -12,9 +12,6 @@
 echo "Running in node: $(hostname)"
 echo "Running in: $(pwd)"
 
-module load Python cuDNN
-source ../venv/bin/activate
-
 DATA=<path>/ProjectNew
 PGDATA=<path>/ProjectNew/pgdata
 SOCKETDIR=<path>/ProjectNew/pgsocket

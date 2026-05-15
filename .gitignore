@@ -34,7 +34,8 @@ data/
 
 
 # Models
-models/
+Qwen_models/
 dumps/
 part_aa
 *.pkl
+*.bin
