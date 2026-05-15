@@ -19,18 +19,21 @@ The dashboard is fully containerized using **Docker**, ensuring a consistent env
 The Metabase service is managed via `docker-compose.yml`. The following environment variables link Metabase to the project's central database:
 
 ```yaml
-metabase:
-  image: metabase/metabase:latest
-  container_name: metabase_app
-  depends_on:
-    - db
-  environment:
-    - MB_DB_TYPE=postgres
-    - MB_DB_DBNAME=dashboard_database
-    - MB_DB_PORT=5432
-    - MB_DB_USER=dashboard
-    - MB_DB_PASS=dashboard
-    - MB_DB_HOST=db
+ metabase:
+    image: metabase/metabase:v0.58.1
+    container_name: metabase_app
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase_app_db
+      MB_DB_PORT: 5432
+      MB_DB_USER: dashboard
+      MB_DB_PASS: dashboard
+      MB_DB_HOST: db
 ```
 
 ---
@@ -58,13 +61,18 @@ Custom Heatmaps: High-fidelity species distribution maps served through a second
 
 To restore the species data and Metabase dashboard configurations:
 
-1. Start the containers:
+1. Navigate to the dashboard folder
    ```bash
-   docker-compose up -d
+      cd src/dashboard
    ```
-2. Import the binary dump file:
+2. Start the containers
+   ```bash 
+      docker-compose up -d
+   ```
+3. Access Dashboard
+Open your browser and navigate to:
    ```bash
-   docker exec -i my_web_project-db-1 pg_restore -U dashboard -d dashboard_database < init_dashboard.dump
+      http://localhost:3000
    ```
 *Note: We use the `.dump` format (PostgreSQL Custom Format) for better compression and faster restoration.*
 Access Dashboard: Open your browser and navigate to http://localhost:3000.
