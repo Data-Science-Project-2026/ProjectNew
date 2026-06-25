@@ -121,36 +121,7 @@ fetch('http://' + window.location.hostname + ':8001/api/species')
         });
 
         // 3. 初始化物种下拉框
-        kSelect.innerHTML = '<option value="">-- Select Kingdom --</option>';
-        Object.keys(hierarchy).sort().forEach(k => {
-            kSelect.innerHTML += `<option value="${k}">${k}</option>`;
-        });
-
-        // Kingdom 联动
-        kSelect.onchange = () => {
-            cSelect.innerHTML = '<option value="">-- Select Category --</option>';
-            gSelect.innerHTML = '<option value="">-- Select Genus --</option>';
-            if (kSelect.value) {
-                Object.keys(hierarchy[kSelect.value]).sort().forEach(c => {
-                    cSelect.innerHTML += `<option value="${c}">${c}</option>`;
-                });
-            }
-            updateMap(); 
-        };
-
-        // Category 联动
-        cSelect.onchange = () => {
-            gSelect.innerHTML = '<option value="">-- Select Genus --</option>';
-            if (cSelect.value) {
-                Object.keys(hierarchy[kSelect.value][cSelect.value]).sort().forEach(g => {
-                    gSelect.innerHTML += `<option value="${g}">${g}</option>`;
-                });
-            }
-            updateMap();
-        };
-
-        // Genus 联动
-        gSelect.onchange = updateMap;
+        updateSpeciesDropdowns();
     });
 
 // ===== 核心控制逻辑 =====
@@ -159,7 +130,85 @@ fetch('http://' + window.location.hostname + ':8001/api/species')
 function toggleCity(city, isChecked) {
     if (isChecked) activeCities.add(city);
     else activeCities.delete(city);
+    updateSpeciesDropdowns();
     updateMap();
+}
+function updateSpeciesDropdowns() {
+    // 保存用户当前已经选好的物种值，防止刷新选项时把用户的选择强行重置为空
+    const currentK = kSelect.value;
+    const currentC = cSelect.value;
+    const currentG = gSelect.value;
+
+    // 1. 过滤出当前已被勾选的城市的数据（如果一个都没勾选，则视为全选，展示全量物种选项）
+    const cityFilteredData = allData.filter(d => {
+        return activeCities.size === 0 ? true : activeCities.has(d.city);
+    });
+
+    // 2. 基于这些城市的数据，重新构建物种层级树
+    const hierarchy = {};
+    cityFilteredData.forEach(d => {
+        if (!hierarchy[d.kingdom]) hierarchy[d.kingdom] = {};
+        if (!hierarchy[d.kingdom][d.category]) hierarchy[d.kingdom][d.category] = {};
+        if (!hierarchy[d.kingdom][d.category][d.genus]) hierarchy[d.kingdom][d.category][d.genus] = [];
+    });
+
+    // 3. 刷新 Kingdom 下拉框
+    kSelect.innerHTML = '<option value="">-- Select Kingdom --</option>';
+    Object.keys(hierarchy).sort().forEach(k => {
+        kSelect.innerHTML += `<option value="${k}">${k}</option>`;
+    });
+    // 恢复之前选的值（如果这个值在当前城市里依然存在的话）
+    if (hierarchy[currentK]) {
+        kSelect.value = currentK;
+    }
+
+    // 4. 刷新 Category 下拉框
+    cSelect.innerHTML = '<option value="">-- Select Category --</option>';
+    if (kSelect.value && hierarchy[kSelect.value]) {
+        Object.keys(hierarchy[kSelect.value]).sort().forEach(c => {
+            cSelect.innerHTML += `<option value="${c}">${c}</option>`;
+        });
+        if (hierarchy[kSelect.value][currentC]) {
+            cSelect.value = currentC;
+        }
+    }
+
+    // 5. 刷新 Genus 下拉框
+    gSelect.innerHTML = '<option value="">-- Select Genus --</option>';
+    if (kSelect.value && cSelect.value && hierarchy[kSelect.value][cSelect.value]) {
+        Object.keys(hierarchy[kSelect.value][cSelect.value]).sort().forEach(g => {
+            gSelect.innerHTML += `<option value="${g}">${g}</option>`;
+        });
+        if (hierarchy[kSelect.value][cSelect.value].hasOwnProperty(currentG)) {
+            gSelect.value = currentG;
+        }
+    }
+
+    // 6. 重新绑定常规联动事件（保证用户手动切下拉框时，下级能正常刷新）
+    kSelect.onchange = () => {
+        // 当用户手动切换 Kingdom 时，清空并刷新下级
+        cSelect.innerHTML = '<option value="">-- Select Category --</option>';
+        gSelect.innerHTML = '<option value="">-- Select Genus --</option>';
+        if (kSelect.value && hierarchy[kSelect.value]) {
+            Object.keys(hierarchy[kSelect.value]).sort().forEach(c => {
+                cSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+        }
+        updateMap();
+    };
+
+    cSelect.onchange = () => {
+        // 当用户手动切换 Category 时，清空并刷新下级
+        gSelect.innerHTML = '<option value="">-- Select Genus --</option>';
+        if (kSelect.value && cSelect.value && hierarchy[kSelect.value][cSelect.value]) {
+            Object.keys(hierarchy[kSelect.value][cSelect.value]).sort().forEach(g => {
+                gSelect.innerHTML += `<option value="${g}">${g}</option>`;
+            });
+        }
+        updateMap();
+    };
+
+    gSelect.onchange = updateMap;
 }
 
 // 核心：过滤数据并更新地图

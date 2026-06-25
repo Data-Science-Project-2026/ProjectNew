@@ -3,6 +3,7 @@ version: '3.8'
 services:
   db:           
     image: postgres:17
+    shm_size: 1gb
     container_name: postgres_db
     environment:
       POSTGRES_DB: dashboard_database
@@ -72,6 +73,8 @@ services:
       - PGDATABASE=dashboard_database
       - PGUSER=dashboard
       - PGPASSWORD=dashboard
+    volumes:
+      - .:/app
 
   web:
     image: nginx:alpine

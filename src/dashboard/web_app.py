@@ -86,17 +86,16 @@ def animals():
         return [r[0] for r in cur.fetchall()]
 
 @app.get("/graph")
-def graph(animal: str = "panda"):
+def graph(animal: str):
     with get_conn() as conn, conn.cursor() as cur:
         # edges: 只取这个 animal 的邻居（plant/emotion）
         cur.execute(
-            "SELECT source, target, weight, target_type FROM cooccur_edges WHERE source=%s ORDER BY weight DESC;",
+            "SELECT source, target, weight FROM cooccur_edges WHERE source=%s ORDER BY weight DESC;",
             (animal,),
         )
         edges = cur.fetchall()
 
         # node types（从 cooccur_nodes 查）
-        cur.execute("SELECT id, type FROM cooccur_nodes;")
         type_map = {i: t for (i, t) in cur.fetchall()}
 
     # build nodes
@@ -105,12 +104,13 @@ def graph(animal: str = "panda"):
     nodes.append({"id": animal, "type": "animal", "value": 1.0})
     # neighbor nodes
     seen = set([animal])
-    for s, t, w, tt in edges:
+    for s, t, w in edges:
         if t not in seen:
-            nodes.append({"id": t, "type": type_map.get(t, tt), "value": float(w)})
+            # 这里 type 从 type_map 获取，如果找不到，可以给一个默认值，例如 "unknown"
+            nodes.append({"id": t, "type": type_map.get(t, "unknown"), "value": float(w)})
             seen.add(t)
 
-    links = [{"source": s, "target": t, "value": float(w), "target_type": tt} for (s, t, w, tt) in edges]
+    links = [{"source": s, "target": t, "value": float(w)} for (s, t, w) in edges]
     return {"center": animal, "nodes": nodes, "links": links}
 
 @app.get("/api/species")
@@ -162,5 +162,50 @@ def get_species(city: str = Query(None)):
         for r in rows
     ]
 
+    return JSONResponse(data)
+
+
+@app.get("/api/species_for_graph")
+def get_species_for_graph():
+    with get_conn() as conn, conn.cursor() as cur:
+        query = """
+        WITH all_names AS (
+            SELECT source AS name FROM cooccur_edges
+        )
+        SELECT DISTINCT
+            an.name,
+            split_part(an.name, ' ', 1) AS genus,
+            cl.kingdom,
+            cl.category
+        FROM all_names an
+        JOIN species_details sd ON an.name = sd.scientific_name
+        LEFT JOIN category_list cl ON sd.category = cl.id
+        WHERE an.name IS NOT NULL AND trim(an.name) != ''
+        """
+        cur.execute(query)
+        rows = cur.fetchall()
+    # 按属分组并构造返回格式
+    genus_map = {}
+    for row in rows:
+        name = row[0]
+        genus = row[1] if row[1] else "Unknown genus"
+        kingdom = row[2] if row[2] else "Uncategorised"
+        category = row[3] if row[3] else "Uncategorised"
+        if genus and genus not in genus_map:
+            genus_map[genus] = {
+                "kingdom": kingdom,
+                "category": category,
+                "species_example": name
+            }
+
+    data = [
+        {
+            "kingdom": info["kingdom"],
+            "category": info["category"],
+            "genus": genus,
+            "species": info["species_example"]
+        }
+        for genus, info in genus_map.items()
+    ]
     return JSONResponse(data)
 

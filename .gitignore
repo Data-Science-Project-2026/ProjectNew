@@ -31,7 +31,7 @@ data/
 !data/.gitkeep
 !data/**/.gitkeep
 *.dump
-
+src/dashboard/data script/final_dump_fixed.sql
 
 # Models
 Qwen_models/
@@ -39,3 +39,6 @@ dumps/
 part_aa
 *.pkl
 *.bin
+
+
+src/dashboard/db/init/dashboard_database.dump
