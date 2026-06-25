@@ -62,14 +62,26 @@ Custom Heatmaps: High-fidelity species distribution maps served through a second
 To restore the species data and Metabase dashboard configurations:
 
 1. Download the Dashboard Database Dump
-   The dashboard database dump is not stored in the GitHub repository due to its large size. Download the file from the following link:
-   https://helsinkifi-my.sharepoint.com/:u:/g/personal/zhouruij_ad_helsinki_fi/IQACZMAp8x8KRZv_u04JiRaxAZ1o4d96NlRD13X-Wc2M92A?e=lr5UwC
-   After downloading, move the dump file into: src/dashboard/db/init/
+
+   The dashboard database dump is not stored in the GitHub repository due to its large size.
+
+   Download the file from the following link:
+
+   https://helsinkifi-my.sharepoint.com/:u:/g/personal/zhouruij_ad_helsinki_fi/IQACZMAp8x8KRZv_u04JiRaxAZ1o4d96NlRD13X-Wc2M92A?e=NSg8oL
+
+   After downloading, move the dump file into:
+
+   ```text
+   src/dashboard/db/init/
+   ```
+
    The folder should contain:
 
-      src/dashboard/db/init/
-         ├── dashboard_database.dump
-         └── metabase_app_db.dump
+   ```text
+   src/dashboard/db/init/
+   ├── dashboard_database.dump
+   └── metabase_app_db.dump
+   ```
 
 2. Navigate to the dashboard folder
    ```bash
