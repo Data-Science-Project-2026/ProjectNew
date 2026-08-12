@@ -1,13 +1,13 @@
-# 忽略数据库数据文件夹
+# Ignore database data folders
 postgres_data
 
-# 忽略 Python 缓存
+# Ignore Python cache files
 __pycache__
 .pyc
 
-# 忽略环境变量文件（如果有敏感信息）
+# Ignore environment variable files (if sensitive data is used)
 .env
 
-# 忽略系统文件
+# Ignore system files
 .DS_Store
 Thumbs.db

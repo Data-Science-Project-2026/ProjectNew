@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>物种关系图谱 · 属级生态网络</title>
+  <title>Species Relationship Map · Genus-Level Ecosystem Network</title>
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -120,7 +120,7 @@
   function showEmptyHint(show, customMsg = null) {
     const empty = document.getElementById("emptyMsg");
     if (show) {
-      empty.innerText = customMsg || "✨ 请选择「属」查看生态关联网络";
+      empty.innerText = customMsg || "✨ Please select a genus to view the ecological network";
       empty.style.display = "block";
       setLoading(false);
     } else empty.style.display = "none";
@@ -175,7 +175,7 @@
     const centerNode = nodes.find(n => n.id === data.center);
     const otherNode = nodes.find(n => n.id !== data.center);
     if (centerNode && otherNode) {
-        // 设置固定位置（同时设置 x,y 和 fx,fy）
+        // Set fixed positions (set x, y, fx, and fy at the same time)
         centerNode.x = width/2;
         centerNode.y = height/2;
         centerNode.fx = centerNode.x;
@@ -185,12 +185,12 @@
         otherNode.fx = otherNode.x;
         otherNode.fy = otherNode.y;
 
-        // 更新连线
+        // Update links
         linkSel.attr("x1", centerNode.x).attr("y1", centerNode.y)
                .attr("x2", otherNode.x).attr("y2", otherNode.y);
-        // 更新节点位置
+        // Update node positions
         nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
-        // 适配视图
+        // Adjust the view
         fitToView(nodes);
         return;
     }
@@ -235,7 +235,7 @@
 
   async function onGenusChanged(genusVal, kingdomVal, categoryVal) {
     if (!genusVal) { clearGraphVisual(); showEmptyHint(true, "Please select a genus"); return; }
-    await fetchGraphBySpecies(genusVal);  // 直接传属名
+    await fetchGraphBySpecies(genusVal);  // Pass the genus name directly
 }
 
   async function loadTaxonomyFromBackend() {
@@ -245,11 +245,11 @@
     if (!Array.isArray(speciesList) || !speciesList.length) throw new Error("No data available");
     const tmpMap = new Map();
     for (const rec of speciesList) {
-      const kingdom = rec.kingdom || "未分类界";
-      const category = rec.category || "未分类类";
-      const genus = rec.genus || "未知属";
+      const kingdom = rec.kingdom || "Unclassified Kingdom";
+      const category = rec.category || "Unclassified Category";
+      const genus = rec.genus || "Unknown Genus";
       let speciesName = rec.species;
-      if (!speciesName) speciesName = genus !== "未知属" ? `${genus}` : `物种_${genus}`;
+      if (!speciesName) speciesName = genus !== "Unknown Genus" ? `${genus}` : `Species_${genus}`;
       if (!tmpMap.has(kingdom)) tmpMap.set(kingdom, { categorySet: new Set(), genusByCategory: new Map(), genusToExampleSpecies: new Map() });
       const entry = tmpMap.get(kingdom);
       entry.categorySet.add(category);

@@ -42,3 +42,29 @@ part_aa
 
 
 src/dashboard/db/init/dashboard_database.dump
+
+# Frontend dependencies and build output
+src/website/nature-insight-dashboard/node_modules/
+src/website/nature-insight-dashboard/dist/
+
+# Python virtual environments
+src/website/nature-insight-dashboard/backend/.venv/
+src/website/nature-insight-dashboard/backend/venv/
+
+# Python cache
+**/__pycache__/
+*.py[cod]
+
+# PyInstaller output
+src/website/nature-insight-dashboard/backend/build/
+src/website/nature-insight-dashboard/backend/dist/
+src/website/nature-insight-dashboard/backend/dashboard/
+src/website/nature-insight-dashboard/backend/*.spec
+src/website/nature-insight-dashboard/backend/*.exe
+
+# Packaged archives should be sent separately
+src/website/nature-insight-dashboard/backend/dashboard.zip
+src/website/nature-insight-dashboard-source.zip
+
+# Logs and temporary files
+*.log

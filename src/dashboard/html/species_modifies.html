@@ -15,7 +15,7 @@ html, body { height:100%; margin:0; }
     top:0; bottom:0; left:0; right:0;
 }
 
-/* 保留你的UI */
+/* Keep your UI */
 .custom-panel {
     position: fixed;
     z-index: 10000;
@@ -52,13 +52,13 @@ html, body { height:100%; margin:0; }
 
 <div id="map"></div>
 
-<!-- 左侧：城市 -->
+<!-- Left side: cities -->
 <div class="custom-panel left-panel">
     <div class="panel-title">City Selection</div>
     <div id="city-panel"></div>
 </div>
 
-<!-- 右侧：物种 -->
+<!-- Right side: species -->
 <div class="custom-panel right-panel">
 <div class="panel-title">Species Filter</div>
 
@@ -80,23 +80,23 @@ html, body { height:100%; margin:0; }
 
 <script>
 
-// 初始化地图
-// 初始化地图
+// Initialize map
+// Initialize map
 const map = L.map('map').setView([35, 110], 5);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png').addTo(map);
 
-// 全局变量
-let allData = [];            // 存储原始后端数据
-let activeCities = new Set(); // 存储选中的城市名称
-let mainHeatLayer = null;    // 全局唯一的热力图层
+// Global variables
+let allData = [];            // Store raw backend data
+let activeCities = new Set(); // Store selected city names
+let mainHeatLayer = null;    // Single global heat layer
 
-// UI 元素
+// UI elements
 const cityPanel = document.getElementById('city-panel');
 const kSelect = document.getElementById('kingdom-select');
 const cSelect = document.getElementById('category-select');
 const gSelect = document.getElementById('genus-select');
 
-// 加载数据
+// Load data
 fetch('http://' + window.location.hostname + ':8001/api/species')
     .then(res => res.json())
     .then(data => {
@@ -104,7 +104,7 @@ fetch('http://' + window.location.hostname + ':8001/api/species')
         const hierarchy = {};
         const cities = new Set();
 
-        // 1. 构建层级结构和城市列表
+        // 1. Build the hierarchy and city list
         data.forEach(d => {
             cities.add(d.city);
             if (!hierarchy[d.kingdom]) hierarchy[d.kingdom] = {};
@@ -112,7 +112,7 @@ fetch('http://' + window.location.hostname + ':8001/api/species')
             if (!hierarchy[d.kingdom][d.category][d.genus]) hierarchy[d.kingdom][d.category][d.genus] = [];
         });
 
-        // 2. 初始化城市 UI
+        // 2. Initialize city UI
         Array.from(cities).sort().forEach(city => {
             const div = document.createElement('div');
             div.className = 'item';
@@ -120,13 +120,13 @@ fetch('http://' + window.location.hostname + ':8001/api/species')
             cityPanel.appendChild(div);
         });
 
-        // 3. 初始化物种下拉框
+        // 3. Initialize species dropdowns
         updateSpeciesDropdowns();
     });
 
-// ===== 核心控制逻辑 =====
+// ===== Core control logic =====
 
-// 城市勾选切换
+// City selection toggle
 function toggleCity(city, isChecked) {
     if (isChecked) activeCities.add(city);
     else activeCities.delete(city);
@@ -134,17 +134,17 @@ function toggleCity(city, isChecked) {
     updateMap();
 }
 function updateSpeciesDropdowns() {
-    // 保存用户当前已经选好的物种值，防止刷新选项时把用户的选择强行重置为空
+    // Save the species values the user has already selected so the option refresh does not forcibly reset them to empty
     const currentK = kSelect.value;
     const currentC = cSelect.value;
     const currentG = gSelect.value;
 
-    // 1. 过滤出当前已被勾选的城市的数据（如果一个都没勾选，则视为全选，展示全量物种选项）
+    // 1. Filter data for the currently selected cities (if none are selected, treat it as all selected and show all species options)
     const cityFilteredData = allData.filter(d => {
         return activeCities.size === 0 ? true : activeCities.has(d.city);
     });
 
-    // 2. 基于这些城市的数据，重新构建物种层级树
+    // 2. Rebuild the species hierarchy based on the filtered city data
     const hierarchy = {};
     cityFilteredData.forEach(d => {
         if (!hierarchy[d.kingdom]) hierarchy[d.kingdom] = {};
@@ -152,17 +152,17 @@ function updateSpeciesDropdowns() {
         if (!hierarchy[d.kingdom][d.category][d.genus]) hierarchy[d.kingdom][d.category][d.genus] = [];
     });
 
-    // 3. 刷新 Kingdom 下拉框
+    // 3. Refresh the Kingdom dropdown
     kSelect.innerHTML = '<option value="">-- Select Kingdom --</option>';
     Object.keys(hierarchy).sort().forEach(k => {
         kSelect.innerHTML += `<option value="${k}">${k}</option>`;
     });
-    // 恢复之前选的值（如果这个值在当前城市里依然存在的话）
+    // Restore the previous value if it still exists in the current cities
     if (hierarchy[currentK]) {
         kSelect.value = currentK;
     }
 
-    // 4. 刷新 Category 下拉框
+    // 4. Refresh the Category dropdown
     cSelect.innerHTML = '<option value="">-- Select Category --</option>';
     if (kSelect.value && hierarchy[kSelect.value]) {
         Object.keys(hierarchy[kSelect.value]).sort().forEach(c => {
@@ -173,7 +173,7 @@ function updateSpeciesDropdowns() {
         }
     }
 
-    // 5. 刷新 Genus 下拉框
+    // 5. Refresh the Genus dropdown
     gSelect.innerHTML = '<option value="">-- Select Genus --</option>';
     if (kSelect.value && cSelect.value && hierarchy[kSelect.value][cSelect.value]) {
         Object.keys(hierarchy[kSelect.value][cSelect.value]).sort().forEach(g => {
@@ -184,9 +184,9 @@ function updateSpeciesDropdowns() {
         }
     }
 
-    // 6. 重新绑定常规联动事件（保证用户手动切下拉框时，下级能正常刷新）
+    // 6. Rebind the standard linked events so the lower-level dropdowns refresh correctly when the user changes them manually
     kSelect.onchange = () => {
-        // 当用户手动切换 Kingdom 时，清空并刷新下级
+        // When the user manually changes Kingdom, clear and refresh the lower-level options
         cSelect.innerHTML = '<option value="">-- Select Category --</option>';
         gSelect.innerHTML = '<option value="">-- Select Genus --</option>';
         if (kSelect.value && hierarchy[kSelect.value]) {
@@ -198,7 +198,7 @@ function updateSpeciesDropdowns() {
     };
 
     cSelect.onchange = () => {
-        // 当用户手动切换 Category 时，清空并刷新下级
+        // When the user manually changes Category, clear and refresh the lower-level options
         gSelect.innerHTML = '<option value="">-- Select Genus --</option>';
         if (kSelect.value && cSelect.value && hierarchy[kSelect.value][cSelect.value]) {
             Object.keys(hierarchy[kSelect.value][cSelect.value]).sort().forEach(g => {
@@ -211,14 +211,14 @@ function updateSpeciesDropdowns() {
     gSelect.onchange = updateMap;
 }
 
-// 核心：过滤数据并更新地图
+// Core: filter data and update the map
 function updateMap() {
-    // 1. 如果有旧图层，先移除
+    // 1. Remove the previous layer if it exists
     if (mainHeatLayer) {
         map.removeLayer(mainHeatLayer);
     }
 
-    // 2. 根据 UI 状态过滤数据
+    // 2. Filter data according to the UI state
     const filteredPoints = allData.filter(d => {
         const cityMatch = activeCities.has(d.city);
         const kMatch = kSelect.value ? d.kingdom === kSelect.value : true;
@@ -226,7 +226,7 @@ function updateMap() {
         const gMatch = gSelect.value ? d.genus === gSelect.value : true;
         
         return cityMatch && kMatch && cMatch && gMatch;
-    }).map(d => [d.lat, d.lng]); // 只提取坐标
+    }).map(d => [d.lat, d.lng]); // Extract only the coordinates
 
     // 3. 绘制新热力图 (如果有数据)
     if (filteredPoints.length > 0) {

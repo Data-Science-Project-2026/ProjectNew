@@ -7,7 +7,7 @@ import psycopg2
 
 app = FastAPI()
 
-# 允许 Metabase 页面（localhost:3000）去请求你的 API（可选，但建议）
+# Allow the Metabase page (localhost:3000) to request your API (optional, but recommended)
 # app.add_middleware(
 #     CORSMiddleware,
 #     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -17,46 +17,46 @@ app = FastAPI()
 # )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],           # 允许所有端口（包括你现在的 8080）访问
-    allow_credentials=False,       # 当 origins 为 "*" 时，必须为 False
+    allow_origins=["*"],           # Allow all ports, including the current 8080, to access
+    allow_credentials=False,       # Must be False when origins is "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 修改前
+# Before change
 # GRAPH_HTML_PATH = os.path.join(os.path.dirname(__file__), "graph.html")
 
-# 修改后：明确指向 html 子文件夹
+# After change: explicitly point to the html subfolder
 BASE_DIR = os.path.dirname(__file__)
 HTML_DIR = os.path.join(BASE_DIR, "html")
 GRAPH_HTML_PATH = os.path.join(HTML_DIR, "graph.html")
 MODIFIES_HTML_PATH = os.path.join(HTML_DIR, "species_modifies.html")
 
 def get_conn():
-    # 统一连接到你在 docker-compose 里新定义的数据库
+    # Connect to the database defined in docker-compose in a unified way
     return psycopg2.connect(
         host=os.getenv("PGHOST", "db"),
         port=int(os.getenv("PGPORT", "5432")),
-        dbname="dashboard_database",  # 改为新的数据库名
-        user="dashboard",             # 改为新用户名
-        password="dashboard",         # 改为新密码
+        dbname="dashboard_database",  # Use the new database name
+        user="dashboard",             # Use the new username
+        password="dashboard",         # Use the new password
     )
 
 def get_conn_species():
-    # 这里的逻辑和上面一致，因为你的所有表现在都在一个库里
+    # The logic is the same as above because all tables are now in one database
     return get_conn()
 
 def add_iframe_headers(resp):
-    # MutableHeaders 没有 pop，用 del
+    # MutableHeaders does not have pop, so use del
     if "x-frame-options" in resp.headers:
         del resp.headers["x-frame-options"]
 
-    # 如果之前设置过 CSP frame-ancestors，也可以删掉/重设
+    # If CSP frame-ancestors was previously set, remove or reset it
     if "content-security-policy" in resp.headers:
         del resp.headers["content-security-policy"]
 
-    # 允许被 iframe 嵌入（按需限制来源）
-    # 注意：frame-ancestors 建议写你的 metabase 域名；本机可先用 http://localhost:3000
+    # Allow embedding in an iframe (restrict the source as needed)
+    # Note: frame-ancestors is recommended to specify your Metabase domain; for local use, http://localhost:3000 is okay for now
     resp.headers["Content-Security-Policy"] = "frame-ancestors 'self' http://localhost:3000"
 
     return resp
@@ -77,7 +77,7 @@ def serve_species_modifies():
     with open(MODIFIES_HTML_PATH, "r", encoding="utf-8") as f:
         html = f.read()
     resp = HTMLResponse(html)
-    return add_iframe_headers(resp) # 必须调用这个函数注入 Headers
+    return add_iframe_headers(resp)  # Must call this function to inject headers
 
 @app.get("/animals")
 def animals():
@@ -88,14 +88,14 @@ def animals():
 @app.get("/graph")
 def graph(animal: str):
     with get_conn() as conn, conn.cursor() as cur:
-        # edges: 只取这个 animal 的邻居（plant/emotion）
+        # edges: only fetch neighbors of this animal (plant/emotion)
         cur.execute(
             "SELECT source, target, weight FROM cooccur_edges WHERE source=%s ORDER BY weight DESC;",
             (animal,),
         )
         edges = cur.fetchall()
 
-        # node types（从 cooccur_nodes 查）
+        # node types (read from cooccur_nodes)
         type_map = {i: t for (i, t) in cur.fetchall()}
 
     # build nodes
@@ -106,7 +106,7 @@ def graph(animal: str):
     seen = set([animal])
     for s, t, w in edges:
         if t not in seen:
-            # 这里 type 从 type_map 获取，如果找不到，可以给一个默认值，例如 "unknown"
+            # type is obtained from type_map here; if missing, use a default value such as "unknown"
             nodes.append({"id": t, "type": type_map.get(t, "unknown"), "value": float(w)})
             seen.add(t)
 
@@ -116,10 +116,10 @@ def graph(animal: str):
 @app.get("/api/species")
 def get_species(city: str = Query(None)):
     with get_conn_species() as conn, conn.cursor() as cur:
-        # 修改后的 SQL：
-        # 1. 提取属名 (genus)
-        # 2. 关联 species_details 获取 category ID
-        # 3. 关联 category_list 获取 kingdom 和 category 名称
+        # Updated SQL:
+        # 1. Extract the genus name (genus)
+        # 2. Join species_details to get the category ID
+        # 3. Join category_list to get the kingdom and category names
         query = """
             SELECT DISTINCT ON (i.post_id) 
                 p.city_en, 
@@ -132,32 +132,32 @@ def get_species(city: str = Query(None)):
             JOIN images i ON s.image_id = i.id 
             JOIN posts po ON i.post_id = po.id 
             JOIN parks_with_coordinates p ON po.park = p.park_name_in_post
-            -- 关键关联 --
+            -- Key join --
             JOIN species_details sd ON split_part(s.species, ' ', 1) = sd.scientific_name
             JOIN category_list cl ON sd.category = cl.id
             --------------
             WHERE s.confidence > 0.4 
         """
-        
+
         params = []
         if city:
             query += " AND p.city_en = %s"
             params.append(city)
 
-        #query += " ORDER BY i.post_id, s.confidence DESC"
+        # query += " ORDER BY i.post_id, s.confidence DESC"
 
         cur.execute(query, params)
         rows = cur.fetchall()
 
-    # 构建返回给前端的 JSON
+    # Build the JSON returned to the frontend
     data = [
         {
             "city": r[0],
             "lat": float(r[1]),
             "lng": float(r[2]),
-            "genus": r[3],    # 新增
-            "category": r[4], # 新增
-            "kingdom": r[5]   # 新增
+            "genus": r[3],    # Added
+            "category": r[4], # Added
+            "kingdom": r[5]   # Added
         }
         for r in rows
     ]
@@ -184,7 +184,7 @@ def get_species_for_graph():
         """
         cur.execute(query)
         rows = cur.fetchall()
-    # 按属分组并构造返回格式
+    # Group by genus and build the return format
     genus_map = {}
     for row in rows:
         name = row[0]

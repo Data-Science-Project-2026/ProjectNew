@@ -79,12 +79,12 @@
   </div>
 
 <script>
-/** ====== 配置区 ====== */
+/** ====== Configuration ====== */
 const API_BASE = "http://localhost:8001";
-// 你后端返回的 weight 基本都是 0~1，所以这里用 0 最保险
+// Backend weights are usually in the 0~1 range, so 0 is the safest default value here
 const DEFAULT_MIN_WEIGHT = 0;
 
-/** ====== D3 初始化 ====== */
+/** ====== D3 initialization ====== */
 const svg = d3.select("#svg");
 const rootG = svg.append("g");
 const linkG = rootG.append("g");
@@ -119,7 +119,7 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-/** ====== 渲染 ====== */
+/** ====== Rendering ====== */
 function colorForType(type){
   if (type === "animal") return "#4aa3ff";
   if (type === "plant") return "#88c7ff";
@@ -246,7 +246,7 @@ function renderGraph(data){
   }, 900);
 }
 
-/** ====== 数据加载（关键：防竞态） ====== */
+/** ====== Data loading (important: prevent race conditions) ====== */
 let currentAbort = null;
 let currentReqId = 0;
 
@@ -299,7 +299,7 @@ async function loadGraph(animal){
       try{
         await loadGraph(e.target.value);
       }catch(err){
-        if (err.name === "AbortError") return; // 正常：被下一次切换取消了
+        if (err.name === "AbortError") return; // Normal: canceled by the next selection
         clearGraph();
         console.error(err);
       }
